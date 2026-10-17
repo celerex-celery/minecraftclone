@@ -863,21 +863,22 @@ export class HUD {
       if (renderer) {
         const gl = typeof renderer.getContext === 'function' ? renderer.getContext() : null;
         if (gl) {
-          let vendor, render;
-          try {
-            vendor = gl.getParameter(0x9245); // UNMASKED_VENDOR_WEBGL
-            render = gl.getParameter(0x9246); // UNMASKED_RENDERER_WEBGL
-          } catch { /* unmasked params blocked */ }
-          if (vendor || render) {
-            const guess = `${vendor ?? '?'}:${render ?? '?'}`;
-            if (!guess.includes('WebKit')) {
-              this._gpu = guess;
-              if (this._gpuTimer) {
-                clearInterval(this._gpuTimer);
-                this._gpuTimer = null;
-              }
-              return;
+          // WEBGL_debug_renderer_info must be present to read the real adapter;
+          // otherwise 0x9245/0x9246 throw INVALID_ENUM and spam the console.
+          const unmasked = gl.getExtension('WEBGL_debug_renderer_info');
+          if (unmasked) {
+          const vendor = gl.getParameter(0x9245); // UNMASKED_VENDOR_WEBGL
+          const render = gl.getParameter(0x9246); // UNMASKED_RENDERER_WEBGL
+          // Show just the GPU model name, not "vendor:model".
+          const name = render ?? vendor;
+          if (name && !name.includes('WebKit')) {
+            this._gpu = name;
+            if (this._gpuTimer) {
+              clearInterval(this._gpuTimer);
+              this._gpuTimer = null;
             }
+            return;
+          }
           }
         }
       }
@@ -889,12 +890,13 @@ export class HUD {
         const adapter = await navigator.gpu.requestAdapter();
         if (adapter) {
           const { vendor, device, vendorID, deviceID, description } = adapter.info;
-          if (vendorID || deviceID) {
-            this._gpu = `0x${vendorID?.toString(16) ?? '?'}:0x${deviceID?.toString(16) ?? '?'}`;
+          // Prefer a human-readable name over raw hex ids.
+          if (description) {
+            this._gpu = description;
           } else if (vendor || device) {
             this._gpu = `${vendor ?? '?'}:${device ?? '?'}`;
-          } else if (description) {
-            this._gpu = description;
+          } else if (vendorID || deviceID) {
+            this._gpu = `0x${vendorID?.toString(16) ?? '?'}:0x${deviceID?.toString(16) ?? '?'}`;
           }
           if (this._gpu !== 'n/a' && this._gpuTimer) {
             clearInterval(this._gpuTimer);
