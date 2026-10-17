@@ -223,6 +223,13 @@ export class HUD {
     /** last season drawn, so the readout only rebuilds when the day rolls over */
     this._seasonKey = '';
     this._gravityKey = '';
+    /** GPU adapter name, fetched once on load */
+    this._gpu = 'n/a';
+    if (typeof navigator !== 'undefined' && navigator.gpu) {
+      navigator.gpu.requestAdapter().then((a) => {
+        this._gpu = a?.name ?? 'n/a';
+      }).catch(() => { /* WebGPU not available */ });
+    }
 
     this._buildHotbarSlots();
   }
@@ -855,6 +862,9 @@ export class HUD {
       target
         ? t('debug.target', Blocks.name(target.id), target.x, target.y, target.z)
         : t('debug.noTarget'),
+      t('debug.gpu', this._gpu),
+      t('debug.cpu', navigator.hardwareConcurrency ?? 'n/a'),
+      t('debug.ram', ((performance.memory?.totalJSHeapSize ?? 0) / 1048576).toFixed(0)),
     ];
 
     this._setDebugBlock('left', left);
