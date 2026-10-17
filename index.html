@@ -90,14 +90,15 @@
   <div id="hud-topleft">
     <!-- the frame rate, above everything else in the corner and on its own -->
     <div id="fps-counter"></div>
-    <!-- the F3 readout shares the column, so the season steps out of its way
-         rather than being printed underneath it. `.hidden` is display:none
-         globally, so it collapses out of the flow when toggled off. -->
-    <div id="debug-overlay" class="hidden"></div>
     <!-- the name of the music playing, top left, the way the real game shows it -->
     <div id="music-toast"></div>
     <div id="season-panel" aria-live="off"></div>
   </div>
+  <!-- F3 debug panels: one category pinned to each screen corner -->
+  <div id="debug-topleft" class="debug-panel hidden"></div>
+  <div id="debug-topright" class="debug-panel hidden"></div>
+  <div id="debug-bottomleft" class="debug-panel hidden"></div>
+  <div id="debug-bottomright" class="debug-panel hidden"></div>
   <!-- every line of text the game says: toasts, command output, chat, item
        names and the hint under the crosshair, all in one left-hand stack -->
   <div id="toast-area"></div>

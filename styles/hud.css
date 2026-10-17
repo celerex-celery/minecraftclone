@@ -790,17 +790,45 @@
    its own: the column is already scaled, and a second scale here would put it
    out of step with the box it is laid out in. */
 
-#debug-overlay {
+/* F3 debug panels: one category pinned to each screen corner, scaled with
+   the GUI and anchored at its corner so the panel never drifts when --gui
+   changes. `.hidden` collapses the panel out of the flow when F3 is off. */
+
+.debug-panel {
+  position: absolute;
   line-height: 1.3;
   filter: drop-shadow(1.5px 1.5px 0 #000);
+  transform: scale(var(--gui));
+  pointer-events: none;
+  z-index: 4;
 }
 
-#debug-overlay .dbg-left {
-  color: #ffffff;
+#debug-topleft {
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+  text-align: left;
 }
 
-#debug-overlay .dbg-right {
-  color: #ffff55;
+#debug-topright {
+  top: 0;
+  right: 0;
+  transform-origin: top right;
+  text-align: right;
+}
+
+#debug-bottomleft {
+  bottom: 0;
+  left: 0;
+  transform-origin: bottom left;
+  text-align: left;
+}
+
+#debug-bottomright {
+  bottom: 0;
+  right: 0;
+  transform-origin: bottom right;
+  text-align: right;
 }
 
 /* ---------------- Chat screen ----------------

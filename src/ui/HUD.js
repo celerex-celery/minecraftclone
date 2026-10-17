@@ -194,7 +194,10 @@ export class HUD {
       bubbles: document.getElementById('bubbles'),
       xpFill: document.getElementById('xp-fill'),
       xpLevel: document.getElementById('xp-level'),
-      debug: document.getElementById('debug-overlay'),
+      debugTL: document.getElementById('debug-topleft'),
+      debugTR: document.getElementById('debug-topright'),
+      debugBL: document.getElementById('debug-bottomleft'),
+      debugBR: document.getElementById('debug-bottomright'),
       toastArea: document.getElementById('toast-area'),
       waliaArea: document.getElementById('walia-area'),
       itemNameArea: document.getElementById('item-name-area'),
@@ -803,7 +806,10 @@ export class HUD {
   /* -------------------------------------------------- debug */
 
   toggleDebug() {
-    this.el.debug.classList.toggle('hidden');
+    this.el.debugTL.classList.toggle('hidden');
+    this.el.debugTR.classList.toggle('hidden');
+    this.el.debugBL.classList.toggle('hidden');
+    this.el.debugBR.classList.toggle('hidden');
     // The GPU adapter is only reported once the renderer has a live WebGL
     // context, so (re)kick the fetch the first time the overlay is opened.
     if (this.debugVisible) this._fetchGpu();
@@ -814,7 +820,7 @@ export class HUD {
   }
 
   get debugVisible() {
-    return !this.el.debug.classList.contains('hidden');
+    return !this.el.debugTL.classList.contains('hidden');
   }
 
   /**
@@ -858,12 +864,16 @@ export class HUD {
       ? (performance.memory.usedJSHeapSize / 1048576).toFixed(1)
       : 'n/a';
 
-    const left = [
+    // top-left: where the player is and what they are looking at
+    const position = [
       { head: t('debug.cat.position') },
       t('debug.xyz', x.toFixed(3), y.toFixed(3), z.toFixed(3)),
       t('debug.block', bx, by, bz),
       t('debug.chunkPos', bx >> 4, bz >> 4),
       t('debug.facing', t(`debug.dir.${facingKey}`)),
+    ];
+    // top-right: the world around the player
+    const world = [
       { head: t('debug.cat.world') },
       t('debug.biome', biome),
       t(`debug.dimension.${g.dimension ?? w.dimension}`),
@@ -879,7 +889,8 @@ export class HUD {
         ? t('debug.target', Blocks.name(target.id), target.x, target.y, target.z)
         : t('debug.noTarget'),
     ];
-    const right = [
+    // bottom-left: rendering and simulation cost
+    const renderStats = [
       { head: t('debug.cat.performance') },
       t('debug.fps', g.fps),
       t('debug.chunks', g.chunkStats.rendered, g.chunkStats.total, g.chunkStats.pending),
@@ -887,6 +898,9 @@ export class HUD {
       t('debug.tris', (g.triangles / 1000).toFixed(1)),
       t('debug.drops', g._itemDropCount),
       t('debug.mem', mem),
+    ];
+    // bottom-right: PC specs (GPU adapter, CPU cores, total RAM)
+    const system = [
       { head: t('debug.cat.system') },
       // PC specs on the right side: GPU adapter id, CPU cores, total RAM
       t('debug.gpu', this._gpu),
@@ -894,30 +908,26 @@ export class HUD {
       t('debug.ram', ((performance.memory?.totalJSHeapSize ?? 0) / 1048576).toFixed(0)),
     ];
 
-    this._setDebugBlock('left', left);
-    this._setDebugBlock('right', right);
+    this._setDebugBlock(this.el.debugTL, COLORS.white, position);
+    this._setDebugBlock(this.el.debugTR, COLORS.white, world);
+    this._setDebugBlock(this.el.debugBL, COLORS.yellow, renderStats);
+    this._setDebugBlock(this.el.debugBR, COLORS.yellow, system);
   }
 
-  _setDebugBlock(side, lines) {
-    let host = this.el.debug.querySelector(`.dbg-${side}`);
-    if (!host) {
-      host = document.createElement('div');
-      host.className = `dbg-${side}`;
-      this.el.debug.appendChild(host);
-    }
+  _setDebugBlock(el, color, lines) {
     lines.forEach((line, i) => {
-      let row = host.children[i];
+      let row = el.children[i];
       if (!row) {
         row = document.createElement('div');
-        host.appendChild(row);
+        el.appendChild(row);
       }
       const isHead = line && typeof line === 'object' && line.head;
       this.font.set(row, isHead ? line.head : line, {
         scale: 2,
-        color: isHead ? COLORS.gray : (side === 'left' ? COLORS.white : COLORS.yellow),
+        color: isHead ? COLORS.gray : color,
       });
     });
-    while (host.childElementCount > lines.length) host.lastChild.remove();
+    while (el.childElementCount > lines.length) el.lastChild.remove();
   }
 
   /**
