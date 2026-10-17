@@ -850,9 +850,30 @@ export class HUD {
             clearInterval(this._gpuTimer);
             this._gpuTimer = null;
           }
+          return;
         }
-      } catch { /* GPU info unavailable */ }
+      } catch { /* GPU info unavailable via Electron IPC */ }
     }
+    // Fallback: read the GPU vendor/renderer strings straight off the WebGL
+    // context three.js is drawing into. Works even when Electron's
+    // getGPUInfo() reports no active device (e.g. angle/software rendering).
+    try {
+      const renderer = this.game?.renderer;
+      if (renderer) {
+        const gl = typeof renderer.getContext === 'function' ? renderer.getContext() : null;
+        if (gl) {
+          const vendor = gl.getParameter(gl.VENDOR);
+          const render = gl.getParameter(gl.RENDERER);
+          if (vendor || render) {
+            this._gpu = `${vendor ?? '?'}:${render ?? '?'}`;
+            if (this._gpuTimer) {
+              clearInterval(this._gpuTimer);
+              this._gpuTimer = null;
+            }
+          }
+        }
+      }
+    } catch { /* WebGL GPU info unavailable */ }
   }
 
   _renderDebug() {
