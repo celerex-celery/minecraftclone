@@ -380,6 +380,9 @@ pack present in this folder (`minecraft-assets-26.3/`, version 26.3).
 the game uses into `assets/`, so the game folder is self-contained. All game
 code, shaders, UI and systems are original.
 
+**All original Minecraft assets belong to Mojang/Microsoft and are used
+strictly for non-commercial, educational purposes.** See LICENSE.md.
+
 ---
 
 ## Performance notes
