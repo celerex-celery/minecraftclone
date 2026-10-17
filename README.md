@@ -1,5 +1,10 @@
 # Minecraft Voxel
 
+**Asset notice:** All original Minecraft textures, sounds, music, models and
+other assets belong to Mojang/Microsoft and are extracted from the Minecraft
+client asset pack (`minecraft-assets-26.3/`). They are used strictly for
+non-commercial, educational purposes. See LICENSE.md.
+
 A Minecraft-style voxel **survival** game running in the browser, built with
 three.js and the real Minecraft asset pack (textures, GUI sprites, bitmap font,
 sound effects and music). Packaged as an Electron desktop app; three.js is
