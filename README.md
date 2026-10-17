@@ -250,6 +250,8 @@ and light with flint and steel:
 
 ## UI
 
+![Options screen](options.png)
+
 - **One texture atlas** for all block geometry; four draw groups per chunk
   (opaque, alpha-cutout, water, lava).
 - **Localisation** — UI strings, item names, block names, splash texts and the
