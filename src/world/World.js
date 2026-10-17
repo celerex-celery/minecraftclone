@@ -889,6 +889,9 @@ export class World {
     for (const [key, t] of [...this.primedTNT]) {
       t.fuse -= dt;
       if (t.fuse > 0) continue;
+      // The primed block is gone before it goes off, so the blast cannot
+      // re-light it and set off a second explosion at the same spot.
+      this.setBlock(t.x, t.y, t.z, 0);
       this.primedTNT.delete(key);
       this.explode(t.x, t.y, t.z, TNT_POWER);
     }

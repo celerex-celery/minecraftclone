@@ -2892,9 +2892,11 @@ this.mesh = buildMobMesh(variant);
       // Monster AI
       if (v.id === 'enderman') {
         speed = this._updateEnderman(dt, world, player, solid, defAt, away, dx, dz, gain, inWater, this.underwater);
-      } else if (v.id === 'creeper') {
+        } else if (v.id === 'creeper') {
         // Creeper: stalk the player, light its fuse when close, and explode.
-        const close = away < 3.0 && this._canSeeEntity(player, world);
+        // Creepers hunt in the dark, so use raw line of sight rather than
+        // _canSeeEntity (which needs light and would blind them at night).
+        const close = away < 3.0 && this._lineOfSight(player, world);
         if (close) {
           this.primed = true;
           this.fuseTimer = (this.fuseTimer ?? 0) + dt;

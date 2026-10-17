@@ -378,6 +378,10 @@ export class Advancements {
     this.game.statistics.recordHurt();
   }
 
+  recordKilled(mobId) {
+    this.game.statistics.recordKilled(mobId);
+  }
+
   recordNight() {
     this.game.statistics.recordNight();
   }
