@@ -29,4 +29,5 @@ contextBridge.exposeInMainWorld('mcVoxel', {
    * @param {string} line the formatted line, written by the caller
    */
   terminal: (level, line) => ipcRenderer.send('terminal-log', level, line),
+  quit: () => ipcRenderer.invoke('app:quit'),
 });

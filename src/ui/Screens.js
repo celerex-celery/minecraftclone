@@ -164,6 +164,8 @@ export class TitleScreen {
         this.game.continueWorld();
       } else if (action === 'options') {
         this.game.screens.openOptions(() => this.show());
+      } else if (action === 'quit') {
+        window.mcVoxel?.quit?.();
       }
     });
 

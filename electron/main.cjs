@@ -162,6 +162,8 @@ ipcMain.handle('saves:putSettings', async (_e, settings) => {
   return true;
 });
 
+ipcMain.handle('app:quit', () => app.quit());
+
 let serveProc = null;
 
 function startDevServer() {
