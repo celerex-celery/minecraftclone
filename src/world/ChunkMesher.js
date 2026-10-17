@@ -967,8 +967,10 @@ builder.pushQuad();
   emitLiquid(x, y, z, px, py, pz, def) {
     // the flow sim knows how deep this cell is, so a spreading river gets
     // visibly shallower as it moves away from where it was placed; a source is
-    // the block's own liquidTop
-    const surface = this.world ? this.world.fluid.surfaceAt(x, y, z) : def.liquidTop;
+    // a full block, so it renders at full height rather than stopping at
+    // liquidTop and looking like a flat pane.
+    const level = this.world ? this.world.fluid.levelAt(x, y, z) : 0;
+    const surface = level === 0 ? 1 : (this.world ? this.world.fluid.surfaceAt(x, y, z) : def.liquidTop);
     // Lava goes to its own builder, and its own material: it is opaque and it does
     // not scroll.
     const isWater = def.name === 'water';
