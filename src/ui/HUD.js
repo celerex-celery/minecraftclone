@@ -882,6 +882,27 @@ export class HUD {
         }
       }
     } catch { /* WebGL GPU info unavailable */ }
+    // Last resort: WebGPU adapter info reports the real hardware vendor/device
+    // ids even when WebGL masks them and Electron's getGPUInfo() returns null.
+    try {
+      if (typeof navigator !== 'undefined' && navigator.gpu) {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (adapter) {
+          const { vendor, device, vendorID, deviceID, description } = adapter.info;
+          if (vendorID || deviceID) {
+            this._gpu = `0x${vendorID?.toString(16) ?? '?'}:0x${deviceID?.toString(16) ?? '?'}`;
+          } else if (vendor || device) {
+            this._gpu = `${vendor ?? '?'}:${device ?? '?'}`;
+          } else if (description) {
+            this._gpu = description;
+          }
+          if (this._gpu !== 'n/a' && this._gpuTimer) {
+            clearInterval(this._gpuTimer);
+            this._gpuTimer = null;
+          }
+        }
+      }
+    } catch { /* WebGPU unavailable */ }
   }
 
   _renderDebug() {
