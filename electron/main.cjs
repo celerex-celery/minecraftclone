@@ -250,6 +250,16 @@ async function createWindow() {
     } catch {
       /* window gone */
     }
+    try {
+      const gpu = await win.webContents.getGPUInfo();
+      const d = gpu.gpuDevice;
+      if (d && d.active) {
+        logLine('Render thread', 'INFO',
+          `gpu vendorId 0x${d.vendorId?.toString(16) ?? '?'} deviceId 0x${d.deviceId?.toString(16) ?? '?'} active`);
+      }
+    } catch {
+      /* gpu info not available */
+    }
   }, 30000);
 
   win.webContents.setWindowOpenHandler(({ url }) => {
