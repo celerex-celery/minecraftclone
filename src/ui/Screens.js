@@ -72,7 +72,7 @@ export class TitleScreen {
         const name = input.value.trim();
         if (name && name.length <= 16) {
           this.game.settings.playerName = name;
-          this.game.saveSettings();
+          this.game.saveGame.putSettings(this.game.settings).catch(() => {});
           this._updatePlayerName();
         }
         cleanup();
