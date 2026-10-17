@@ -124,6 +124,9 @@ const PAD_BINDS = {
   // because a chat box should open once per tap and not every tenth of a
   // second for as long as the button is down.
   chat: { dpad: PAD.RIGHT },
+  // Drop the held item stack. dpad down answers once per press (edge), not on
+  // repeat, so holding it does not empty the hotbar.
+  dropItem: { dpad: PAD.DOWN },
 };
 
 export class Input {
