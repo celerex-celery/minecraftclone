@@ -165,8 +165,9 @@ ipcMain.handle('saves:putSettings', async (_e, settings) => {
 ipcMain.handle('app:quit', () => app.quit());
 
 ipcMain.handle('app:gpu-info', async () => {
+  if (!mainWin) return null;
   try {
-    const info = await win.webContents.getGPUInfo();
+    const info = await mainWin.webContents.getGPUInfo();
     const d = info.gpuDevice;
     return d && d.active
       ? { vendorId: d.vendorId, deviceId: d.deviceId }

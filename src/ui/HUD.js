@@ -223,15 +223,11 @@ export class HUD {
     /** last season drawn, so the readout only rebuilds when the day rolls over */
     this._seasonKey = '';
     this._gravityKey = '';
-    /** GPU adapter name, fetched once on load */
+    /** GPU adapter name, fetched once the renderer has a live WebGL context */
     this._gpu = 'n/a';
-    if (typeof window !== 'undefined' && window.mcVoxel?.gpuInfo) {
-      window.mcVoxel.gpuInfo().then((info) => {
-        if (info) {
-          this._gpu = `0x${info.vendorId?.toString(16) ?? '?'}:0x${info.deviceId?.toString(16) ?? '?'}`;
-        }
-      }).catch(() => { /* GPU info unavailable */ });
-    }
+    /** whether a GPU info fetch has already been kicked off */
+    this._gpuFetched = false;
+    this._fetchGpu();
 
     this._buildHotbarSlots();
   }
@@ -808,6 +804,9 @@ export class HUD {
 
   toggleDebug() {
     this.el.debug.classList.toggle('hidden');
+    // The GPU adapter is only reported once the renderer has a live WebGL
+    // context, so (re)kick the fetch the first time the overlay is opened.
+    if (this.debugVisible) this._fetchGpu();
     // Deliberately does not touch `settings.showFps`. It used to, which meant
     // pressing F3 rewrote a saved option - so opening the debug overlay once
     // turned the frame rate readout off for good, and closing it turned the
@@ -816,6 +815,27 @@ export class HUD {
 
   get debugVisible() {
     return !this.el.debug.classList.contains('hidden');
+  }
+
+  /**
+   * Fetch the GPU adapter id once the renderer has a live WebGL context.
+   *
+   * Called both at construction (fire-and-forget, in case the context is already
+   * up) and the first time the F3 overlay is opened, because `webContents
+   * .getGPUInfo()` only reports an active device after three.js has created the
+   * WebGL renderer. Runs at most once.
+   */
+  async _fetchGpu() {
+    if (this._gpuFetched) return;
+    this._gpuFetched = true;
+    if (typeof window !== 'undefined' && window.mcVoxel?.gpuInfo) {
+      try {
+        const info = await window.mcVoxel.gpuInfo();
+        if (info) {
+          this._gpu = `0x${info.vendorId?.toString(16) ?? '?'}:0x${info.deviceId?.toString(16) ?? '?'}`;
+        }
+      } catch { /* GPU info unavailable */ }
+    }
   }
 
   _renderDebug() {
@@ -839,18 +859,12 @@ export class HUD {
       : 'n/a';
 
     const left = [
-      t('debug.fps', g.fps),
-      t('debug.chunks', g.chunkStats.rendered, g.chunkStats.total, g.chunkStats.pending),
-      t('debug.drawCalls', g.drawCalls),
-      t('debug.tris', (g.triangles / 1000).toFixed(1)),
-      t('debug.drops', g._itemDropCount),
-      t('debug.mem', mem),
-    ];
-    const right = [
+      { head: t('debug.cat.position') },
       t('debug.xyz', x.toFixed(3), y.toFixed(3), z.toFixed(3)),
       t('debug.block', bx, by, bz),
       t('debug.chunkPos', bx >> 4, bz >> 4),
       t('debug.facing', t(`debug.dir.${facingKey}`)),
+      { head: t('debug.cat.world') },
       t('debug.biome', biome),
       t(`debug.dimension.${g.dimension ?? w.dimension}`),
       t('debug.light', w.getSky(bx, by + 1, bz), w.getBlockLight(bx, by + 1, bz)),
@@ -864,6 +878,17 @@ export class HUD {
       target
         ? t('debug.target', Blocks.name(target.id), target.x, target.y, target.z)
         : t('debug.noTarget'),
+    ];
+    const right = [
+      { head: t('debug.cat.performance') },
+      t('debug.fps', g.fps),
+      t('debug.chunks', g.chunkStats.rendered, g.chunkStats.total, g.chunkStats.pending),
+      t('debug.drawCalls', g.drawCalls),
+      t('debug.tris', (g.triangles / 1000).toFixed(1)),
+      t('debug.drops', g._itemDropCount),
+      t('debug.mem', mem),
+      { head: t('debug.cat.system') },
+      // PC specs on the right side: GPU adapter id, CPU cores, total RAM
       t('debug.gpu', this._gpu),
       t('debug.cpu', navigator.hardwareConcurrency ?? 'n/a'),
       t('debug.ram', ((performance.memory?.totalJSHeapSize ?? 0) / 1048576).toFixed(0)),
@@ -886,9 +911,10 @@ export class HUD {
         row = document.createElement('div');
         host.appendChild(row);
       }
-      this.font.set(row, line, {
+      const isHead = line && typeof line === 'object' && line.head;
+      this.font.set(row, isHead ? line.head : line, {
         scale: 2,
-        color: side === 'left' ? COLORS.white : COLORS.yellow,
+        color: isHead ? COLORS.gray : (side === 'left' ? COLORS.white : COLORS.yellow),
       });
     });
     while (host.childElementCount > lines.length) host.lastChild.remove();
