@@ -25,7 +25,6 @@ export class TitleScreen {
     this.game = game;
     this.root = document.getElementById('title-screen');
     this.splash = document.getElementById('title-splash');
-    this.continueBtn = document.getElementById('btn-continue');
     this.saveGame = game.saveGame;
     this.playerNameEl = document.getElementById('title-player-name');
     this.playerPreviewEl = document.getElementById('title-player-preview');
@@ -183,15 +182,9 @@ export class TitleScreen {
       // logo's real width rather than to nothing.
       this._rotateSplash();
       this._updatePlayerName();
-     // the Continue button only makes sense once a world exists
-     this.saveGame.list().then((worlds) => {
-       const latest = worlds[0];
-       this.continueBtn.classList.toggle('hidden', !latest);
-       if (latest) this.game.font.set(this.continueBtn, latest.name, { scale: 2, color: COLORS.white });
-     });
-     // Hide the sky so the sun, moon and stars don't show through the title
-     // screen. `setDimension` restores their visibility when a world loads.
-     const sky = this.game.sky;
+      // Hide the sky so the sun, moon and stars don't show through the title
+      // screen. `setDimension` restores their visibility when a world loads.
+      const sky = this.game.sky;
      if (sky) {
        sky.dome.visible = false;
        sky.sun.visible = false;
