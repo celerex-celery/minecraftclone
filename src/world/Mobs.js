@@ -4282,6 +4282,11 @@ export class Mobs {
       // Vanilla: monsters spawn at light level <= 7 (not just 0)
       // This allows spawning in caves and at night, but not near torches (light 14)
       if (light > 7) return false;
+      // Surface (sky reaches here) only spawns at night: if sky light gets in
+      // and there's still effective light, it's daytime on the surface - never
+      // spawn there no matter what the leaf canopy above does. Caves (sky === 0)
+      // are exempt and spawn whenever dark enough.
+      if (w.getSky(x, y, z) > 0 && light > 0) return false;
     } else if (!this.lightAllows(light)) {
       return false;
     }
