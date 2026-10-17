@@ -228,8 +228,6 @@ export class HUD {
     this._gravityKey = '';
     /** GPU adapter name, fetched once the renderer has a live WebGL context */
     this._gpu = 'n/a';
-    /** whether a GPU info fetch has already been kicked off */
-    this._gpuFetched = false;
     this._fetchGpu();
 
     this._buildHotbarSlots();
@@ -829,11 +827,12 @@ export class HUD {
    * Called both at construction (fire-and-forget, in case the context is already
    * up) and the first time the F3 overlay is opened, because `webContents
    * .getGPUInfo()` only reports an active device after three.js has created the
-   * WebGL renderer. Runs at most once.
+   * WebGL renderer. Retries on each F3 open until a real adapter id is found,
+   * then stops.
    */
   async _fetchGpu() {
-    if (this._gpuFetched) return;
-    this._gpuFetched = true;
+    // Don't refetch once we have a real adapter id.
+    if (this._gpu !== 'n/a') return;
     if (typeof window !== 'undefined' && window.mcVoxel?.gpuInfo) {
       try {
         const info = await window.mcVoxel.gpuInfo();
