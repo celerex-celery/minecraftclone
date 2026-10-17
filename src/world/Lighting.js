@@ -289,8 +289,11 @@ export class LightEngine {
           for (let y = MAX_Y; y >= MIN_Y; y--) {
             const def = list[blocks[lay(y, col)]];
             if (def.opacity > 0) {
-              level -= def.opacity;
-              if (level <= 0) break;
+              if (level === 15 && def.opacity < 15) {
+              } else {
+                level -= def.opacity;
+                if (level <= 0) break;
+              }
             }
             light[lay(y, col)] |= level << 4;
           }
