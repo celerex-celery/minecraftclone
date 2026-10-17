@@ -109,6 +109,31 @@ Every key below is rebindable in **Options → Controls**.
 Mouse in the inventory: **left click** pick up / drop, **right click** half,
 **shift + click** quick move, **shift + click a result** craft repeatedly.
 
+## Controller
+
+A gamepad on the standard (Xbox-style) mapping works out of the box — plug it in
+and play. The game polls the controller each frame, so there is nothing to
+configure. The browser pops up a small message when a controller connects or
+disconnects.
+
+| Control | Action |
+| --- | --- |
+| Left stick | Move |
+| Right stick | Look around |
+| A | Jump |
+| B | Sneak |
+| RT | Mine (hold) |
+| LT | Place / eat / use item (hold) |
+| X | Pick Block — copies what you are looking at into the hotbar |
+| Y | Inventory / Creative inventory |
+| Start | Pause menu |
+| Right stick click | Cycle camera: first → third → front |
+| D-pad right | Open chat |
+| D-pad down | Drop the held item stack |
+
+Typing chat and commands still uses the keyboard: the game opens an on-screen
+keyboard when a controller opens the chat box.
+
 Type `/help` in chat for slash commands.
 
 ### Commands
