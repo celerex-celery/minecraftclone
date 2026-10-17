@@ -954,10 +954,7 @@ export class Interaction {
 
     const liquid = Blocks.id(bucket.liquid);
     // Water evaporates in the Nether: it cannot be placed there at all.
-    if (bucket.liquid === 'water' && world.dimension === 'nether') {
-      this.game.hud.toast(t('hud.cannotPlace', 'water'), 'warn');
-      return false;
-    }
+    if (bucket.liquid === 'water' && world.dimension === 'nether') return false;
     world.setBlock(px, py, pz, liquid);
     // the pour itself is a source, not a trickle
     world.fluid.setLevel(px, py, pz, 0);
