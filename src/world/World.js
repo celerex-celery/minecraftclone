@@ -265,7 +265,7 @@ export class World {
     const time = this.time ?? 0;
     const dayTicks = 24000;
     const dayProgress = (time / dayTicks) % 1;
-    const sunAngle = (dayProgress * Math.PI * 2) - (Math.PI / 2);
+    const sunAngle = dayProgress * Math.PI * 2;
     const skyLightLevel = Math.max(0, Math.round(Math.sin(sunAngle) * 15));
     const skyDarken = 15 - skyLightLevel;
     const effectiveSky = Math.max(0, sky - skyDarken);
