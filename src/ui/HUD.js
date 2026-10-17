@@ -413,8 +413,8 @@ export class HUD {
    */
   _renderFps() {
     const on = this.game.settings.showFps !== false;
-    this.el.fps?.classList.toggle('hidden', !on);
-    if (!on) return;
+    if (!this.debugVisible) this.el.fps?.classList.toggle('hidden', !on);
+    if (!on || this.debugVisible) return;
 
     this._fpsTimer = (this._fpsTimer ?? 0) - this._lastDt;
     if (this._fpsTimer > 0) return;
@@ -811,9 +811,15 @@ export class HUD {
     this.el.debugTR.classList.toggle('hidden');
     this.el.debugBL.classList.toggle('hidden');
     this.el.debugBR.classList.toggle('hidden');
+    // When F3 is up the corner panel covers the frame rate and season
+    // readout, so hide both; restore them when F3 closes. Inline style wins
+    // over the _renderFps/_renderSeason class toggles, so guard those too.
+    const hidden = this.debugVisible;
+    this.el.fps.style.display = hidden ? 'none' : '';
+    this.el.season.style.display = hidden ? 'none' : '';
     // The GPU adapter is only reported once the renderer has a live WebGL
     // context, so (re)kick the fetch the first time the overlay is opened.
-    if (this.debugVisible) this._fetchGpu();
+    if (hidden) this._fetchGpu();
     // Deliberately does not touch `settings.showFps`. It used to, which meant
     // pressing F3 rewrote a saved option - so opening the debug overlay once
     // turned the frame rate readout off for good, and closing it turned the
@@ -1083,6 +1089,11 @@ export class HUD {
     if (!world || !this.el.season) return;
     // Hide season in Nether and End
     if (world.dimension === 'nether' || world.dimension === 'end') {
+      this.el.season.style.display = 'none';
+      return;
+    }
+    // Hidden while F3 is up; toggleDebug owns the corner while the overlay shows
+    if (this.debugVisible) {
       this.el.season.style.display = 'none';
       return;
     }
