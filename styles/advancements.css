@@ -1,0 +1,266 @@
+/* ------------------------------------------------------------------
+   Advancements
+   ------------------------------------------------------------------ */
+
+/* the "Advancement Made!" popup, top right like the real game */
+.adv-toast {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 120;
+  min-width: 300px;
+  padding: 8px 12px 10px;
+  background: #1b1b1b;
+  border: 2px solid #6f6f6f;
+  box-shadow: 0 3px 0 #00000080;
+  /* no transition here: the visibility is a class the HUD drives, so the
+     popup can be shown and hidden without racing a CSS timer */
+  opacity: 0;
+  transform: translateX(28px);
+  transition: opacity 0.25s ease-out, transform 0.25s ease-out;
+  pointer-events: none;
+}
+
+.adv-toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.adv-toast-head {
+  line-height: 0;
+  margin-bottom: 6px;
+}
+
+.adv-toast-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.adv-toast-icon,
+.adv-tab,
+.adv-cell-icon {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.adv-toast-icon {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3b3b3b;
+  border: 2px solid #111111;
+  box-shadow: inset 1px 1px 0 #ffffff33;
+}
+
+.adv-toast-text {
+  min-width: 0;
+  line-height: 0;
+}
+
+.adv-toast-text > div {
+  margin-top: 2px;
+}
+
+/* --- the screen --- */
+
+.adv-panel {
+  width: 720px;
+  max-width: 94vw;
+}
+
+.adv-inner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  margin-top: 10px;
+}
+
+.adv-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 auto;
+}
+
+.adv-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 4px;
+  background: #2b2b2b;
+  border: 2px solid #101010;
+  color: #fff;
+  cursor: pointer;
+  line-height: 0;
+}
+
+.adv-tab:hover {
+  background: #3a3a3a;
+}
+
+.adv-tab.selected {
+  background: #4a4a4a;
+  border-color: #ffff5588;
+  box-shadow: inset 0 0 0 1px #ffff5544;
+}
+
+.adv-tab-count {
+  color: #b0b0b0;
+  line-height: 0;
+}
+
+.adv-body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.adv-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+}
+
+.adv-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  background: #232323;
+  border: 2px solid #0e0e0e;
+  /* children sit in from the left, which is what draws the tree without a
+     scrolling diagram */
+  margin-left: calc(var(--adv-depth, 0) * 18px);
+}
+
+.adv-cell-icon {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #161616;
+  border: 2px solid #0a0a0a;
+  /* an unearned one is dimmed, the way the real game shows locked ones */
+  opacity: 0.55;
+  filter: grayscale(1);
+}
+
+.adv-cell.done .adv-cell-icon {
+  opacity: 1;
+  filter: none;
+  box-shadow: 0 0 0 2px #ffff5566;
+}
+
+.adv-cell-text {
+  min-width: 0;
+  line-height: 0;
+}
+
+.adv-cell-text > div {
+  margin-top: 2px;
+}
+
+/* ------------------------------------------------------------------
+   Statistics. Shares the tab column and panel shell with advancements,
+   because in the real game they are the same screen with different content.
+   ------------------------------------------------------------------ */
+
+.stat-panel {
+  width: 560px;
+  max-width: 94vw;
+  max-height: 92vh;
+}
+
+.stat-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 46vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #6f6f6f #1a1a1a;
+  padding-right: 4px;
+}
+
+/* The statistics tabs are text rather than icons, so they need a width of their
+   own to line up as a column instead of each one being as wide as its label. */
+#stat-tabs .adv-tab {
+  min-width: 130px;
+  padding: 4px 8px;
+  text-align: left;
+}
+
+.stat-search {
+  width: 100%;
+  margin-bottom: 8px;
+  /* the box must not be the thing that scrolls away, or typing in it and then
+     looking down the list leaves you unsure what you filtered */
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.stat-body::-webkit-scrollbar {
+  width: 10px;
+}
+
+.stat-body::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.stat-body::-webkit-scrollbar-thumb {
+  background: #6f6f6f;
+  border: 2px solid #1a1a1a;
+}
+
+/* One line: label hard left, value hard right, so a column of values lines up
+   by its right edge and neither half can wrap under the other. */
+.stat-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 4px;
+}
+
+.stat-label,
+.stat-value {
+  line-height: 0;
+}
+
+.stat-label {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stat-value {
+  flex: 0 0 auto;
+}
+
+.stat-section {
+  margin-bottom: 12px;
+}
+
+.stat-heading {
+  line-height: 0;
+  padding: 3px 4px 5px;
+  margin-bottom: 3px;
+  border-bottom: 2px solid #ffffff22;
+}
+
+.stat-empty {
+  line-height: 0;
+  padding: 3px 4px;
+}

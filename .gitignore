@@ -1,0 +1,19 @@
+# Node
+node_modules/
+
+# Profiler and test output. Both are run ad hoc and their output is pasted into
+# the changelog by hand - there is no reason to keep the raw file.
+*-out.txt
+prof-out.txt
+test-out.txt
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# The Minecraft client asset pack is the upstream source the extracted
+# assets/ were pulled from. It is large and it is not this project's code.
+minecraft-assets-*/

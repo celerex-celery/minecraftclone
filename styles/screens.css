@@ -1,0 +1,720 @@
+/* =============================================================
+   Minecraft Voxel - container screens (inventory, crafting table,
+   furnace), tooltips, and the dragged stack cursor.
+
+   Layout follows the real game: player preview + armour on the
+   left, crafting grid on the right, then the 3x9 backpack and the
+   hotbar underneath, each with its own label so nothing is
+   ambiguous.
+   ============================================================= */
+
+#container-screen {
+  z-index: 60;
+}
+
+.container-panel {
+  width: 340px;
+  max-width: 96vw;
+  max-height: 92vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.container-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+/* ---------------- top row: player + crafting ---------------- */
+
+.inv-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.inv-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inv-col-left {
+  flex: 0 0 auto;
+  /* armour slots and the player model stand side by side, the way the real
+     inventory has them, rather than stacked in one column */
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.inv-col-right {
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.inv-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* the 3x9 main grid and the hotbar row, with the gap the real game puts between
+   them - the row you reach for is obvious from the space under it, not from a
+   caption */
+.inv-main {
+  margin-top: 14px;
+}
+
+/* A crafting bench or a furnace has no player column, so the panel becomes one
+   left-aligned stack: title, the block's widget, then the player's inventory.
+   The real game anchors all of them to the same left edge. */
+.inv-top.single {
+  justify-content: flex-start;
+}
+
+.inv-area.left {
+  align-items: flex-start;
+}
+
+.inv-area.left .inv-section {
+  align-items: flex-start;
+}
+
+.inv-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* ---------------- player preview ---------------- */
+
+/* The model stands in a dark inset, which is what the real inventory does and
+   what makes it read as a character standing in a box rather than a diagram
+   floating on the panel. It used to be a grey card, which is not a shape the
+   real game has anywhere. */
+.player-preview {
+  position: relative;
+  width: 74px;
+  align-self: flex-start;
+  background: #1c1c1c;
+  border: 3px solid;
+  border-color: #ffffff #555555 #555555 #ffffff;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 4px 0 6px;
+}
+
+/* The real player model, rendered once into its own small canvas by
+   `PlayerPreview`. Drawn at three times this and scaled back down, which is what
+   gives its edges the same chunky look as every other sprite in the interface;
+   an ordinary `<canvas>` would come out smooth and out of place next to a
+   pixelated UI. */
+.player-preview-canvas {
+  display: block;
+  width: 68px;
+  height: 112px;
+  image-rendering: pixelated;
+}
+
+/* ---------------- grids & slots ---------------- */
+
+.grid {
+  display: grid;
+  gap: 2px;
+  background: #8b8b8b;
+  padding: 3px;
+  border: 2px solid #373737;
+  box-shadow: inset 1px 1px 0 #ffffff55;
+}
+
+.grid.g3 { grid-template-columns: repeat(3, 26px); }
+.grid.g2 { grid-template-columns: repeat(2, 26px); }
+.grid.g9 { grid-template-columns: repeat(9, 26px); }
+.grid.g1 { grid-template-columns: 26px; }
+
+.craft-grid {
+  background: #7a7a7a;
+}
+
+/* the chest's own slots get the same recessed grey the crafting grid does, and
+   the six row version is left to flow - the panel already scrolls */
+.chest-grid {
+  background: #7a7a7a;
+}
+
+.hotbar-grid {
+  /* the gap the real game leaves under the main grid, so the two rows read as
+     separate rather than as one six row block */
+  margin-top: 12px;
+  box-shadow: inset 1px 1px 0 #ffffff55, 0 2px 0 #555555;
+}
+
+.slot {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  background-image: url("../assets/textures/gui/slot.png");
+  background-size: 100% 100%;
+}
+
+.slot canvas.item-icon {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  width: 16px;
+  height: 16px;
+  /* drawn at its native 16px and shown at 16px, so nothing is resampled. This
+     rule is what stops the browser smoothing the downscale, which is what made
+     every icon look pale and blurry rather than crisp. */
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* A stack size, tucked into the bottom-right corner of the slot.
+   Only drawn when the count is 2 or more, so a lone item shows no digit at
+   all. The offsets hold it inside the 18px slot rather than hanging over the
+   edge: at `bottom: -1px` the number sat a pixel low and read as belonging to
+   the slot below. */
+.slot .stack-count {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  /* the shadow is what keeps a white number legible on a pale block icon */
+  filter: drop-shadow(1px 1px 0 #000);
+  pointer-events: none;
+}
+
+.slot .stack-dur {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 3px;
+  height: 3px;
+  background: #000000;
+  box-shadow: 0 0 0 1px #00000055;
+}
+
+.slot .stack-dur i {
+  display: block;
+  height: 100%;
+  background: #55ff55;
+}
+
+.slot.hover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.45);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.slot.output {
+  width: 32px;
+  height: 32px;
+  background: none;
+}
+
+.slot.output canvas.item-icon {
+  top: 5px;
+  left: 5px;
+  width: 16px;
+  height: 16px;
+}
+
+/* armour slots get a faint hint of what belongs in them */
+.armour-slot::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  opacity: 0.14;
+  background: #ffffff;
+  clip-path: polygon(20% 0, 80% 0, 100% 22%, 100% 100%, 0 100%, 0 22%);
+}
+
+.slot.hb-slot::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 4px;
+  height: 2px;
+  background: #ffffff33;
+}
+
+/* ---------------- creative palette ---------------- */
+
+/* The row of tabs along the top of the creative inventory.
+   Deliberately plain: a run of small square buttons, the selected one drawn in
+   front of the others. The real game's tabs are a flat strip of icons with a
+   lighter background on whichever is open, and that reads better than anything
+   fancier at this size. */
+.creative-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  width: 100%;
+  padding: 2px 2px 0;
+  background: #8b8b8b;
+  border: 2px solid #373737;
+  border-bottom: none;
+}
+
+.creative-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: #5a5a5a;
+  border: 2px solid #2f2f2f;
+  cursor: pointer;
+}
+
+.creative-tab:hover {
+  background: #6d6d6d;
+}
+
+.creative-tab.active {
+  background: #b0b0b0;
+  border-color: #ffffff55;
+  /* the open tab sits proud of the strip, as it does in the real game */
+  margin-bottom: -2px;
+  height: 28px;
+}
+
+.creative-tab canvas {
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+  display: block;
+  pointer-events: none;
+}
+
+.creative-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.creative-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 7px;
+  font: 12px/1.2 Consolas, "Courier New", monospace;
+  color: #e0e0e0;
+  background: #1a1a1a;
+  border: 2px solid #373737;
+  box-shadow: inset 1px 1px 0 #00000080;
+  outline: none;
+}
+
+.creative-search:focus {
+  border-color: #a0a0a0;
+}
+
+.creative-scroll {
+  width: 100%;
+  max-height: 46vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background: #8b8b8b;
+  border: 2px solid #373737;
+  box-shadow: inset 1px 1px 0 #ffffff55;
+  padding: 3px;
+  display: flex;
+  justify-content: center;
+}
+
+/* the scroll box already provides the frame, so the grid drops its own */
+.creative-grid {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  align-content: start;
+}
+
+.creative-grid .slot canvas.item-icon {
+  top: 5px;
+  left: 5px;
+}
+
+/* ---------------- crafting & furnace ---------------- */
+
+.craft-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.craft-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.craft-out,
+.furnace-out {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.arrow {
+  position: relative;
+  width: 30px;
+  height: 20px;
+  background: #5a5a5a;
+  box-shadow: inset 1px 1px 0 #3a3a3a, inset -1px -1px 0 #8a8a8a;
+}
+
+.arrow i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0%;
+  background: #e8e8e8;
+  box-shadow: inset 0 0 0 1px #9a9a9a;
+}
+
+.furnace-area {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.furnace-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.furnace-arrow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.flame {
+  position: relative;
+  width: 16px;
+  height: 19px;
+  background: #4a4a4a;
+  clip-path: polygon(50% 0%, 78% 32%, 66% 34%, 88% 68%, 50% 100%, 12% 68%, 34% 34%, 22% 32%);
+}
+
+.flame i {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 0%;
+  background: linear-gradient(180deg, #ffe14d 0%, #ff8a1f 100%);
+}
+
+.section-label {
+  margin-bottom: 2px;
+  opacity: 0.9;
+  display: flex;
+  justify-content: center;
+}
+
+.container-hint {
+  /* Kept as a rule but no longer used: the element was removed from the markup
+     along with the click-help line it held. The real game shows no help text
+     under the container, and the rule was the only thing holding that strip
+     open. */
+  display: none;
+}
+
+/* ---------------- tooltip ---------------- */
+
+#tooltip {
+  position: fixed;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.tooltip-inner {
+  background-image: url("../assets/textures/gui/background.png");
+  background-size: 100% 100%;
+  padding: 6px 10px 7px;
+  min-width: 104px;
+  filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.55));
+}
+
+.tooltip-inner .tt-name {
+  margin-bottom: 4px;
+}
+
+.tooltip-inner .tt-line {
+  opacity: 0.85;
+  margin-top: 3px;
+}
+
+.tooltip-inner .tt-rarity {
+  margin-top: 5px;
+  opacity: 0.9;
+}
+
+/* ---------------- cursor stack ---------------- */
+
+#cursor-item {
+  position: fixed;
+  z-index: 90;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+#cursor-item canvas {
+  width: 26px;
+  height: 26px;
+  image-rendering: pixelated;
+}
+
+#cursor-item .stack-count {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  filter: drop-shadow(1px 1px 0 #000);
+}
+
+/* =============================================================
+   end screen
+   ============================================================= */
+
+#end-screen {
+  z-index: 70;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#end-credits-content {
+  position: relative;
+  width: 80%;
+  max-width: 800px;
+  text-align: center;
+  color: #fff;
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 18px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.end-continue-btn {
+  z-index: 1000 !important;
+}
+
+/* =============================================================
+   Steps app overlay (opened with M)
+   ============================================================= */
+#steps-app {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+}
+
+.steps-container {
+  width: 200px;
+  background: #1a1a1a;
+  border: 3px solid;
+  border-color: #e6d91a #a68c00 #a68c00 #e6d91a;
+  padding: 10px 12px;
+  image-rendering: pixelated;
+}
+
+.steps-title {
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 18px;
+  font-weight: normal;
+  color: #e6d91a;
+  text-align: center;
+  margin-bottom: 8px;
+  image-rendering: pixelated;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.steps-counter {
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 16px;
+  font-weight: normal;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 6px;
+  image-rendering: pixelated;
+}
+
+.steps-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #444444;
+  border: 1px solid #222222;
+  box-shadow: inset 0 1px 0 #666666;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.steps-bar-fill {
+  height: 100%;
+  background: #55aa00;
+  box-shadow: inset 0 -1px 0 #336600;
+  transition: width 0.2s ease;
+}
+
+.steps-progress,
+.steps-remaining,
+.steps-reward {
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 12px;
+  font-weight: normal;
+  color: #dddddd;
+  text-align: center;
+  margin-top: 2px;
+  image-rendering: pixelated;
+}
+
+
+/* =============================================================
+   the controller's selection ring
+
+   A keyboard player's cursor points at things. A controller player
+   has a ring, and it is the same white the real game draws around
+   whatever the stick has walked onto. It is on top of everything a
+   slot shows, including the item in it, because the thing under the
+   ring is the thing being picked up. */
+button.pad-focus,
+.creative-tab.pad-focus,
+.pad-focus button:not([disabled]) {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+}
+
+/* Slots outline inside rather than outside: a negative offset keeps
+   the ring hugging the item rather than sitting on the gap between
+   slots, where no ring belongs. */
+.slot.pad-focus {
+  outline: 2px solid #ffffff;
+  outline-offset: -2px;
+}
+
+/* The sliders steer rather than walk, so they take the ring the same
+   way buttons do. */
+input.pad-focus[type='range'] {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+
+/* =============================================================
+   the on-screen keyboard
+
+   What a controller types on. It sits over the bottom of whatever screen
+   asked for it, dark like the other panels, with the game's own font on
+   every key - the same buttons the mouse can still click, because it is
+   the same DOM the mouse always used. */
+
+#osk {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.osk-panel {
+  pointer-events: auto;
+  background: rgba(16, 16, 16, 0.92);
+  border: 2px solid #373737;
+  border-bottom: none;
+  padding: 8px 10px 10px;
+  box-shadow: inset 1px 1px 0 #ffffff22;
+  max-width: 640px;
+}
+
+.osk-title {
+  color: #b0b0b0;
+  padding: 0 2px 6px;
+  image-rendering: pixelated;
+}
+
+.osk-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.osk-row {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+
+.osk-key {
+  min-width: 40px;
+  height: 34px;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  /* the same grey as a slot, so the keyboard reads as part of the GUI */
+  background: #8b8b8b;
+  box-shadow: inset 1px 1px 0 #ffffff55, inset -1px -1px 0 #00000066;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.osk-key:hover {
+  background: #a0a0a0;
+}
+
+.osk-special {
+  background: #6f6f6f;
+  min-width: 56px;
+}
+
+.osk-wide {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* the pad's ring, and the flash a real keypress leaves behind it */
+.osk-key.pad-focus,
+.osk-key.pad-focus:hover {
+  outline: 3px solid #ffff55;
+  outline-offset: 1px;
+  background: #a8b8c8;
+}
+
+.osk-key.osk-pressed {
+  background: #ffffff;
+  color: #202020;
+  filter: brightness(1.2);
+}

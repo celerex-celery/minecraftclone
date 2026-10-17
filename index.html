@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Minecraft Voxel</title>
+<!-- The logo, drawn out of the game's own bitmap font by `npm run icon`. -->
+<link rel="icon" href="favicon.ico" sizes="16x16 24x24 32x32 48x48 64x64 128x128 256x256" />
+<link rel="apple-touch-icon" href="favicon.ico" />
+<link rel="stylesheet" href="styles/main.css" />
+<link rel="stylesheet" href="styles/hud.css" />
+<link rel="stylesheet" href="styles/screens.css" />
+<link rel="stylesheet" href="styles/title.css" />
+<link rel="stylesheet" href="styles/advancements.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- ============================ 3D VIEWPORT ============================ -->
+<div id="viewport">
+  <canvas id="game-canvas"></canvas>
+  <div id="damage-flash"></div>
+  <div id="water-overlay"></div>
+  <div id="sleep-overlay"></div>
+  <div id="vignette"></div>
+</div>
+
+<!-- ============================ CRASH ============================ -->
+<!-- Sits above every other screen. Vanilla answers a fatal error with a crash
+     screen and a report code; this is the same, and it is built by main.js. -->
+<div id="crash-screen" class="screen crash hidden">
+  <div class="crash-box">
+    <h2 class="crash-title" id="crash-title">Minecraft Voxel has crashed!</h2>
+    <div class="crash-sub" id="crash-sub">Sorry :(</div>
+    <div class="crash-code" id="crash-code"></div>
+    <pre class="crash-report" id="crash-report"></pre>
+    <div class="crash-actions">
+      <button class="mc-btn wide" id="crash-reload">Reload</button>
+      <button class="mc-btn wide" id="crash-copy">Copy details</button>
+      <button class="mc-btn wide" id="crash-dismiss">Dismiss</button>
+    </div>
+    <div class="crash-hint" id="crash-hint"></div>
+  </div>
+</div>
+
+<!-- ============================ HUD ============================ -->
+<div id="hud" class="hidden">
+
+  <div id="crosshair-wrap"><img id="crosshair" src="assets/textures/gui/crosshair.png" alt="" /></div>
+
+  <div id="walia-area"></div>
+
+    <div id="hud-bottom">
+      <div id="status-row">
+        <div class="status-side" id="status-left">
+          <div id="armor" class="icon-row"></div>
+          <div id="hearts" class="icon-row"></div>
+        </div>
+         <div class="status-side" id="status-right">
+           <div id="hunger" class="icon-row"></div>
+           <div id="bubbles" class="icon-row"></div>
+         </div>
+      </div>
+
+      <div id="xp-row">
+        <div id="xp-bar"><div id="xp-fill"></div></div>
+        <div id="xp-level"></div>
+      </div>
+
+      <div id="item-name-area"></div>
+
+      <div id="hotbar">
+        <div id="hotbar-slots"></div>
+        <img id="hotbar-frame" src="assets/textures/gui/hotbar.png" alt="" />
+        <img id="hotbar-selection" src="assets/textures/gui/hotbar_selection.png" alt="" />
+      </div>
+    </div>
+    <div id="gravity-indicator"></div>
+
+  <!-- the step counter app: opens with M, like a phone watch -->
+  <div id="steps-app" class="hidden"></div>
+
+  <div id="hud-topleft">
+    <!-- the frame rate, above everything else in the corner and on its own -->
+    <div id="fps-counter"></div>
+    <!-- the F3 readout shares the column, so the season steps out of its way
+         rather than being printed underneath it. `.hidden` is display:none
+         globally, so it collapses out of the flow when toggled off. -->
+    <div id="debug-overlay" class="hidden"></div>
+    <!-- the name of the music playing, top left, the way the real game shows it -->
+    <div id="music-toast"></div>
+    <div id="season-panel" aria-live="off"></div>
+  </div>
+  <!-- every line of text the game says: toasts, command output, chat, item
+       names and the hint under the crosshair, all in one left-hand stack -->
+  <div id="toast-area"></div>
+  <!-- the saving indicator, top right: nine frames of an arrow stepping into a
+       chest, played at six frames a second while a write is in flight -->
+  <div id="autosave" aria-hidden="true"></div>
+
+  <!-- the chat screen only exists while a line is being typed -->
+  <div id="chat-screen" class="hidden">
+    <div id="chat-lines"></div>
+    <div id="chat-suggest"></div>
+    <input id="chat-input" type="text" maxlength="256" autocomplete="off"
+           spellcheck="false" data-i18n-ph="chat.hint" />
+  </div>
+</div>
+
+<!-- ============================ TITLE SCREEN ============================ -->
+<div id="title-screen" class="screen hidden">
+  <div class="title-bg"></div>
+  <div class="title-content">
+    <div class="title-left">
+      <div class="player-profile">
+        <div class="player-preview" id="title-player-preview"></div>
+        <div class="player-name" id="title-player-name">Player</div>
+      </div>
+    </div>
+    <!-- The head shrink-wraps the logo so the splash can be placed against the
+         logo's own corner, the way the real screen hangs it off the logo. -->
+    <div class="title-head">
+      <div class="title-logo" id="title-logo"></div>
+      <div class="title-splash" id="title-splash"></div>
+    </div>
+    <div class="title-buttons">
+      <button class="mc-btn wide" data-action="play" data-i18n="menu.singleplayer">Singleplayer</button>
+      <div id="world-seed-row" class="seed-row hidden">
+        <label class="mc-label" id="seed-label" data-i18n="menu.seed">World seed</label>
+        <div class="seed-input-row">
+          <input id="world-seed" class="mc-input" type="text" maxlength="24" spellcheck="false" placeholder="leave blank for random" data-i18n-ph="menu.seed.placeholder" />
+          <button class="mc-btn small" data-action="create" data-i18n="menu.create">Create</button>
+        </div>
+      </div>
+      <button class="mc-btn wide hidden" id="btn-continue" data-action="continue" data-i18n="menu.continue">Continue World</button>
+      <button class="mc-btn wide" data-action="options" data-i18n="menu.options">Options...</button>
+    </div>
+    <!-- No data-i18n here on purpose: the number comes from package.json, and a
+         translated string carrying a hard-coded version drifts the moment the
+         version is bumped. Game fills this in once it has read the file. -->
+    <div id="title-version"></div>
+  </div>
+</div>
+
+<!-- ============================ PAUSE ============================ -->
+<!-- The real pause menu is not a panel: the world stays dim behind a plain
+     stack of buttons. A thing there is one of is a full-width button, a thing
+     there are two of is a pair of halves, and nothing has a box round it. -->
+<div id="pause-screen" class="screen hidden dim">
+  <div class="menu-stack">
+    <h2 class="mc-heading" id="pause-title" data-i18n="menu.game" data-scale="2">Game Menu</h2>
+    <div class="btn-stack">
+      <button class="mc-btn full" data-action="resume" data-i18n="menu.backToGame">Back to Game</button>
+      <div class="btn-pair">
+        <button class="mc-btn half" data-action="advancements" data-i18n="adv.title">Advancements</button>
+        <button class="mc-btn half" data-action="statistics" data-i18n="stat.title">Statistics</button>
+      </div>
+      <div class="btn-pair">
+        <button class="mc-btn half" data-action="options" data-i18n="menu.options">Options...</button>
+        <button class="mc-btn half" data-action="save" data-i18n="menu.saveGame">Save Game</button>
+      </div>
+      <button class="mc-btn full danger" data-action="quit" data-i18n="menu.saveAndQuit">Save and Quit to Title</button>
+    </div>
+  </div>
+</div>
+
+  <!-- ============================ STATISTICS ============================ -->
+  <div id="stat-screen" class="screen hidden dim">
+    <div class="panel stat-panel">
+      <h2 class="mc-heading" id="stat-title" data-i18n="stat.title">Statistics</h2>
+      <div class="adv-inner">
+        <div class="adv-tabs" id="stat-tabs"></div>
+        <div class="stat-body" id="stat-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ ADVANCEMENTS ============================ -->
+  <div id="adv-screen" class="screen hidden dim">
+    <div class="panel adv-panel">
+      <h2 class="mc-heading" id="adv-title" data-i18n="adv.title">Advancements</h2>
+      <div class="adv-inner">
+        <div class="adv-tabs" id="adv-tabs"></div>
+        <div class="adv-body" id="adv-body"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================ OPTIONS ============================ -->
+<!-- Like the pause menu, no box: a title, two columns of full buttons, and
+     Done at the bottom. Each of those buttons is itself a screen - the real
+     game's options menu is a menu of menus, not a tabbed settings panel. -->
+<div id="options-screen" class="screen hidden dim">
+  <div class="menu-stack">
+    <h2 class="mc-heading" id="options-title" data-i18n="options.title" data-scale="2">Options</h2>
+    <div class="options-grid" id="options-grid"></div>
+    <div class="panel-footer">
+    </div>
+  </div>
+</div>
+
+<!-- ============================ WORLD LIST ============================ -->
+<div id="worldlist-screen" class="screen hidden dim">
+  <div class="screen-stack">
+    <h2 class="mc-heading light" id="worldlist-title">Select World</h2>
+    <div class="worldlist-entries" id="worldlist-entries"></div>
+    <div class="screen-actions">
+      <button class="mc-btn primary" data-action="create" data-i18n="menu.createNew">Create New World</button>
+      <button class="mc-btn" data-action="back" data-i18n="menu.back">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ CREATE WORLD ============================ -->
+<div id="create-screen" class="screen hidden dim">
+  <div class="screen-stack wide">
+    <h2 class="mc-heading light" id="create-title">Create New World</h2>
+    <div class="create-body" id="create-body"></div>
+  </div>
+</div>
+
+<!-- ============================ LANGUAGE ============================ -->
+<div id="language-screen" class="screen language-screen hidden">
+  <h2 class="mc-heading" id="language-title" data-i18n="language.title">Language</h2>
+  <div class="language-list" id="language-list"></div>
+  <div class="language-note" id="language-note" data-i18n="language.note"></div>
+  <div class="language-actions">
+  </div>
+</div>
+
+<!-- ============================ DEATH ============================ -->
+<div id="death-screen" class="screen hidden dim death">
+  <div class="death-content">
+    <h2 class="mc-heading red" id="death-title" data-i18n="death.title">You Died!</h2>
+    <div class="death-sub" id="death-sub"></div>
+    <button class="mc-btn wide" data-action="respawn" data-i18n="death.respawn">Respawn</button>
+    <button class="mc-btn wide" data-action="quit" data-i18n="menu.titleScreen">Title Screen</button>
+  </div>
+</div>
+
+<!-- ============================ END CREDITS ============================ -->
+<div id="end-screen" class="screen hidden">
+  <div id="end-credits-content">
+    <div id="end-credits-quotes"></div>
+  </div>
+</div>
+
+<!-- ============================ CONTAINER SCREENS ============================ -->
+<div id="container-screen" class="screen hidden dim">
+  <div class="panel container-panel" id="container-panel">
+    <h2 class="mc-heading" id="container-title">Crafting</h2>
+    <div class="container-body">
+      <div class="craft-area" id="craft-area"></div>
+      <div class="inv-area" id="inv-area"></div>
+    </div>
+  </div>
+</div>
+
+<div id="tooltip" class="hidden"><div class="tooltip-inner" id="tooltip-inner"></div></div>
+
+<div id="cursor-item" class="hidden"></div>
+
+<script type="module" src="src/main.js"></script>
+</body>
+</html>

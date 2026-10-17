@@ -1,0 +1,887 @@
+/* =============================================================
+   Minecraft Voxel - HUD (crosshair, hotbar, hearts, hunger, xp, debug)
+   Layout is a 182x22 hotbar scaled up with pixelated rendering, the
+   same proportions the real game uses.
+   ============================================================= */
+
+#hud {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#dev-left, #dev-center, #dev-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#dev-left, #dev-center {
+  flex: 1;
+}
+
+#dev-center {
+  justify-content: center;
+}
+
+#dev-right {
+  justify-content: flex-end;
+}
+
+#dev-bar span {
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+}
+
+#dev-bar #dev-walia.on {
+  color: #55ff55;
+}
+
+#dev-bar #dev-walia.off {
+  color: #ff5555;
+}
+
+#dev-bar button {
+  font-size: 10px;
+  padding: 2px 6px;
+  height: 20px;
+  line-height: 1;
+}
+
+#dev-bar button:hover {
+  background: #a5cfa5;
+}
+
+#dev-bar button:active {
+  background: #7d7d7d;
+}
+
+/* ---------------- Crosshair ---------------- */
+
+#crosshair-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -50%) scale(calc(var(--gui) * 0.5));
+  transform-origin: 50% 50%;
+  opacity: 0.9;
+  mix-blend-mode: difference;
+}
+
+#crosshair {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------------- WALIA (What Am I Looking At) ----------------
+   The panel that names whatever is under the crosshair, sitting above it so it
+   never covers the thing it is describing.
+
+   The slab is the vanilla tooltip: a dark translucent fill inside a light border,
+   which is what keeps it readable over a bright sky as well as over a cave. */
+
+#walia-area {
+  position: absolute;
+  top: calc(26px * var(--gui));
+  left: 50%;
+  transform: translateX(-50%) scale(var(--gui));
+  transform-origin: 50% 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* The slab is the vanilla tooltip: a dark fill inside a light border. It is
+   opaque rather than translucent, because at 78% a midnight sky came through
+   the fill and took the panel's contrast with it - the name stayed legible but
+   the dark half of a half heart did not. */
+.walia-panel {
+  background: #101018;
+  border: 2px solid #6b6b7b;
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
+  padding: 5px 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  /* No entrance animation, deliberately. The panel is rebuilt whenever what it
+     describes changes, which includes things that tick - a growth countdown
+     moves every second - so a fade tied to the rebuild pulsed once a second
+     while watching a sapling, and restarted on every frame of a mining swing.
+     Jade gets the same problem and answers it the same way: its box fades
+     between *shown and hidden*, never between two contents, and it holds alpha
+     at 0.55 rather than letting it reach zero mid-transition
+     (BoxElementImpl.updateRect). This panel just updates in place instead. */
+  position: relative;
+}
+
+/* the name, and the block's own icon beside it when there is one */
+.walia-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.walia-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: auto;
+  -webkit-optimize-contrast: none;
+  flex: 0 0 auto;
+}
+
+.walia-name,
+.walia-health-text,
+.walia-info {
+  line-height: 0;
+  white-space: nowrap;
+}
+
+/* health too high for a row of hearts, printed as the number the hearts stood
+   for. No backing plate, unlike the hearts - a digit has contrast on its own and
+   the plate would only make the line look heavier than the mob it describes. */
+.walia-health-text {
+  padding-left: 1px;
+}
+
+/* health: one sprite per heart, the same three states as the survival bar
+
+   The row carries its own light backing. The empty heart is drawn in near-black
+   (#2e2e2e fill inside a #1a1a1a outline), which is invisible both against a
+   midnight sky and against this panel's own dark fill - a wound was only
+   readable in daylight. A fixed backing makes the contrast the same at midnight
+   as at noon, and leaves the shared sprite alone so the survival bar is not
+   restyled along with it. The colour is the panel's own border colour, so the
+   strip reads as part of the frame rather than as a patch bolted onto it. */
+.walia-hearts {
+  display: flex;
+  gap: 1px;
+  line-height: 0;
+  background: #6b6b7b;
+  border-radius: 2px;
+  padding: 2px 3px;
+}
+
+.walia-hearts img,
+.walia-hearts canvas {
+  width: 10px;
+  height: 10px;
+  image-rendering: pixelated;
+}
+
+/* where it came from, in the blue the real game prints a mod name in */
+.walia-source {
+  line-height: 0;
+  white-space: nowrap;
+}
+
+/* breaking progress, as a bar along the bottom edge of the panel.
+   Pulled out to the panel's own edges rather than inset with the rest of the
+   content, because it reads as a property of the block rather than as another
+   line of text about it - the same reason Jade runs it past the frame. The fill
+   is the harvest yellow of the real game's break particles, so the bar and the
+   crack overlay it is measuring are visibly the same thing. */
+.walia-breaking {
+  position: absolute;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  height: 3px;
+  background: rgba(0, 0, 0, 0.55);
+  overflow: hidden;
+}
+
+.walia-breaking i {
+  display: block;
+  height: 100%;
+  background: #ffd83d;
+}
+
+/* ---------------- Bottom cluster ----------------
+   Proportions are the vanilla ones at GUI scale 1: 182x22 hotbar, 5px xp bar,
+   9px status icons. The whole cluster is then scaled by --gui, so the layout
+   matches the real game at every scale. */
+
+#hud-bottom {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%) scale(var(--gui));
+  transform-origin: 50% 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 182px;
+}
+
+/* hearts / hunger sit directly on top of the hotbar, armour / bubbles above */
+#status-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  width: 182px;
+  min-height: 19px;
+  padding: 0;
+  margin: 0;
+}
+
+/* creative has no health, hunger or experience to show */
+#hud.creative #status-row,
+#hud.creative #xp-row {
+  display: none;
+}
+
+.status-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1px;
+  width: 91px;
+  padding: 0;
+  margin: 0;
+}
+
+#status-left {
+  align-items: flex-start;
+}
+
+#status-right {
+  align-items: flex-end;
+}
+
+/* right-side bars (hunger, bubbles) fill from the center outward, so reverse
+   the icon order within each row to match vanilla */
+#status-right .icon-row {
+  flex-direction: row-reverse;
+}
+
+.icon-row {
+  display: flex;
+  gap: 0;
+  height: 9px;
+  line-height: 0;
+  align-items: flex-end;
+}
+
+.icon-row img,
+.icon-row canvas {
+  width: 9px;
+  height: 9px;
+  image-rendering: pixelated;
+  flex: 0 0 auto;
+  /* the vanilla dark outline around every status icon, so the bars stay
+     readable over bright terrain */
+  filter:
+    drop-shadow(1px 0 0 rgba(0, 0, 0, 0.75))
+    drop-shadow(-1px 0 0 rgba(0, 0, 0, 0.75))
+    drop-shadow(0 1px 0 rgba(0, 0, 0, 0.75))
+    drop-shadow(0 -1px 0 rgba(0, 0, 0, 0.75));
+}
+
+/* an empty row collapses so the row below stays on the hotbar */
+.icon-row:empty {
+  display: none;
+}
+
+/* ---------------- XP bar ---------------- */
+
+#xp-row {
+  position: relative;
+  width: 182px;
+  height: 5px;
+}
+
+#xp-bar {
+  position: absolute;
+  inset: 0;
+  background-image: url("../assets/textures/gui/experience_bar_background.png");
+  background-size: 100% 100%;
+}
+
+#xp-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background-image: url("../assets/textures/gui/experience_bar_progress.png");
+  background-size: 100% 100%;
+}
+
+#xp-level {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #80ff20;
+  line-height: 0;
+}
+
+/* ---------------- Item Name (above hotbar) ---------------- */
+
+#item-name-area {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+  margin-bottom: 4px;
+}
+
+#item-name-area .item-name-line {
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  padding: 2px 8px;
+  filter: drop-shadow(1px 1px 0 #000);
+  animation: itemNameIn 0.18s ease-out;
+  transition: opacity 0.6s linear;
+  white-space: nowrap;
+}
+
+#item-name-area .item-name-line.fade {
+  opacity: 0;
+}
+
+@keyframes itemNameIn {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ---------------- Hotbar ---------------- */
+
+#hotbar {
+  position: relative;
+  width: 182px;
+  height: 22px;
+  /* the frame sheet is smooth-scaled too, for the same reason as the icons */
+}
+
+#hotbar-slots {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(9, 20px);
+  grid-auto-rows: 20px;
+  /* The frame is a translucent grey bar, and the slots are absolutely
+     positioned siblings, so without this it paints straight over the items and
+     every one of them looks washed out. In the real game the frame sits behind
+     the items and only the selection outline is on top. */
+  z-index: 1;
+}
+
+#hotbar-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 182px;
+  height: 22px;
+  pointer-events: none;
+  z-index: 0;
+  /* the global `img` rule is `pixelated`, and these two sheets are scaled by the
+     GUI scale, so they have to opt back out or they come out lumpy */
+  image-rendering: auto;
+  -webkit-optimize-contrast: none;
+}
+
+#hotbar-selection {
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 24px;
+  height: 24px;
+  transform: translate(-1px, -1px);
+  transition: left 0.06s linear;
+  pointer-events: none;
+  /* just an outline, so it belongs on top of the item it is highlighting */
+  z-index: 2;
+  image-rendering: auto;
+  -webkit-optimize-contrast: none;
+}
+
+.hotbar-slot {
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+
+#gravity-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  transform: scale(var(--gui));
+  transform-origin: 0% 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* The item icon in a hotbar slot.
+   Scoped to `.item-icon` on purpose. A bare `.hotbar-slot canvas` also matched
+   the canvas holding the stack count, so the number inherited this rule and was
+   laid exactly on top of the icon at 16x16 - which is why the count stopped
+   appearing. */
+.hotbar-slot canvas.item-icon {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  /* The canvas source is 128px, supersampled, so the GUI scale only ever
+     downsamples it - smooth here stays sharp instead of blurring, and
+     nearest-neighbour would just re-block the pixels. */
+  image-rendering: auto;
+  -webkit-optimize-contrast: none;
+}
+
+/* The stack size on a hotbar slot.
+   This rule was here all along and nothing ever matched it: the HUD wrote
+   `stack-count` for the number and `hotbar-durability` for the bar, so the bar
+   was styled and the number was not. With no rule at all the number was a static
+   block laid out after the absolutely-positioned icon, filling the 20px slot and
+   covering the item outright. It is named to match the durability bar now. */
+.hotbar-count {
+  position: absolute;
+  right: 1px;
+  /* Down, flush with the bottom of the slot. The font canvas is 12px tall at
+     scale 1 (9px of glyph, plus a pixel of padding top and bottom and a pixel
+     for the shadow) and the glyph sits in the top ten of those, so the box has
+     to hang below the edge by a couple of pixels for the digits themselves to
+     land on the bottom line. */
+  bottom: -5px;
+  /* a white digit on a pale block icon needs the shadow to stay readable */
+  filter: drop-shadow(1px 1px 0 #000);
+  pointer-events: none;
+}
+
+.hotbar-durability {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  height: 2px;
+  background: #000000;
+}
+
+.hotbar-durability i {
+  display: block;
+  height: 100%;
+  background: #55ff55;
+}
+
+/* ---------------- The text column ----------------
+   Everything the game says to the player goes here, in one stack on the left:
+   toasts, command output, chat, the name of the item you just swapped to, and
+   the hint under the crosshair. It is the same three-second life for all of
+   them, set in `HUD.TEXT_LIFE`.
+
+   Bottom left, a little above the hotbar, which is where the real game puts
+   chat and where a line of text is least in the way - the middle of the screen
+   belongs to the crosshair, and the top left already has the frame counter, the
+   debug readout and the name of the music playing in it.
+
+   The box is anchored by its bottom edge and has no height of its own, so it
+   grows *upward* as lines are added. That is deliberate: the newest line is
+   appended last and therefore sits lowest, nearest the corner, and the older
+   ones stack above it in the order they arrived, so the column reads top to
+   bottom as history. `column-reverse` would put the newest at the top instead,
+   which is the opposite of what a log is. */
+
+#toast-area {
+  position: absolute;
+  bottom: 8px;
+  left: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 4px;
+  align-items: flex-start;
+  pointer-events: none;
+  max-width: 60%;
+  z-index: 5;
+}
+
+/* Every line: the shared background, the padding, and the fade at the end of
+   its three seconds. The kinds below only change the colour of the bar down the
+   left-hand edge. */
+.text-line {
+  background: rgba(0, 0, 0, 0.6);
+  border-left: 3px solid #7fd67f;
+  padding: 4px 10px;
+  animation: toastIn 0.18s ease-out;
+  filter: drop-shadow(1.5px 1.5px 0 #000);
+  transition: opacity 0.6s linear;
+}
+
+.text-line.fade {
+  opacity: 0;
+}
+
+.text-line.warn {
+  border-left-color: #ffb84d;
+}
+
+.text-line.bad {
+  border-left-color: #ff5555;
+}
+
+/* Chat and command output carry no kind colour: they are the record of what
+   happened rather than a warning about it. */
+.text-line.chat-line {
+  border-left-color: #6f8fb0;
+}
+
+/* The item name is the quietest line in the column - it is a label, not an
+   event - so it gets no bar at all. */
+.text-line.item-name {
+  border-left-color: transparent;
+  opacity: 0.85;
+}
+
+/* The hint under the crosshair. Amber, because it is telling the player a thing
+   is not possible right now, and it is the one line that stays put while the
+   crosshair stays on the thing it is about. */
+.text-line.hint {
+  border-left-color: #ffb84d;
+}
+
+/* ---------------- Autosave indicator ----------------
+   The Bedrock arrow stepping down into a chest, while a world write is in
+   flight.
+
+   The sheet is nine frames side by side, each 19 x 31, and the animation is a
+   `steps()` walk across it - one frame every 1.5/9 of a second, which is six
+   frames a second. It is a sprite sheet rather than an image sequence because that
+   is what the source is, and the browser then does the stepping on the
+   compositor, so the indicator costs nothing per frame while it is up.
+
+   Paused rather than absent when no save is running, so toggling it does not
+   restart the cycle from frame zero every time. */
+
+#autosave {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  /* 18 x 30, not the sheet's 19 x 31. The ripped sheet carries a one pixel
+     blue cell guide on the top and left of every frame, and the real game masks
+     its guides out, so copy-assets.ps1 cuts them and lays the frames out again
+     as a clean 18 x 30 strip. The guide is what read as a blue border drawn over
+     the icon. */
+  width: calc(18px * var(--gui));
+  height: calc(30px * var(--gui));
+  background-image: url("../assets/textures/gui/autosave.png");
+  background-repeat: no-repeat;
+  /* the whole strip, so one background-position step is one frame */
+  background-size: calc(162px * var(--gui)) calc(30px * var(--gui));
+  image-rendering: pixelated;
+  opacity: 0;
+  transition: opacity 0.25s linear;
+  pointer-events: none;
+  z-index: 3;
+  animation: autosaveCycle 1.5s steps(9) infinite;
+  animation-play-state: paused;
+}
+
+#autosave.saving {
+  opacity: 1;
+  animation-play-state: running;
+}
+
+@keyframes autosaveCycle {
+  from { background-position: 0 0; }
+  to { background-position: calc(-162px * var(--gui)) 0; }
+}
+
+/* ---------------- Top left column ----------------
+   The season readout and the now-playing strip share this column. The music
+   toast used to be absolutely positioned in the corner on its own, which meant
+   it and anything else put in the corner had to know about each other's
+   heights. Stacking them means neither can cover the other. */
+
+#hud-topleft {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  /* The column is scaled as one unit rather than scaling each child on its own.
+     A transform does not change an element's layout box, so a child scaled at
+     --gui 3 occupies a third of the vertical room it paints into and the strip
+     would land on top of whatever is below it. Scaling the whole column keeps
+     the painted spacing and the laid-out spacing the same shape. */
+  transform: scale(var(--gui));
+  transform-origin: top left;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* ---------------- Frame rate ----------------
+   Its own element at the top of the corner column, rather than the first line
+   of the F3 panel, because it is on all the time and F3 is not. */
+
+#fps-counter {
+  color: #ffffff;
+  line-height: 0;
+  /* the bitmap font draws its own drop shadow, so this needs no backing plate */
+  filter: drop-shadow(1.5px 1.5px 0 #000);
+}
+
+/* ---------------- Season readout ----------------
+   An 8x8 icon cut from the season sheet, with the season's name over the day
+   count. No panel and no background: the bitmap font already draws its own
+   drop shadow, which is what keeps it readable against a bright sky, so a slab
+   of grey behind it would only be taking away from the picture.
+
+   The two lines are stacked rather than sat side by side. Name and day count
+   on one row put a 16px-tall word next to an 8px-tall one, which reads as two
+   unrelated fragments at different heights; stacked, they read as one label
+   with a caption. */
+
+#season-panel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  /* out of the way rather than merely invisible, so it cannot catch a click */
+  pointer-events: none;
+}
+
+/* The icon only, by class.
+   A bare `#season-panel canvas` rule would also catch the name and the day
+   count, because the bitmap font draws them onto canvases as well - and it
+   would force all three to the icon's 16x16, squashing the text into an
+   unreadable sliver. */
+#season-panel .season-icon {
+  width: 16px;
+  height: 16px;
+  image-rendering: pixelated;
+  display: block;
+  flex: 0 0 auto;
+}
+
+.season-text {
+  display: flex;
+  flex-direction: column;
+  /* the font canvas carries a 1px shadow, so the lines need almost nothing
+     between them - any more and the pair stops looking like one label */
+  gap: 1px;
+}
+
+/* the season's name and its day count, sharing a row. Baseline aligned, not
+   centred: centring an 8px number against a 16px word leaves it floating
+   halfway up the word rather than sitting on the same line as it. */
+.season-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.season-name {
+  color: #ffffff;
+  line-height: 0;
+}
+
+.season-progress {
+  color: #b4b4b4;
+  line-height: 0;
+}
+
+.season-day {
+  color: #dcdcdc;
+  line-height: 0;
+}
+
+/* ---------------- Music now playing ----------------
+   The name of the track goes in the top left corner on its own dark strip, which
+   is where the real game puts it. It is not one of the centre-screen toasts: a
+   track is minutes long, and a label that fades after three seconds would have
+   been gone before the music had got going.
+
+   `display: none` by default is deliberate. The strip is above the season in the
+   same column, and opacity alone does not take an element out of the flow - a
+   faded-out strip would hold its height open and leave the season permanently
+   parked half a screen down for the rest of the session. It is hidden, not just
+   transparent, so the season only steps aside while a track is actually
+   showing. `gone` is set once the fade has finished, which keeps the collapse
+   from snapping the season up mid-fade. */
+
+#music-toast {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px 5px 5px;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid;
+  border-color: #1c1c1c;
+  opacity: 0;
+  /* out of the way rather than merely invisible, so it cannot catch a click */
+  pointer-events: none;
+  transition: opacity 0.35s linear;
+}
+
+#music-toast.show {
+  display: flex;
+  opacity: 1;
+}
+
+#music-toast.fade {
+  opacity: 0;
+}
+
+#music-toast.gone {
+  display: none;
+}
+
+/* the record, drawn rather than fetched: a disc with a lighter centre and a
+   hole, which is what a music toast is a picture of.
+
+   It turns while the panel is up and stops when it is not, so the record is a
+   picture of a record going round rather than a spinning logo that keeps going
+   after the music has stopped. The groove rings are what make it read as
+   spinning - a plain disc rotating looks like nothing at all. */
+.music-disc {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 50%,
+      #1a1a1a 0 14%, transparent 15%),
+    repeating-radial-gradient(circle at 50% 50%,
+      #d8d8d8 0 8%, #9a9a9a 8% 14%, #d8d8d8 14% 22%);
+  image-rendering: pixelated;
+  animation: musicSpin 3s linear infinite;
+  animation-play-state: paused;
+}
+
+#music-toast.show .music-disc {
+  animation-play-state: running;
+}
+
+@keyframes musicSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* a player who does not want motion should not have to have it */
+@media (prefers-reduced-motion: reduce) {
+  .music-disc { animation: none; }
+}
+
+.music-label {
+  line-height: 0;
+  white-space: nowrap;
+}
+
+@keyframes toastIn {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ---------------- Debug overlay (F3) ----------------
+   Lives in the top-left column with the music strip and the season, so all
+   three stack instead of fighting over the corner. It carries no transform of
+   its own: the column is already scaled, and a second scale here would put it
+   out of step with the box it is laid out in. */
+
+#debug-overlay {
+  line-height: 1.3;
+  filter: drop-shadow(1.5px 1.5px 0 #000);
+}
+
+#debug-overlay .dbg-left {
+  color: #ffffff;
+}
+
+#debug-overlay .dbg-right {
+  color: #ffff55;
+}
+
+/* ---------------- Chat screen ----------------
+   The log itself is `#toast-area` now - see "The text column" above - so this
+   is only the screen you type in, with its own history. */
+
+/* The chat screen: history above, prompt below, exactly like the real game. */
+#chat-screen {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: scale(var(--gui));
+  transform-origin: 0 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: auto;
+  z-index: 4;
+}
+
+/* an id selector beats the shared .hidden utility, so restate it here */
+#chat-screen.hidden {
+  display: none;
+}
+
+#chat-lines {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 0 2px 2px;
+  max-height: 220px;
+  overflow: hidden;
+}
+
+#chat-suggest {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-height: 132px;
+  overflow: hidden;
+}
+
+.chat-suggest-line {
+  padding: 0 4px;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+#chat-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px 4px 4px;
+  font: 13px/1.2 Consolas, "Courier New", monospace;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.55);
+  border: none;
+  border-bottom: 2px solid #ffffff;
+  outline: none;
+  image-rendering: pixelated;
+}
+
+#chat-input::placeholder {
+  color: #808080;
+}
+
+/* the crosshair is noise while a line is being typed */
+#hud.chatting #crosshair-wrap {
+  display: none;
+}
+
+/* Move toast area up when chat is open so it doesn't cover input */
+#hud.chatting #toast-area {
+  bottom: 180px; /* above the chat screen */
+}
+
+/* The history inside the open chat screen, which is a different thing from the
+   log on the HUD: this one keeps its lines until the screen is closed. */
+#chat-lines .chat-line {
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1px 4px;
+  animation: toastIn 0.1s ease-out;
+  filter: drop-shadow(1.5px 1.5px 0 #000);
+}

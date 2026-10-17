@@ -1,0 +1,26 @@
+/* =============================================================
+   Title screen — static panorama background.
+   Replaces the CSS gradient with panorama_3.png from the asset
+   pack, centered and covering the screen. The ::before layer provides
+   the darkening pass that keeps the logo and buttons legible; the
+   ::after block-grid texture is removed.
+   ============================================================= */
+
+.title-bg {
+  position: absolute;
+  inset: 0;
+  background: url("../assets/textures/gui/title/background/panorama_3.png") center/cover no-repeat;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+/* Keep the darkening overlay that sits over the panorama. */
+.title-bg::before {
+  pointer-events: none;
+}
+
+/* Remove the faint block-grid texture that main.css draws here. */
+.title-bg::after {
+  content: none;
+  display: none;
+}

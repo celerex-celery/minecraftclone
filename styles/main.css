@@ -1,0 +1,1336 @@
+/* =============================================================
+   Minecraft Voxel - base styles
+   Pixel-perfect Minecraft-flavoured UI, no external webfonts.
+   All text is rendered through PixelFont into <canvas> elements
+   so it uses the real Minecraft bitmap font sheet.
+   ============================================================= */
+
+:root {
+  --mc-panel: #c6c6c6;
+  --mc-panel-dark: #555555;
+  --mc-panel-light: #ffffff;
+  --mc-btn-face: #7d7d7d;
+  --mc-btn-hover: #a5cfa5;
+  --mc-btn-shadow-dark: #3a3a3a;
+  --mc-text: #ffffff;
+  --mc-text-dark: #1f1f1f;
+  --mc-green: #55ff55;
+  --mc-red: #ff5555;
+  --mc-yellow: #ffff55;
+  /* GUI scale, recalculated from the window size by Game.resize() */
+  --gui: 3;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: var(--mc-text);
+  font-family: "Consolas", "DejaVu Sans Mono", monospace;
+  cursor: default;
+}
+
+canvas {
+  display: block;
+}
+
+img {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Bitmap text produced by PixelFont */
+canvas.mc-text,
+.mc-text {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+/* =============================================================
+   Viewport
+   ============================================================= */
+
+#viewport {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  /* Belt and braces with crispPixelRatio() in Game.js.
+     Normally the framebuffer is a whole number of device pixels per CSS pixel
+     and the compositor maps it across one to one, so this has nothing to do.
+     When it does not - fractional browser zoom, a fractional device pixel
+     ratio, a window that lands between device pixels - the compositor rescales
+     the canvas with bilinear filtering and the whole 3D view goes soft. Nearest
+     neighbour here is what keeps the blocks sharp in those cases too.
+     Deliberately not on the global `canvas` rule: the 2D canvases the HUD and
+     the menus draw into are already sized at their final pixel size. */
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#damage-flash {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      /* The opacity is driven every frame from the damage spike, so there is no
+         transition here: one would only fight it and leave the flash trailing
+         behind the hit. The spike itself decays fast in Survival. */
+      background: radial-gradient(ellipse at center, rgba(255, 0, 0, 0) 30%, rgba(190, 0, 0, 0.62) 100%);
+      opacity: 0;
+      z-index: 5;
+    }
+
+#water-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: rgba(28, 78, 160, 0.42);
+  opacity: 0;
+  transition: opacity 0.18s linear;
+  z-index: 4;
+}
+
+/* The sleep fade.
+   Opaque black over the whole viewport, with the opacity driven per frame by
+   `Game._updateSleep` rather than by a CSS transition - the fade is two halves
+   of a second and the clock jump happens on the frame the screen is fully
+   black, so it needs to be able to hold at exactly 1 rather than ease towards
+   it. Above the water overlay so a night-time swim into bed fades black rather
+   than blue, and above the damage flash for the same reason. */
+#sleep-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: #000;
+  opacity: 0;
+  z-index: 6;
+}
+
+#vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.38) 100%);
+  z-index: 3;
+}
+
+/* =============================================================
+   Generic screens
+   ============================================================= */
+
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.screen.dim {
+  background: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(1.5px);
+}
+
+.screen.death {
+  background: rgba(120, 0, 0, 0.55);
+}
+
+.panel {
+  position: relative;
+  background: var(--mc-panel);
+  border: 4px solid;
+  border-color: #ffffff #555555 #555555 #ffffff;
+  padding: 12px 14px;
+  box-shadow: 0 0 0 3px #00000055;
+  color: var(--mc-text-dark);
+  max-width: 94vw;
+  max-height: 92vh;
+  overflow-y: auto;
+}
+
+/* The options screen has to sit above the title screen, which is z-index 90. */
+#options-screen {
+  z-index: 95;
+}
+
+.mc-heading {
+  margin-bottom: 14px;
+  text-align: center;
+}
+
+.panel-footer {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* =============================================================
+   Minecraft-style buttons
+   ============================================================= */
+
+.mc-btn {
+  position: relative;
+  min-height: 26px;
+  padding: 4px 11px;
+  border: 3px solid;
+  border-color: #6f6f6f #2b2b2b #2b2b2b #6f6f6f;
+  background: var(--mc-btn-face);
+  color: #fff;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.08s linear;
+  font: inherit;
+}
+
+.mc-btn.wide {
+  width: 100%;
+  min-width: 200px;
+}
+
+.mc-btn:hover {
+  background: var(--mc-btn-hover);
+}
+
+.mc-btn:active {
+  border-color: #2b2b2b #6f6f6f #6f6f6f #2b2b2b;
+}
+
+.mc-btn.danger:hover {
+  background: #d98d8d;
+}
+
+.mc-btn.small {
+  min-width: 90px;
+  min-height: 24px;
+  padding: 3px 8px;
+}
+
+.mc-label {
+  color: var(--mc-text-dark);
+}
+
+.mc-input {
+  background: #000000;
+  border: 2px solid #a0a0a0;
+  color: #e0e0e0;
+  padding: 5px 8px;
+  font: inherit;
+  width: 100%;
+  outline: none;
+}
+
+.mc-input:focus {
+  border-color: #ffffff;
+}
+
+/* =============================================================
+   Loading screen
+   ============================================================= */
+
+#loading-screen {
+  background: linear-gradient(180deg, #1d2833 0%, #10161d 60%, #0a0d11 100%);
+  z-index: 100;
+}
+
+.load-box {
+  width: 420px;
+  text-align: center;
+}
+
+.load-logo {
+  margin-bottom: 26px;
+  display: flex;
+  justify-content: center;
+}
+
+.load-progress {
+  width: 100%;
+  height: 14px;
+  background: #1c1c1c;
+  border: 2px solid #000;
+  box-shadow: inset 0 0 0 2px #5a5a5a;
+}
+
+.load-progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(180deg, #7ee77e 0%, #35a035 100%);
+  transition: width 0.15s linear;
+}
+
+.load-status {
+  margin-top: 12px;
+  color: #b9c6d0;
+  min-height: 18px;
+}
+
+.load-tip {
+  margin-top: 18px;
+  color: var(--mc-yellow);
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 14px;
+  text-align: center;
+  min-height: 18px;
+  opacity: 0.9;
+  animation: tipFade 0.5s ease-in;
+}
+
+@keyframes tipFade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 0.9; transform: translateY(0); }
+}
+
+/* The splash sits on the progress bar and jitters like the real one, which
+   wobbles rather than sitting perfectly still. */
+.load-splash {
+  position: relative;
+  height: 30px;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding-right: 10px;
+  overflow: hidden;
+  animation: splashWobble 0.9s ease-in-out infinite;
+}
+
+@keyframes splashWobble {
+  0% { transform: rotate(-9deg) translate(0, 0); }
+  50% { transform: rotate(-11deg) translate(0, 1px); }
+  100% { transform: rotate(-9deg) translate(0, 0); }
+}
+
+/* =============================================================
+   Crash screen
+   ============================================================= */
+
+#crash-screen {
+  /* above the loading screen too: a crash during boot has to be visible */
+  z-index: 200;
+  background: rgba(10, 0, 0, 0.86);
+}
+
+.crash-box {
+  width: min(680px, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  text-align: center;
+  padding: 28px 24px;
+  background: #1b1b1b;
+  border: 3px solid #000;
+  box-shadow: inset 0 0 0 3px #4a4a4a;
+}
+
+.crash-title {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--mc-red);
+  text-shadow: 2px 2px 0 #3a0000;
+  margin-bottom: 10px;
+}
+
+.crash-sub {
+  color: var(--mc-text);
+  margin-bottom: 14px;
+}
+
+.crash-code {
+  color: var(--mc-yellow);
+  font-size: 15px;
+  margin-bottom: 14px;
+  word-break: break-all;
+}
+
+.crash-report {
+  display: block;
+  text-align: left;
+  max-height: 220px;
+  overflow: auto;
+  padding: 12px;
+  margin-bottom: 18px;
+  background: #0d0d0d;
+  border: 2px solid #000;
+  color: #cfd8e3;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.crash-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.crash-hint {
+  margin-top: 14px;
+  min-height: 18px;
+  color: #9fb0c0;
+  font-size: 13px;
+}
+
+/* =============================================================
+   Title screen
+   ============================================================= */
+
+#title-screen {
+  z-index: 90;
+}
+
+.title-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 45% at 50% 6%, rgba(255, 248, 214, 0.55), rgba(255, 255, 255, 0) 70%),
+    linear-gradient(180deg,
+      #4a7cbb 0%,
+      #6ea3d6 30%,
+      #9cc4e2 48%,
+      #b9d4e0 52%,
+      #4e7d3f 55%,
+      #2f5c2a 78%,
+      #1d3d1a 100%);
+  image-rendering: pixelated;
+}
+
+/* The real screen runs its rotating panorama through a darkening pass, which is
+   what keeps the logo and the buttons legible over a bright sky. The vignette
+   is the same idea at the edges. */
+.title-bg::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0) 35%, rgba(0, 0, 0, 0.45) 100%),
+    rgba(0, 0, 0, 0.38);
+}
+
+/* A faint block grid, the texture the real screen's panorama has at its edges */
+.title-bg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.09) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.09) 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.55;
+}
+
+.title-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+}
+
+.title-left {
+  position: absolute;
+  left: -120px;
+  top: 55%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.player-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.player-preview {
+  width: 68px;
+  height: 112px;
+  overflow: hidden;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.player-preview-canvas {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+.player-name {
+  cursor: pointer;
+  user-select: none;
+  line-height: 0;
+  filter: drop-shadow(1.5px 1.5px 0 rgba(0, 0, 0, 0.85));
+  transition: opacity 0.15s ease;
+}
+
+.player-name:hover {
+  opacity: 0.8;
+}
+
+/* shrink-wraps the logo so the splash hangs off its corner */
+.title-head {
+  position: relative;
+  display: inline-block;
+  line-height: 0;
+}
+
+/* Chunky two-tone logo: a hard black shadow layer behind each line */
+.logo-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  filter: drop-shadow(0 6px 0 rgba(0, 0, 0, 0.35));
+}
+
+.logo-line {
+  position: relative;
+  line-height: 0;
+}
+
+.logo-shadow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  line-height: 0;
+}
+
+.logo-face {
+  position: relative;
+  line-height: 0;
+}
+
+.logo-sub {
+  margin-top: 4px;
+}
+
+/* The splash hangs off the logo's lower right corner, turned further than it
+   looks like it should be, and the real one both breathes and shakes - a slow
+   pop with a fast jitter layered on top, which is why the keyframes carry a
+   translate as well as the scale. */
+.title-splash {
+  position: absolute;
+  top: 58px;
+  right: -24px;
+  transform: rotate(-20deg);
+  transform-origin: center;
+  animation: titleSplash 1.9s ease-in-out infinite;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.85));
+}
+
+@keyframes titleSplash {
+  0%   { transform: rotate(-20deg) scale(1) translate(0, 0); }
+  4%   { transform: rotate(-20deg) scale(1.16) translate(-1px, 1px); }
+  12%  { transform: rotate(-20deg) scale(1.02) translate(1px, -1px); }
+  20%  { transform: rotate(-20deg) scale(1) translate(0, 0); }
+  55%  { transform: rotate(-20deg) scale(1) translate(1px, 0); }
+  58%  { transform: rotate(-20deg) scale(1) translate(-1px, 1px); }
+  62%  { transform: rotate(-20deg) scale(1) translate(0, 0); }
+  100% { transform: rotate(-20deg) scale(1) translate(0, 0); }
+}
+
+#title-version {
+  position: fixed;
+  left: 8px;
+  bottom: 6px;
+  z-index: 3;
+  line-height: 0;
+  font-family: "Consolas", "DejaVu Sans Mono", monospace;
+  font-size: 12px;
+  color: #c8c8c8;
+  text-shadow: 1.5px 1.5px 0 rgba(0, 0, 0, 0.7);
+}
+
+.title-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  width: 230px;
+}
+
+.seed-row {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5);
+}
+
+.seed-input-row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.seed-input-row .mc-btn {
+  flex: 0 0 auto;
+}
+
+.title-footer {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  opacity: 0.8;
+}
+
+/* =============================================================
+   Death screen
+   ============================================================= */
+
+.death-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.death-sub {
+  color: #ffd7d7;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+/* =============================================================
+   Options and pause are not panels at all in the real game: the
+   world stays dim behind a plain stack of buttons, so the text is
+   white and there is no box to light it. The inventory / crafting /
+   furnace panels keep the vanilla light grey, because that is what
+   the real game uses for containers.
+   ============================================================= */
+
+.options-grid {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 216px;
+}
+
+/* category tabs on the left */
+/* ------------------------------------------------------------------
+   Menus: pause and options.
+
+   Vanilla puts these straight onto the dimmed world rather than into a
+   panel box, measures a single button at 200px, splits a pair into two
+   98px halves, and spaces every row by 4px. Those are the numbers here,
+   in one place, so every menu button in the game can be resized at once.
+   ------------------------------------------------------------------ */
+
+.menu-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-height: 94vh;
+}
+
+.btn-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-pair {
+  display: flex;
+  gap: 4px;
+  width: 200px;
+  max-width: 95vw;
+}
+
+/* A full-width button; the halves that share a row with one. */
+.mc-btn.full {
+  width: 200px;
+  max-width: 95vw;
+}
+
+/* Done sits under a two-column menu, so it is as wide as both columns. */
+.mc-btn.full-wide {
+  width: 404px;
+  max-width: 95vw;
+}
+
+.mc-btn.half {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 4px 6px;
+}
+
+/* The options menu itself: a category per button, two to a row. */
+.options-grid {
+  display: grid;
+  grid-template-columns: 200px 200px;
+  gap: 4px;
+  justify-content: center;
+}
+
+.options-grid > .mc-btn {
+  width: 100%;
+  max-width: none;
+}
+
+/* And a category once it is open: one row per setting. */
+.options-rows {
+  width: 404px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 62vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.option-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* One setting, as the row-button the real game uses: the label on the left
+   of a grey button, whatever controls it on the right. */
+.option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: 26px;
+  padding: 4px 11px;
+  border: 3px solid;
+  border-color: #6f6f6f #2b2b2b #2b2b2b #6f6f6f;
+  background: var(--mc-btn-face);
+  color: #fff;
+}
+
+.option-row:hover {
+  background: var(--mc-btn-hover);
+}
+
+.option-row .opt-name {
+  flex: 0 1 auto;
+  line-height: 0;
+  text-align: left;
+}
+
+.option-row .opt-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  justify-content: flex-end;
+}
+
+.opt-value {
+  min-width: 34px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  line-height: 0;
+  background: #3f3f3f;
+  border: 1px solid #1a1a1a;
+  padding: 2px 4px;
+}
+
+/* ------------------------------------------------------------------
+   Language screen - full bleed, like the real one: the whole window is
+   the background, the list fills the height between the title and the
+   buttons, and the list is the only panel on screen.
+   ------------------------------------------------------------------ */
+#language-screen {
+  z-index: 96;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 28px;
+  background: #1c1c1c;
+  overflow: hidden;
+}
+
+/* Blown-up dirt, the same backdrop the real menus use, kept crisp so the
+   16x16 texels stay sharp. Inset past the edges so the tiling has no seams. */
+#language-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #6b4f31;
+  background-image: url("../assets/textures/blocks/dirt.png");
+  background-size: 192px 192px;
+  image-rendering: pixelated;
+  filter: brightness(0.62) saturate(0.75);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* everything else sits above the backdrop */
+#language-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+#language-screen .mc-heading {
+  margin: 0;
+  filter: drop-shadow(2px 2px 0 #000000aa);
+}
+
+.language-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  width: 420px;
+  max-width: 92vw;
+  max-height: 62vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 3px;
+  background: #6f6f6f;
+  border: 2px solid #1a1a1a;
+  box-shadow: inset 1px 1px 0 #ffffff33, 0 0 0 2px #00000099;
+  scrollbar-width: thin;
+  scrollbar-color: #c6c6c6 #4a4a4a;
+}
+
+.language-list::-webkit-scrollbar {
+  width: 14px;
+}
+
+.language-list::-webkit-scrollbar-track {
+  background: #4a4a4a;
+  box-shadow: inset 0 0 0 1px #1a1a1a;
+}
+
+.language-list::-webkit-scrollbar-thumb {
+  background: #c6c6c6;
+  border: 2px solid #4a4a4a;
+}
+
+.language-entry {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 30px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 2px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  line-height: 0;
+  flex: 0 0 auto;
+}
+
+.language-entry:hover {
+  background: #8b8b8bcc;
+}
+
+.language-entry.active {
+  background: #3f3f3f;
+  border-color: #ffffff;
+  box-shadow: inset 1px 1px 0 #00000066;
+}
+
+/* the tick marks the selected language, like the real options screen */
+.lang-tick {
+  width: 10px;
+  height: 10px;
+  flex: 0 0 auto;
+  background: transparent;
+}
+
+.language-entry.active .lang-tick {
+  background: #ffffff;
+}
+
+.language-note {
+  color: #c8c8c8;
+  line-height: 0;
+  filter: drop-shadow(1.5px 1.5px 0 #00000099);
+}
+
+.language-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.opt-value {
+  min-width: 34px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  line-height: 0;
+  /* the value is white, so it needs the dark inset vanilla draws behind it,
+     otherwise it is white-on-light-grey on the options panel */
+  background: #3f3f3f;
+  border: 1px solid #2b2b2b;
+  padding: 2px 4px;
+}
+
+/* language picker: a button that opens a scrollable list */
+.lang-picker {
+  position: relative;
+  min-width: 148px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.lang-list {
+  position: absolute;
+  top: calc(100% + 3px);
+  right: 0;
+  min-width: 178px;
+  max-height: 168px;
+  overflow-y: auto;
+  background: #8b8b8b;
+  border: 2px solid #373737;
+  box-shadow: inset 1px 1px 0 #ffffff55, 0 3px 0 #00000055;
+  padding: 3px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lang-list.hidden {
+  display: none;
+}
+
+.lang-entry {
+  display: flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 2px solid transparent;
+  cursor: pointer;
+  line-height: 0;
+  text-align: left;
+}
+
+.lang-entry:hover {
+  background: #b0b0b0;
+}
+
+.lang-entry.active {
+  background: #6f6f6f;
+  border-color: #ffffff;
+}
+
+/* ------------------------------------------------------------------
+   Controls tab: a scrolling two-column list of actions and their keys,
+   laid out the way the real game's key bind screen is.
+   ------------------------------------------------------------------ */
+
+.keybind-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: min(344px, 46vh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* the list is chunky and blocky, so a thin dark bar matches the panels */
+  scrollbar-width: thin;
+  scrollbar-color: #6f6f6f #1a1a1a;
+  padding-right: 2px;
+}
+
+.keybind-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.keybind-scroll::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.keybind-scroll::-webkit-scrollbar-thumb {
+  background: #6f6f6f;
+  border: 2px solid #1a1a1a;
+}
+
+.keybind-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.keybind-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.keybind-name,
+.keybind-key {
+  background: rgba(0, 0, 0, 0.22);
+  border: 2px solid #ffffff55;
+  padding: 5px 7px;
+  line-height: 0;
+  display: flex;
+  align-items: center;
+}
+
+.keybind-name {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.keybind-key {
+  flex: 0 0 132px;
+  justify-content: center;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.keybind-key:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: #ffffffaa;
+}
+
+.keybind-key.fixed {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.keybind-key.listening {
+  border-color: #ffff55;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.keybind-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 6px;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 110px;
+  height: 14px;
+  background: #00000055;
+  border: 2px solid #6f6f6f;
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 16px;
+  background: #8b8b8b;
+  border: 2px solid;
+  border-color: #6f6f6f #2b2b2b #2b2b2b #6f6f6f;
+  cursor: pointer;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 10px;
+  height: 16px;
+  background: #8b8b8b;
+  border: 2px solid #2b2b2b;
+  cursor: pointer;
+}
+
+.mc-toggle {
+  min-width: 58px;
+}
+
+/* =============================================================
+   Toast messages
+   ============================================================= */
+
+#toast-area {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.toast {
+  background: rgba(0, 0, 0, 0.62);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  padding: 5px 10px;
+  animation: toastIn 0.18s ease-out;
+}
+
+.toast.fade {
+  opacity: 0;
+  transition: opacity 0.5s linear;
+}
+
+@keyframes toastIn {
+  from { transform: translateY(-8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* =============================================================
+   World list and world creation
+   ============================================================= */
+
+#worldlist-screen,
+#create-screen {
+  z-index: 94;
+}
+
+.screen-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 470px;
+  max-width: 96vw;
+  max-height: 94vh;
+}
+
+.screen-stack.wide {
+  width: 560px;
+}
+
+.mc-heading.light {
+  color: #ffffff;
+  filter: drop-shadow(2px 2px 0 #000000aa);
+}
+
+.screen-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.worldlist-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  max-height: 56vh;
+  padding-right: 4px;
+}
+
+.worldlist-empty {
+  text-align: center;
+  padding: 26px 0;
+}
+
+.worldlist-entry {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #2b2b2b;
+  border: 2px solid #101010;
+  padding: 8px 10px;
+}
+
+.worldlist-preview {
+  flex: 0 0 62px;
+  height: 44px;
+  background: #3b6ea5;
+  border: 2px solid #101010;
+  box-shadow: inset 0 0 0 1px #ffffff22;
+}
+
+.worldlist-info {
+  /* The name and meta are bitmap-font canvases, which have no natural break
+     points. Without this the flex row grows to fit the widest one and shoves
+     the action buttons off the end of the panel, so the column is pinned to
+     the space it actually has and the text is clipped instead. */
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.worldlist-name {
+  line-height: 0;
+  margin-bottom: 5px;
+  overflow: hidden;
+}
+
+.worldlist-meta {
+  line-height: 0;
+  overflow: hidden;
+}
+
+.worldlist-actions {
+  display: flex;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+/* --- create form --- */
+
+/* The world creation screen, which is the other full-bleed one: the real game
+   puts a single dirt block, stretched to fill the window, behind the form, and
+   the form floats on top of it.
+
+   Stretched rather than tiled, which is the difference the eye picks up
+   immediately: one 16x16 tile blown up over the whole window has its texels
+   enormous and irregular, where tiling at a block size gives the even grid the
+   menus use. `pixelated` is what keeps the blown-up texels square instead of
+   letting the browser smooth them into a blur. */
+#create-screen {
+  background: #1c1c1c;
+  backdrop-filter: none;
+}
+
+#create-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #6b4f31;
+  background-image: url("../assets/textures/blocks/dirt.png");
+  background-repeat: no-repeat;
+  /* one tile, filling the window */
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  /* darkened, so the form's text and its controls still read on top of it */
+  filter: brightness(0.55) saturate(0.8);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* the form sits above the backdrop rather than being painted over by it */
+#create-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
+.create-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: 74vh;
+  padding-right: 4px;
+}
+
+.wc-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.wc-option-label {
+  line-height: 0;
+}
+
+.wc-seed-row {
+  display: flex;
+  gap: 6px;
+}
+
+.wc-seed-row .mc-btn {
+  flex: 0 0 auto;
+}
+
+/* a label cell followed by the option buttons, like the real setup screen */
+.wc-option-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.wc-option-label {
+  flex: 0 0 118px;
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  line-height: 0;
+}
+
+.wc-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 84px;
+  padding: 6px 4px;
+  background: #7d7d7d;
+  border: 3px solid;
+  border-color: #a0a0a0 #303030 #303030 #a0a0a0;
+  cursor: pointer;
+  line-height: 0;
+  box-shadow: inset 0 0 0 1px #00000022;
+}
+
+.wc-option:hover {
+  background: #8f8f8f;
+}
+
+/* the selected option is drawn pressed in, exactly like the game */
+.wc-option.selected {
+  background: #4a4a4a;
+  border-color: #303030 #a0a0a0 #a0a0a0 #303030;
+  box-shadow: inset 2px 2px 0 #00000055;
+}
+
+/* the real item / block texture, not a letter */
+.wc-icon-canvas {
+  width: 30px;
+  height: 30px;
+  image-rendering: pixelated;
+  background: #1e1e1e;
+  border: 2px solid #101010;
+  box-shadow: inset 0 0 0 1px #ffffff18;
+}
+
+.wc-option-caption {
+  line-height: 0;
+}
+
+.wc-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 6px;
+}
