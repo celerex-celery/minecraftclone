@@ -847,6 +847,49 @@ export class HUD {
       }
       return;
     }
+    // WebGPU adapter info reports the real hardware name even when WebGL masks
+    // it and Electron's getGPUInfo() returns null. Prefer a human-readable name.
+    try {
+      if (typeof navigator !== 'undefined' && navigator.gpu) {
+        const adapter = await navigator.gpu.requestAdapter();
+        if (adapter) {
+          const { vendor, device, description } = adapter.info;
+          const name = description ?? (vendor || device ? `${vendor ?? ''} ${device ?? ''}`.trim() : '');
+          if (name && !name.includes('WebKit')) {
+            this._gpu = name;
+            if (this._gpuTimer) {
+              clearInterval(this._gpuTimer);
+              this._gpuTimer = null;
+            }
+            return;
+          }
+        }
+      }
+    } catch { /* WebGPU unavailable */ }
+    // Fallback: read the GPU renderer string straight off the WebGL context
+    // three.js is drawing into. The masked VENDOR/RENDERER report the Chromium
+    // shell ("WebKit"), so only the unmasked version reveals the real adapter.
+    try {
+      const renderer = this.game?.renderer;
+      if (renderer) {
+        const gl = typeof renderer.getContext === 'function' ? renderer.getContext() : null;
+        if (gl) {
+          const unmasked = gl.getExtension('WEBGL_debug_renderer_info');
+          if (unmasked) {
+            const name = gl.getParameter(0x9246); // UNMASKED_RENDERER_WEBGL
+            if (name && !name.includes('WebKit')) {
+              this._gpu = name;
+              if (this._gpuTimer) {
+                clearInterval(this._gpuTimer);
+                this._gpuTimer = null;
+              }
+              return;
+            }
+          }
+        }
+      }
+    } catch { /* WebGL GPU info unavailable */ }
+    // Last resort: Electron IPC vendor/device ids as hex.
     if (typeof window !== 'undefined' && window.mcVoxel?.gpuInfo) {
       try {
         const info = await window.mcVoxel.gpuInfo();
@@ -856,61 +899,9 @@ export class HUD {
             clearInterval(this._gpuTimer);
             this._gpuTimer = null;
           }
-          return;
         }
       } catch { /* GPU info unavailable via Electron IPC */ }
     }
-    // Fallback: read the GPU vendor/renderer strings straight off the WebGL
-    // context three.js is drawing into. The masked VENDOR/RENDERER report the
-    // Chromium shell ("WebKit"), so only the unmasked versions reveal the real
-    // adapter. Never accept a masked "WebKit" answer - keep polling instead.
-    try {
-      const renderer = this.game?.renderer;
-      if (renderer) {
-        const gl = typeof renderer.getContext === 'function' ? renderer.getContext() : null;
-        if (gl) {
-          // WEBGL_debug_renderer_info must be present to read the real adapter;
-          // otherwise 0x9245/0x9246 throw INVALID_ENUM and spam the console.
-          const unmasked = gl.getExtension('WEBGL_debug_renderer_info');
-          if (unmasked) {
-          const vendor = gl.getParameter(0x9245); // UNMASKED_VENDOR_WEBGL
-          const render = gl.getParameter(0x9246); // UNMASKED_RENDERER_WEBGL
-          // Show just the GPU model name, not "vendor:model".
-          const name = render ?? vendor;
-          if (name && !name.includes('WebKit')) {
-            this._gpu = name;
-            if (this._gpuTimer) {
-              clearInterval(this._gpuTimer);
-              this._gpuTimer = null;
-            }
-            return;
-          }
-          }
-        }
-      }
-    } catch { /* WebGL GPU info unavailable */ }
-    // Last resort: WebGPU adapter info reports the real hardware vendor/device
-    // ids even when WebGL masks them and Electron's getGPUInfo() returns null.
-    try {
-      if (typeof navigator !== 'undefined' && navigator.gpu) {
-        const adapter = await navigator.gpu.requestAdapter();
-        if (adapter) {
-          const { vendor, device, vendorID, deviceID, description } = adapter.info;
-          // Prefer a human-readable name over raw hex ids.
-          if (description) {
-            this._gpu = description;
-          } else if (vendor || device) {
-            this._gpu = `${vendor ?? '?'}:${device ?? '?'}`;
-          } else if (vendorID || deviceID) {
-            this._gpu = `0x${vendorID?.toString(16) ?? '?'}:0x${deviceID?.toString(16) ?? '?'}`;
-          }
-          if (this._gpu !== 'n/a' && this._gpuTimer) {
-            clearInterval(this._gpuTimer);
-            this._gpuTimer = null;
-          }
-        }
-      }
-    } catch { /* WebGPU unavailable */ }
   }
 
   _renderDebug() {
