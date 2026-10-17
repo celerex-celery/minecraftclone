@@ -150,6 +150,17 @@ tilde makes it absolute, so `/summon chicken 0 5 0` is five blocks up and
   levels or XP points, or query your current level and progress (`/xp` is the
   short form).
 
+## World types
+
+When you create a world you can pick one of four world types:
+
+| World type | What it is |
+| --- | --- |
+| **Default** | Normal infinite terrain with caves, ores, trees, and all 11 biomes. |
+| **Flat** | A clean superflat plane: bedrock at the bottom, stone, dirt, and a grass cap on top. No caves, ravines, ores, trees, or decoration — just flat ground down to the void below `y = 0`. Good for building and redstone testing. |
+| **Amplified** | Extreme terrain: noise scale turned up so mountains punch much higher and valleys cut much deeper than default. |
+| **Cursed** | The chaos mode. Gravity picks a random direction (UP, DOWN, NORTH, SOUTH, EAST, WEST) and pulls you that way every few seconds, with a toast announcing each change. Above `y = 188` the sky ceiling deals damage. Diamond ore can spawn next to coal. Terrain is slightly more jagged. |
+
 ---
 
 ## World
