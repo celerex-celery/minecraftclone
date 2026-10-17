@@ -265,6 +265,13 @@ export class Input {
       // Suppress the browser's own reaction to any key the game has claimed, so
       // rebinding a key to Space or an arrow cannot scroll the page.
       if (this._blocked.has(e.code) || this._isBoundKey(e.code)) e.preventDefault();
+      if (e.code === 'F11' && !e.repeat) {
+        if (document.fullscreenElement) {
+          document.exitFullscreen?.();
+        } else {
+          this.canvas.requestFullscreen?.();
+        }
+      }
       if (e.repeat) return;
       this.keys.add(e.code);
       this.justPressed.add(e.code);
