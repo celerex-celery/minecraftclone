@@ -1558,7 +1558,6 @@ export class Interaction {
       p.position.z + look.z * 0.6,
       name, n, p.eyePosition,
     );
-    this.game.hud.message(t('hud.dropped', Items.label(name)));
   }
 
   tick(dt) {
