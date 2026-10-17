@@ -129,6 +129,8 @@ tilde makes it absolute, so `/summon chicken 0 5 0` is five blocks up and
 
 ## World
 
+![Create New World UI](CreateNewWorldUI.png)
+
 - **Infinite chunked terrain**, 16 × 128 × 16, streamed around the player with
   distance-based unloading that keeps your edits alive.
 - **Block shapes**: cubes, half-height slabs (bottom and top), stairs, fences,
