@@ -102,17 +102,22 @@ Every key below is rebindable in **Options → Controls**.
 Mouse in the inventory: **left click** pick up / drop, **right click** half,
 **shift + click** quick move, **shift + click a result** craft repeatedly.
 
-Type `/help` in chat for slash commands.
+Type `/help` in chat for slash commands. Commands also accept a leading dot —
+`.xp`, `.tp` and `.summon` work exactly like their `/` counterparts.
 
 ### Commands
 
 `/help` `/give` `/gamemode` `/clear` `/time` `/say` `/kill` `/list` `/seed`
-`/teleport` (`/tp`) `/summon` `/difficulty`
+`/teleport` (`/tp`) `/summon` `/difficulty` `/experience` (`/xp`, also `.xp`)
 
 Coordinates follow the real rule: a bare number is relative to the player and a
 tilde makes it absolute, so `/summon chicken 0 5 0` is five blocks up and
 `/summon chicken ~ ~ ~` is exactly where you stand. Summon a creeper with
-`/summon creeper`.
+`/summon creeper` or some TNT with `/give tnt`.
+
+- `/experience <add|set|query> <targets> <amount> [levels|points]` — set or add
+  levels or XP points, or query your current level and progress (`/xp` is the
+  short form).
 
 ---
 
