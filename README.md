@@ -1,5 +1,7 @@
 # Minecraft Voxel
 
+![Minecraft Voxel title screen](Main.png)
+
 **Asset notice:** All original Minecraft textures, sounds, music, models and
 other assets belong to Mojang/Microsoft and are extracted from the Minecraft
 client asset pack (`minecraft-assets-26.3/`). They are used strictly for
