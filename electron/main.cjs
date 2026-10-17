@@ -164,7 +164,20 @@ ipcMain.handle('saves:putSettings', async (_e, settings) => {
 
 ipcMain.handle('app:quit', () => app.quit());
 
+ipcMain.handle('app:gpu-info', async () => {
+  try {
+    const info = await win.webContents.getGPUInfo();
+    const d = info.gpuDevice;
+    return d && d.active
+      ? { vendorId: d.vendorId, deviceId: d.deviceId }
+      : null;
+  } catch {
+    return null;
+  }
+});
+
 let serveProc = null;
+let mainWin = null;
 
 function startDevServer() {
   return new Promise((resolve, reject) => {
@@ -216,8 +229,8 @@ function stopDevServer() {
 
 async function createWindow() {
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: 1920,
+    height: 1080,
     minWidth: 800,
     minHeight: 500,
     title: 'Minecraft Voxel',
@@ -229,6 +242,7 @@ async function createWindow() {
     },
   });
 
+  mainWin = win;
   win.setMenu(null);
   await win.loadURL(URL);
 

@@ -30,4 +30,5 @@ contextBridge.exposeInMainWorld('mcVoxel', {
    */
   terminal: (level, line) => ipcRenderer.send('terminal-log', level, line),
   quit: () => ipcRenderer.invoke('app:quit'),
+  gpuInfo: () => ipcRenderer.invoke('app:gpu-info'),
 });

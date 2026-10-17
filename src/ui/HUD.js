@@ -225,10 +225,12 @@ export class HUD {
     this._gravityKey = '';
     /** GPU adapter name, fetched once on load */
     this._gpu = 'n/a';
-    if (typeof navigator !== 'undefined' && navigator.gpu) {
-      navigator.gpu.requestAdapter().then((a) => {
-        this._gpu = a?.name ?? 'n/a';
-      }).catch(() => { /* WebGPU not available */ });
+    if (typeof window !== 'undefined' && window.mcVoxel?.gpuInfo) {
+      window.mcVoxel.gpuInfo().then((info) => {
+        if (info) {
+          this._gpu = `0x${info.vendorId?.toString(16) ?? '?'}:0x${info.deviceId?.toString(16) ?? '?'}`;
+        }
+      }).catch(() => { /* GPU info unavailable */ });
     }
 
     this._buildHotbarSlots();
