@@ -834,7 +834,7 @@ export class HUD {
    */
   async _fetchGpu() {
     // Don't refetch once we have a real adapter id; stop the retry timer.
-    if (this._gpu !== 'n/a') {
+    if (this._gpu !== 'n/a' && !this._gpu.startsWith('WebKit')) {
       if (this._gpuTimer) {
         clearInterval(this._gpuTimer);
         this._gpuTimer = null;
@@ -855,20 +855,28 @@ export class HUD {
       } catch { /* GPU info unavailable via Electron IPC */ }
     }
     // Fallback: read the GPU vendor/renderer strings straight off the WebGL
-    // context three.js is drawing into. Works even when Electron's
-    // getGPUInfo() reports no active device (e.g. angle/software rendering).
+    // context three.js is drawing into. The masked VENDOR/RENDERER report the
+    // Chromium shell ("WebKit"), so only the unmasked versions reveal the real
+    // adapter. Never accept a masked "WebKit" answer - keep polling instead.
     try {
       const renderer = this.game?.renderer;
       if (renderer) {
         const gl = typeof renderer.getContext === 'function' ? renderer.getContext() : null;
         if (gl) {
-          const vendor = gl.getParameter(gl.VENDOR);
-          const render = gl.getParameter(gl.RENDERER);
+          let vendor, render;
+          try {
+            vendor = gl.getParameter(0x9245); // UNMASKED_VENDOR_WEBGL
+            render = gl.getParameter(0x9246); // UNMASKED_RENDERER_WEBGL
+          } catch { /* unmasked params blocked */ }
           if (vendor || render) {
-            this._gpu = `${vendor ?? '?'}:${render ?? '?'}`;
-            if (this._gpuTimer) {
-              clearInterval(this._gpuTimer);
-              this._gpuTimer = null;
+            const guess = `${vendor ?? '?'}:${render ?? '?'}`;
+            if (!guess.includes('WebKit')) {
+              this._gpu = guess;
+              if (this._gpuTimer) {
+                clearInterval(this._gpuTimer);
+                this._gpuTimer = null;
+              }
+              return;
             }
           }
         }
