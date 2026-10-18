@@ -304,9 +304,6 @@ export class ChunkMaterials {
       side: THREE.DoubleSide,
       fog: true,
     }), 'portal');
-    // Fire ships as a 16 x 512 strip of 32 animation frames, one column wide -
-    // `uPortalCells` is (1, 32) so each cell is a whole 16 x 16 frame.
-    this.fire.userData.frameCells = new THREE.Vector2(1, 32);
 
     this.all = [this.opaque, this.cutout, this.water, this.lava, this.portal, this.fire,
       this.seagrass];
@@ -333,13 +330,8 @@ export class ChunkMaterials {
       portalShader.uniforms.uPortalFrame.value = Math.floor(time * 12) % 8;
     }
     const fireShader = this.fire.userData.shader;
-    if (fireShader?.uniforms?.uPortalCells) {
-      fireShader.uniforms.uPortalCells.value.copy(this.fire.userData.frameCells);
-    }
-    // Vanilla fire flips one frame per tick (50 ms) through 32 frames, a cycle
-    // of 1.6 s - a flicker, not a strobe.
     if (fireShader?.uniforms?.uPortalFrame) {
-      fireShader.uniforms.uPortalFrame.value = Math.floor(time * 20) % 32;
+      fireShader.uniforms.uPortalFrame.value = Math.floor(time * 11) % 8;
     }
     // Seagrass runs at the rate its own `.mcmeta` gives - two ticks a frame over
     // eighteen frames, which at twenty ticks a second is a cycle of about one and
