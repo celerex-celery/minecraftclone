@@ -2375,7 +2375,7 @@ const payload = {
         const below = Blocks.get(world.getBlock(
           Math.floor(player.position.x), Math.floor(player.position.y - 0.2), Math.floor(player.position.z),
         ));
-        audio.step(below);
+        audio.step(below, player.sneaking ? 0.15 : 0.3);
         // walking slowly costs a trickle of exhaustion, sprinting a lot
         survival.addExhaustion((speed > 4.6 ? 0.5 : 0.06) * dt);
       }

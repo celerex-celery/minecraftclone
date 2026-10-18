@@ -464,11 +464,11 @@ export class SoundEngine {
     this.playFrom(this.group('step', mat) ?? this.group('step', 'stone'), { volume: 0.6, rate: 1.1 });
   }
 
-  step(def) {
+  step(def, volume = 0.3) {
     if (this._lastStep && this.ctx.currentTime - this._lastStep < 0.26) return;
     this._lastStep = this.ctx.currentTime;
     const mat = MATERIAL_FOR_BLOCK(def?.name);
-    this.playFrom(this.group('step', mat), { volume: 0.3, rate: 0.95 + Math.random() * 0.15 });
+    this.playFrom(this.group('step', mat), { volume, rate: 0.95 + Math.random() * 0.15 });
   }
 
   /* ---------------- player ---------------- */
