@@ -556,10 +556,22 @@ export class PlayerModel {
     if (la) la.rotation.x = -swing * ARM_SWING;
     if (ra) ra.rotation.x = swing * ARM_SWING;
 
-    // The tip is the torso, so the head and arms go with it for free.
-    if (body) body.rotation.x = this.crouch * CROUCH_TILT;
-    // And the head looks where the player looks, on top of the crouch.
-    if (head) head.rotation.x = player.pitch;
+    // Crouch: the body tips forward, sinks down, and the head sinks a little
+    // more. The arms tip forward a touch extra, and the legs shift back.
+    // Matches vanilla: body.xRot = 0.5F, arms += 0.4F, legs.z += 4/16 blocks,
+    // body.y += 3.2/16 blocks down, head.y += 4.2/16 blocks down.
+    if (body) {
+      body.rotation.x = this.crouch * CROUCH_TILT;
+      body.position.y -= this.crouch * 0.2;
+    }
+    if (head) {
+      head.rotation.x = player.pitch;
+      head.position.y -= this.crouch * 0.2625;
+    }
+    if (la) la.rotation.x += this.crouch * 0.4;
+    if (ra) ra.rotation.x += this.crouch * 0.4;
+    if (ll) ll.position.z += this.crouch * 0.25;
+    if (rl) rl.position.z += this.crouch * 0.25;
 
     /* ---- what the arms are doing ---- */
     // Mining, and the oars, each own the right arm outright. Both are written
