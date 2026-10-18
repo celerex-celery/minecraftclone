@@ -1916,6 +1916,8 @@ this.id = nextId++;
     this.fallDistance = 0;
     this.flap = 0;
     this.hurtFlash = 0;
+    /** Seconds of white flash left while the creeper's fuse is lit. */
+    this.primedFlash = 0;
     this.game = game; // store game reference for survival access
     /**
      * Seconds this mob has spent out of the player's reach, and so is counting
@@ -2774,8 +2776,9 @@ this.mesh = buildMobMesh(variant);
        if (this.dying) this._updateDeath(dt);
        return;
      }
-     this.age += dt;
-     if (this.hurtFlash > 0) this.hurtFlash -= dt;
+      this.age += dt;
+      if (this.hurtFlash > 0) this.hurtFlash -= dt;
+      if (this.primedFlash > 0) this.primedFlash -= dt;
 
     const defAt = (x, y, z) => (
       typeof world.defAt === 'function' ? world.defAt(x, y, z) : Blocks.get(world.getBlock(x, y, z))
@@ -2900,10 +2903,12 @@ this.mesh = buildMobMesh(variant);
         if (close) {
           this.primed = true;
           this.fuseTimer = (this.fuseTimer ?? 0) + dt;
+          this.primedFlash = v.fuseTime;
           if (gain > 0 && Math.random() < dt * 8) audio.creeperIdle?.(gain); // fuse hiss
           if (this.fuseTimer >= v.fuseTime) {
             this.fuseTimer = 0;
             this.primed = false;
+            this.primedFlash = 0;
             this.exploded = true;
             if (this.game?.explode) this.game.explode(this.pos, v.explosionPower);
             this.kill();
@@ -2916,6 +2921,7 @@ this.mesh = buildMobMesh(variant);
           if (this.primed && away > 7.0) {
             this.primed = false;
             this.fuseTimer = 0;
+            this.primedFlash = 0;
           }
           if (away > v.followRange) speed = 0;
           else if (away > 2.0) { facing = yawToward(dx, dz); speed = v.speed; }
@@ -3399,12 +3405,9 @@ if (!moved) {
    * real bug that was fixed once already.
    */
   _updateHurtFlash() {
-    const flashing = this.hurtFlash > 0;
-    // the model can be swapped out from under the flash - the glTF file landing,
-    // or a chick growing up - and the new group has never been dressed. Comparing
-    // the group as well as the flag is what catches that: the flag alone would
-    // still say "already flashing", skip the whole body, and leave a new model
-    // standing there untinted while the old one went red.
+    const hurtFlashing = this.hurtFlash > 0;
+    const primedFlashing = this.primedFlash > 0;
+    const flashing = hurtFlashing || primedFlashing;
     const groupChanged = this._flashGroup !== this.mesh.group;
     if (flashing === this._flashing && !groupChanged) return;
     this._flashing = flashing;
@@ -3412,37 +3415,39 @@ if (!moved) {
 
     const group = this.mesh.group;
     if (flashing) {
-      // one material per flash, not one per frame. The earlier version compared
-      // the base material against `mobMaterial(variant)`, which is the *fallback*
-      // material - a bird wearing the loaded model file has a different one
-      // entirely, so the comparison never matched, and the flash material was
-      // disposed and rebuilt on every single frame of every flash. That is what
-      // left the tint looking wrong: it was never the same material twice.
+      const isPrimed = primedFlashing;
       if (!this._flashMat) {
         this._flashMat = new THREE.MeshBasicMaterial({
           map: this._flashSourceMap(group),
           vertexColors: true,
-          transparent: false,
-          alphaTest: 0.5,
+          transparent: isPrimed,
+          alphaTest: isPrimed ? 0 : 0.5,
+          opacity: isPrimed ? 0.5 : 1,
         });
-        // `LinearSRGBColorSpace` explicitly, because the default would convert
-        // the hex out of sRGB and darken it a second time: the colour in the
-        // config is already chosen for how dark a flashing bird should look, and
-        // letting the conversion through on top of that turned a dark red into
-        // almost black - a red blob with the model lost inside it.
-        this._flashMat.color.setHex(CONFIG.MOB.HURT_COLOR, THREE.LinearSRGBColorSpace)
-          .multiplyScalar(CONFIG.MOB.HURT_BRIGHTNESS);
+        this._flashMat.color.setHex(
+          isPrimed ? 0xffffff : CONFIG.MOB.HURT_COLOR,
+          THREE.LinearSRGBColorSpace
+        );
+        if (!isPrimed) {
+          this._flashMat.color.multiplyScalar(CONFIG.MOB.HURT_BRIGHTNESS);
+        }
+      } else {
+        this._flashMat.color.setHex(
+          isPrimed ? 0xffffff : CONFIG.MOB.HURT_COLOR,
+          THREE.LinearSRGBColorSpace
+        );
+        this._flashMat.transparent = isPrimed;
+        this._flashMat.alphaTest = isPrimed ? 0 : 0.5;
+        this._flashMat.opacity = isPrimed ? 0.5 : 1;
+        if (!isPrimed) {
+          this._flashMat.color.multiplyScalar(CONFIG.MOB.HURT_BRIGHTNESS);
+        }
+        this._flashMat.needsUpdate = true;
       }
-      // the map is attached here as well as at creation, so a skin that arrives
-      // part-way through a flash still shows through the red rather than turning
-      // the bird into a flat silhouette
       const tex = this._flashSourceMap(group);
       if (tex && this._flashMat.map !== tex) { this._flashMat.map = tex; this._flashMat.needsUpdate = true; }
       group.traverse((o) => {
         if (o.isMesh) {
-          // a mesh already dressed is skipped, so swapping a group whose meshes
-          // were recorded keeps the old material rather than overwriting it with
-          // the flash and losing the real one
           if (!o.userData.baseMaterial) o.userData.baseMaterial = o.material;
           o.material = this._flashMat;
         }

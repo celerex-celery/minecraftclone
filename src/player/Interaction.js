@@ -1537,6 +1537,7 @@ export class Interaction {
       inventory.selected = free < 9 ? free : inventory.selected;
     }
     inventory.touch();
+    audio.pickup();
   }
 
   /** Drop the held stack into the world (Q). */

@@ -346,10 +346,10 @@ Blocks.add('cobblestone', { tiles: 'cobblestone', hardness: 2.0, tool: 'pickaxe'
 Blocks.add('mossy_cobblestone', { tiles: 'mossy_cobblestone', hardness: 2.0, tool: 'pickaxe', tier: 0 });
 Blocks.add('stone_bricks', { tiles: 'stone_bricks', hardness: 1.5, tool: 'pickaxe', tier: 0 });
 Blocks.add('bricks', { tiles: 'bricks', hardness: 2.0, tool: 'pickaxe', tier: 0 });
-Blocks.add('bedrock', { label: 'Bedrock', hardness: -1, tool: 'pickaxe' });
+Blocks.add('bedrock', { label: 'Bedrock', hardness: -1, tool: 'pickaxe', explosionResistance: Infinity });
 Blocks.add('deepslate', { tiles: 'deepslate', hardness: 3.0, tool: 'pickaxe', tier: 0, drops: [{ item: 'cobbled_deepslate' }], xp: 1 });
 Blocks.add('cobbled_deepslate', { tiles: 'cobbled_deepslate', hardness: 3.5, tool: 'pickaxe', tier: 0 });
-Blocks.add('obsidian', { tiles: 'obsidian', hardness: 50.0, tool: 'pickaxe', tier: 3 });
+Blocks.add('obsidian', { tiles: 'obsidian', hardness: 50.0, tool: 'pickaxe', tier: 3, explosionResistance: Infinity });
 
 /* ================================================================
    Soils
@@ -1137,6 +1137,7 @@ Blocks.add('end_portal_frame', {
   placeable: true,
   noDrop: true,
   interactive: 'end_portal_frame',
+  explosionResistance: Infinity,
 });
 
 Blocks.add('end_portal', {

@@ -94,6 +94,9 @@ export class World {
      */
     this.primedTNT = new Map();
 
+    /** White flash overlay meshes for primed TNT, keyed on "x,y,z". */
+    this.tntFlash = new Map();
+
     this.renderDistance = CONFIG.RENDER_DISTANCE;
     this.time = CONFIG.START_TIME;
     /**
@@ -879,13 +882,55 @@ export class World {
     const key = `${x},${y},${z}`;
     if (this.primedTNT.has(key)) return false;
     this.primedTNT.set(key, { fuse: TNT_FUSE, x, y, z });
+    this._addTntFlash(x, y, z);
     return true;
+  }
+
+  /** Add a white translucent flash overlay to a primed TNT block. */
+  _addTntFlash(x, y, z) {
+    const key = `${x},${y},${z}`;
+    const geo = new THREE.BoxGeometry(1, 1, 1);
+    const mat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.5,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(x + 0.5, y + 0.5, z + 0.5);
+    this.scene.add(mesh);
+    this.tntFlash.set(key, { mesh, mat });
+  }
+
+  /** Update the TNT flash overlays each frame: pulse opacity as the fuse burns. */
+  _tickTntFlash(dt) {
+    for (const [key, t] of [...this.primedTNT]) {
+      const flash = this.tntFlash.get(key);
+      if (!flash || this.getBlock(t.x, t.y, t.z) === 0) {
+        this._removeTntFlash(t.x, t.y, t.z);
+        continue;
+      }
+      // Pulse opacity as the fuse burns down.
+      const pulse = (Math.sin(Date.now() * 0.01 * 12) + 1) / 2;
+      flash.mat.opacity = 0.3 + pulse * 0.4;
+    }
+  }
+
+  /** Remove a TNT flash overlay when it explodes or is unprimed. */
+  _removeTntFlash(x, y, z) {
+    const key = `${x},${y},${z}`;
+    const flash = this.tntFlash.get(key);
+    if (!flash) return;
+    this.scene.remove(flash.mesh);
+    flash.mat.dispose();
+    flash.mesh.geometry.dispose();
+    this.tntFlash.delete(key);
   }
 
   /**
    * Tick every lit fuse, and set off any whose fuse has run out.
    */
   updatePrimedTNT(dt) {
+    this._tickTntFlash(dt);
     for (const [key, t] of [...this.primedTNT]) {
       t.fuse -= dt;
       if (t.fuse > 0) continue;
@@ -893,6 +938,7 @@ export class World {
       // re-light it and set off a second explosion at the same spot.
       this.setBlock(t.x, t.y, t.z, 0);
       this.primedTNT.delete(key);
+      this._removeTntFlash(t.x, t.y, t.z);
       this.explode(t.x, t.y, t.z, TNT_POWER);
     }
   }
