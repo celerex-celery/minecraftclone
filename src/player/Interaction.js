@@ -896,11 +896,10 @@ export class Interaction {
     const above = Blocks.get(world.getBlock(px, py + 1, pz));
     if (!above.replaceable) return false;
 
-    // Fire is a plant as far as placement goes. It only burns on the ground, and
-    // a flame hanging off the side of a block is not a thing the real game will
-    // let you make - so the top face is required here too, the same rule a
-    // sapling is under.
-    if (hit.solid && target.face !== 3) return false;
+    // Fire can be placed against any face of any block - top, sides, bottom -
+    // exactly as the real game does. The fire goes into the cell adjacent to
+    // the clicked face, so clicking the side of a block puts flame beside it,
+    // and clicking the top puts it above. No face restriction.
 
     world.setBlock(px, py, pz, fire);
     audio.portalIgnite();
