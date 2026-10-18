@@ -34,11 +34,11 @@
   text-shadow: 1px 1px 0 #000;
 }
 
-#dev-bar #dev-walia.on {
+#dev-bar #dev-waila.on {
   color: #55ff55;
 }
 
-#dev-bar #dev-walia.off {
+#dev-bar #dev-waila.off {
   color: #ff5555;
 }
 
@@ -83,7 +83,7 @@
    The slab is the vanilla tooltip: a dark translucent fill inside a light border,
    which is what keeps it readable over a bright sky as well as over a cave. */
 
-#walia-area {
+#waila-area {
   position: absolute;
   top: calc(26px * var(--gui));
   left: 50%;
@@ -97,7 +97,7 @@
    opaque rather than translucent, because at 78% a midnight sky came through
    the fill and took the panel's contrast with it - the name stayed legible but
    the dark half of a half heart did not. */
-.walia-panel {
+.waila-panel {
   background: #101018;
   border: 2px solid #6b6b7b;
   box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.55);
@@ -118,13 +118,13 @@
 }
 
 /* the name, and the block's own icon beside it when there is one */
-.walia-head {
+.waila-head {
   display: flex;
   align-items: center;
   gap: 6px;
 }
 
-.walia-icon {
+.waila-icon {
   width: 32px;
   height: 32px;
   image-rendering: auto;
@@ -132,9 +132,9 @@
   flex: 0 0 auto;
 }
 
-.walia-name,
-.walia-health-text,
-.walia-info {
+.waila-name,
+.waila-health-text,
+.waila-info {
   line-height: 0;
   white-space: nowrap;
 }
@@ -142,7 +142,7 @@
 /* health too high for a row of hearts, printed as the number the hearts stood
    for. No backing plate, unlike the hearts - a digit has contrast on its own and
    the plate would only make the line look heavier than the mob it describes. */
-.walia-health-text {
+.waila-health-text {
   padding-left: 1px;
 }
 
@@ -155,7 +155,7 @@
    as at noon, and leaves the shared sprite alone so the survival bar is not
    restyled along with it. The colour is the panel's own border colour, so the
    strip reads as part of the frame rather than as a patch bolted onto it. */
-.walia-hearts {
+.waila-hearts {
   display: flex;
   gap: 1px;
   line-height: 0;
@@ -164,15 +164,15 @@
   padding: 2px 3px;
 }
 
-.walia-hearts img,
-.walia-hearts canvas {
+.waila-hearts img,
+.waila-hearts canvas {
   width: 10px;
   height: 10px;
   image-rendering: pixelated;
 }
 
 /* where it came from, in the blue the real game prints a mod name in */
-.walia-source {
+.waila-source {
   line-height: 0;
   white-space: nowrap;
 }
@@ -183,7 +183,7 @@
    line of text about it - the same reason Jade runs it past the frame. The fill
    is the harvest yellow of the real game's break particles, so the bar and the
    crack overlay it is measuring are visibly the same thing. */
-.walia-breaking {
+.waila-breaking {
   position: absolute;
   left: -2px;
   right: -2px;
@@ -193,7 +193,7 @@
   overflow: hidden;
 }
 
-.walia-breaking i {
+.waila-breaking i {
   display: block;
   height: 100%;
   background: #ffd83d;

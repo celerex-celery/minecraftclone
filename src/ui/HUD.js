@@ -199,7 +199,7 @@ export class HUD {
       debugBL: document.getElementById('debug-bottomleft'),
       debugBR: document.getElementById('debug-bottomright'),
       toastArea: document.getElementById('toast-area'),
-      waliaArea: document.getElementById('walia-area'),
+      wailaArea: document.getElementById('waila-area'),
       itemNameArea: document.getElementById('item-name-area'),
       musicToast: document.getElementById('music-toast'),
        autosave: document.getElementById('autosave'),
@@ -215,9 +215,9 @@ export class HUD {
     this._hintEl = null;
     this._hintTimer = 0;
     /** the WALIA panel, the signature of what it last drew, and its break bar */
-    this._waliaSig = '';
-    this._waliaPanel = null;
-    this._waliaBreaking = null;
+    this._wailaSig = '';
+    this._wailaPanel = null;
+    this._wailaBreaking = null;
     /** Item name above hotbar */
     this._itemNameEl = null;
     this._itemNameTimer = 0;
@@ -576,7 +576,7 @@ export class HUD {
    *   info?: string[], breaking?: number, source?: string,
    * }} data null to take the panel away
    */
-  walia(data) {
+  waila(data) {
     const d = data ?? null;
     const info = d?.info ?? [];
     const breaking = d?.breaking > 0 ? Math.min(1, d.breaking) : 0;
@@ -591,12 +591,12 @@ export class HUD {
         + `|${info.join('~')}|${d.source ?? ''}`
       : '';
 
-    if (sig !== this._waliaSig) {
-      this._waliaSig = sig;
-      this._waliaPanel = this._buildWalia(d, info);
+    if (sig !== this._wailaSig) {
+      this._wailaSig = sig;
+      this._wailaPanel = this._buildWalia(d, info);
       // the freshly built panel has no bar, so the old fill belongs to a panel
       // that is no longer on screen and must not be adopted by this one
-      this._waliaBreaking = null;
+      this._wailaBreaking = null;
     }
 
     // The bar, in place. It is made when a swing starts and kept afterwards, so
@@ -604,20 +604,20 @@ export class HUD {
     // reads from the same 0..1 the crack overlay is drawing from - the bar and
     // the cracks cannot disagree about how much is left.
     if (!breaking) {
-      this._waliaBreaking?.remove();
-      this._waliaBreaking = null;
+      this._wailaBreaking?.remove();
+      this._wailaBreaking = null;
       return;
     }
-    if (!this._waliaBreaking) {
+    if (!this._wailaBreaking) {
       const track = document.createElement('div');
-      track.className = 'walia-breaking';
+      track.className = 'waila-breaking';
       track.appendChild(document.createElement('i'));
-      this._waliaPanel?.appendChild(track);
-      this._waliaBreaking = track.firstChild;
+      this._wailaPanel?.appendChild(track);
+      this._wailaBreaking = track.firstChild;
     }
     // rounded to a tenth of a percent, so a bar resting near 33.33 does not
     // churn the compositor over a third decimal place that no eye can see
-    this._waliaBreaking.style.width = `${Math.round(breaking * 1000) / 10}%`;
+    this._wailaBreaking.style.width = `${Math.round(breaking * 1000) / 10}%`;
   }
 
   /**
@@ -630,36 +630,36 @@ export class HUD {
    * @returns {HTMLDivElement|null} the panel, or null when there is nothing to show
    */
   _buildWalia(d, info) {
-    const host = this.el.waliaArea;
+    const host = this.el.wailaArea;
     if (!host) return null;
     host.textContent = '';
     if (!d) return null;
 
     const panel = document.createElement('div');
-    panel.className = 'walia-panel';
+    panel.className = 'waila-panel';
 
     // name, with the block's own icon beside it when there is one. A mob has no
     // block icon, so its name sits flush with the panel's left edge instead.
     const head = document.createElement('div');
-    head.className = 'walia-head';
+    head.className = 'waila-head';
     if (d.icon) {
       const icon = iconCanvas(d.icon, 128, this.game.assets);
-      icon.className = 'walia-icon';
+      icon.className = 'waila-icon';
       head.appendChild(icon);
     }
     const name = document.createElement('div');
-    name.className = 'walia-name';
+    name.className = 'waila-name';
     this.font.set(name, d.name, { scale: 2, color: COLORS.white });
     head.appendChild(name);
     panel.appendChild(head);
 
     if (d.health !== undefined) {
-      panel.appendChild(this._waliaHealth(d.health, d.maxHealth ?? d.health));
+      panel.appendChild(this._wailaHealth(d.health, d.maxHealth ?? d.health));
     }
 
     for (const line of info) {
       const row = document.createElement('div');
-      row.className = 'walia-info';
+      row.className = 'waila-info';
       this.font.set(row, line, { scale: 2, color: COLORS.white });
       panel.appendChild(row);
     }
@@ -667,7 +667,7 @@ export class HUD {
     // where it came from. Vanilla blue, the colour the real game prints a mod
     // name in, and the reason it is on its own line rather than under the name.
     const source = document.createElement('div');
-    source.className = 'walia-source';
+    source.className = 'waila-source';
     this.font.set(source, d.source ?? 'Minecraft', { scale: 2, color: COLORS.blue });
     panel.appendChild(source);
 
@@ -689,11 +689,11 @@ export class HUD {
    * than "20/40" while taking up the room to do it; the number is what the bar
    * would have been communicating anyway.
    */
-  _waliaHealth(health, maxHealth) {
+  _wailaHealth(health, maxHealth) {
     const hearts = Math.ceil(maxHealth / 2);
     if (hearts > WALIA_HEARTS_MAX) {
       const row = document.createElement('div');
-      row.className = 'walia-health-text';
+      row.className = 'waila-health-text';
       this.font.set(row, `${Math.ceil(health)}/${Math.ceil(maxHealth)}`,
         { scale: 2, color: COLORS.white });
       return row;
@@ -701,7 +701,7 @@ export class HUD {
 
     const gui = this.game.assets.gui;
     const row = document.createElement('div');
-    row.className = 'walia-hearts';
+    row.className = 'waila-hearts';
     for (let i = 0; i < hearts; i++) {
       const v = health - i * 2;
       const kind = v >= 2 ? 'full' : v === 1 ? 'half' : 'empty';

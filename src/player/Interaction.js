@@ -902,7 +902,7 @@ export class Interaction {
     // and clicking the top puts it above. No face restriction.
 
     world.setBlock(px, py, pz, fire);
-    audio.click();
+    audio.ignite();
     this.game.particles.spawnPlace(px, py, pz, fire);
     this.game.viewModel.triggerSwing();
     return true;

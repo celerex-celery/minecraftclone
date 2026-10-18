@@ -1530,8 +1530,8 @@ export const DEFAULTS = {
    * setting appeared to control was the whole debug overlay.
    */
   showFps: true,
-  /** What Am I Looking At (WALIA) - show block/item name under crosshair. */
-  walia: true,
+  /** What Am I Looking At (WAILA) - show block/item name under crosshair. */
+  waila: true,
   playerName: 'Player',
   /** Overrides on top of DEFAULT_BINDS; absent or null means "all default". */
   keybinds: null,

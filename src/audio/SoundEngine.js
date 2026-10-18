@@ -45,6 +45,7 @@ const MANIFEST = {
     hurt: ['damage/hit1', 'damage/hit2', 'damage/hit3'],
     fall: ['damage/fallbig'],
     fallSmall: ['damage/fallsmall'],
+    ignite: ['fire/ignite'],
     /* the chicken, which is the only mob in the game */
     chickenIdle: ['mob/chicken/say1', 'mob/chicken/say2', 'mob/chicken/say3'],
     chickenHurt: ['mob/chicken/hurt1', 'mob/chicken/hurt2'],
@@ -473,6 +474,10 @@ export class SoundEngine {
   /* ---------------- player ---------------- */
 
   click() { this.playFrom(MANIFEST.one.click, { volume: 0.5 }); }
+
+  /** Flint and steel striking a block that is not a frame. */
+  ignite() { this.playFrom(MANIFEST.one.ignite, { volume: 0.55, rate: 0.9 }); }
+
   pickup() { this.playFrom(MANIFEST.one.pickup, { volume: 0.4, rate: 1.1 }); }
   hurt() { this.playFrom(MANIFEST.one.hurt, { volume: 0.7 }); }
   fall() { this.playFrom(MANIFEST.one.fall, { volume: 0.7 }); }
@@ -597,7 +602,7 @@ export class SoundEngine {
 
   /** Flint and steel striking a block that is not a frame. */
   portalFail() {
-    this.playFrom(MANIFEST.one.click, { volume: 0.55, rate: 0.9 });
+    this.ignite();
   }
 
   /** A portal catching: the flint strike, then the portal waking up. */

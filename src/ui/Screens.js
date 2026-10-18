@@ -404,7 +404,7 @@ export class OptionsScreen {
       R('caveAmbience', this._toggle(() => s.caveAmbience ?? false, (v) => { s.caveAmbience = v; }));
     } else if (this.category === 'gameplay') {
       R('sensitivity', this._slider(1, 15, 0.5, () => s.sensitivity, (v) => { s.sensitivity = v; }));
-      R('walia', this._toggle(() => s.walia !== false, (v) => { s.walia = v; }));
+      R('waila', this._toggle(() => s.waila !== false, (v) => { s.waila = v; }));
       // No second row for the debug overlay. There used to be a "showDebug"
       // toggle here written to `s.showFps` - the same field as the frame rate
       // option on the video screen - so the two rows fought over one setting and

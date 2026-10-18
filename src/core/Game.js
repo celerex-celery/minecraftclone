@@ -131,7 +131,7 @@ const STATE = {
  * @param {number} seconds
  * @returns {number}
  */
-function waliaTime(seconds) {
+function wailaTime(seconds) {
   const s = Math.max(0, Math.ceil(seconds));
   return s < 3600 ? s : Math.ceil(s / 60);
 }
@@ -2881,12 +2881,12 @@ const payload = {
 
        WALIA (What Am I Looking At): the panel under the crosshair. */
     const targetDef = this.target ? Blocks.get(this.target.id) : null;
-    const walia = this.settings.walia !== false;
-    let waliaData = null;
+    const waila = this.settings.waila !== false;
+    let wailaData = null;
     let specificHint = null;
     if (this.state === STATE.PLAYING && !this.screen) {
       // WALIA: what is under the crosshair, as a block or as a mob
-      if (walia) {
+      if (waila) {
         const mob = this.mobs?.picked;
         const cell = this.target;
         if (mob && (!cell || this.mobs.pickedDist <= cell.dist)) {
@@ -2894,11 +2894,11 @@ const payload = {
           // a countdown the player is actually watching. A chick grows into a
           // chicken and a chicken lays an egg; an adult has neither, so the lines
           // are absent rather than printed as zero
-          if (mob.grow > 0) info.push(t('hud.walia.growth', waliaTime(mob.grow)));
+          if (mob.grow > 0) info.push(t('hud.waila.growth', wailaTime(mob.grow)));
           if (mob.variant.lays && mob.eggTimer > 0) {
-            info.push(t('hud.walia.nextEgg', waliaTime(mob.eggTimer)));
+            info.push(t('hud.waila.nextEgg', wailaTime(mob.eggTimer)));
           }
-          waliaData = {
+          wailaData = {
             name: mob.variant.label,
             // health in points, not hearts: the panel halves it, so a mob on an
             // odd point of health shows a half heart rather than rounding up
@@ -2915,9 +2915,9 @@ const payload = {
             // below, which is the half that matters before spring
             const left = this.world?.growth?.progressAt(cell.x, cell.y, cell.z);
             if (left !== null && left !== undefined) {
-              info.push(t('hud.walia.growth', waliaTime(left)));
+              info.push(t('hud.waila.growth', wailaTime(left)));
             }
-            waliaData = {
+            wailaData = {
               name: Blocks.labelOf(def.name) || def.name || 'Unknown',
               icon: def.name,
               info,
@@ -2938,7 +2938,7 @@ const payload = {
         }
       }
     }
-    this.hud?.walia(waliaData);
+    this.hud?.waila(wailaData);
     this.hud?.hint(specificHint);
 
     if (this.interaction?.mining && this.target) {
