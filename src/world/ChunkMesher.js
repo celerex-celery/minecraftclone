@@ -946,7 +946,7 @@ builder.pushQuad();
         // the same way, so without the flip a flame hangs upside down - which is
         // exactly how it looked before this line existed.
         a[3] = corner === 1 || corner === 2 ? 1 : 0;
-        a[4] = corner === 0 || corner === 1 ? 1 : 0;
+        a[4] = corner === 0 || corner === 1 ? 0 : 1;
       }
       a[5] = sky; a[6] = blk;
       a[7] = col[0]; a[8] = col[1]; a[9] = col[2];
