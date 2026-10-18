@@ -2529,7 +2529,7 @@ const payload = {
       player,
       (name, count) => this.inventory.add(name, count),
           (name, count) => {
-            // pickup sound and "+count" message removed: silent pickup like chat
+            audio.pickup();
           },
           () => audio.bubble(),
         );
