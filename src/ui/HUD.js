@@ -184,6 +184,14 @@ export class HUD {
   constructor(game) {
     this.game = game;
     this.font = game.font;
+    /**
+     * Whether the HUD is on screen because the game wants it there, ignoring
+     * F1. The two are kept apart so that opening a menu and coming back does
+     * not undo the player's own choice to hide the HUD.
+     */
+    this._visible = true;
+    /** Whether the player has hidden the HUD with F1. */
+    this._hiddenByUser = false;
     this.el = {
       hud: document.getElementById('hud'),
       hotbar: document.getElementById('hotbar-slots'),
@@ -236,8 +244,27 @@ export class HUD {
     this._buildHotbarSlots();
   }
 
-  show() { this.el.hud.classList.remove('hidden'); }
-  hide() { this.el.hud.classList.add('hidden'); }
+  /** The game wants the HUD on screen, as opposed to the player hiding it. */
+  show() { this._visible = true; this._applyVisibility(); }
+
+  /** The game wants the HUD off screen, as opposed to the player hiding it. */
+  hide() { this._visible = false; this._applyVisibility(); }
+
+  /**
+   * F1: hide the HUD without changing the game's own idea of whether it is up.
+   *
+   * The two are kept apart so that opening a menu and coming back does not
+   * undo the player's own choice, and pressing F1 in a menu does not leave
+   * the HUD hidden once the menu closes.
+   */
+  toggleHud() {
+    this._hiddenByUser = !this._hiddenByUser;
+    this._applyVisibility();
+  }
+
+  _applyVisibility() {
+    this.el.hud.classList.toggle('hidden', !(this._visible && !this._hiddenByUser));
+  }
 
   /**
    * Creative and spectator hide the survival bars entirely: no hearts, no

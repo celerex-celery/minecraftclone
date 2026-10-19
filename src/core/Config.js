@@ -1446,7 +1446,11 @@ export const KEYBINDS = [
   { action: 'sprint', code: 'ControlLeft' },
   { action: 'attack', code: MOUSE_LEFT, mouse: true },
   { action: 'useItem', code: MOUSE_RIGHT, mouse: true },
-  { action: 'pickBlock', code: 'KeyB' },
+  // Pick block is the middle mouse button, the way the real game has it. It
+  // is not marked `mouse: true`, because that flag means "fixed to the mouse
+  // and cannot be rebound" - and this one can be moved to a key like any
+  // other, which is the point of having a rebindable controls screen.
+  { action: 'pickBlock', code: MOUSE_MIDDLE },
   { action: 'dropItem', code: 'KeyQ' },
   { action: 'hotbar1', code: 'Digit1' },
   { action: 'hotbar2', code: 'Digit2' },
@@ -1462,6 +1466,7 @@ export const KEYBINDS = [
   { action: 'chat', code: 'KeyT' },
   { action: 'command', code: 'Slash' },
   { action: 'debug', code: 'F3' },
+  { action: 'toggleHud', code: 'F1' },
   { action: 'perspective', code: 'F5' },
   { action: 'screenshot', code: 'F2' },
   { action: 'pause', code: 'Escape' },
@@ -1532,6 +1537,15 @@ export const DEFAULTS = {
   showFps: true,
   /** What Am I Looking At (WAILA) - show block/item name under crosshair. */
   waila: true,
+  /**
+   * Sprinting and sneaking as latches rather than holds.
+   *
+   * Both off by default, which is how the game has always behaved: sprinting
+   * is the sprint key held down, or the double tap on forward, and sneaking is
+   * the sneak key held down.
+   */
+  toggleSprint: false,
+  toggleSneak: false,
   playerName: 'Player',
   /** Overrides on top of DEFAULT_BINDS; absent or null means "all default". */
   keybinds: null,

@@ -13,6 +13,7 @@ import { Items, creativeEntries } from '../world/Items.js';
 import { Blocks } from '../world/Blocks.js';
 import { DIFFICULTIES } from '../ui/WorldScreens.js';
 import { resolveVariant, listVariants } from '../world/Mobs.js';
+import { xpForLevel } from '../survival/Survival.js';
 
 /** Vanilla chat colours. */
 export const CHAT_COLORS = {
@@ -124,12 +125,12 @@ function parseXpAmount(text) {
 }
 
 /** Convert a total XP amount into (level, remaining XP) using the same
- *  per-level requirements Survival.xpForNextLevel uses. */
+ *  per-level requirements Survival uses. */
 function xpToLevel(xp) {
   let level = 0;
   let remaining = Math.max(0, xp);
   while (remaining >= 0) {
-    const need = level >= 30 ? 112 + (level - 30) * 9 : 7 + level * 4;
+    const need = xpForLevel(level);
     if (remaining < need) break;
     remaining -= need;
     level++;

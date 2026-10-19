@@ -399,6 +399,17 @@ export class Player {
    */
   _resolveSprint(dt, intent) {
     const held = intent.forward > 0 && !this.sneaking;
+
+    // With toggle sprint on, the sprint state has already been decided by the
+    // key that was pressed. The double tap latch below is left out of it
+    // entirely, because it latches on its own: a double tap from earlier in
+    // the session would otherwise keep the sprint on after the player had
+    // turned the toggle back off.
+    if (intent.sprintToggle) {
+      this._forwardHeldPrev = held;
+      return intent.sprint && held;
+    }
+
     const pressed = held && !this._forwardHeldPrev;
 
     // The window always runs, key up or key down, so it measures the gap

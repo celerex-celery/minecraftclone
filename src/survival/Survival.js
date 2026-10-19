@@ -29,6 +29,23 @@ export const DIFFICULTY = {
   hard: { damage: 1.5, hunger: 1.5, healBonus: 0, starve: true, drownImmune: false },
 };
 
+/**
+ * The experience needed to go from `level` to the one after it.
+ *
+ * Vanilla's curve: 7 points for the first level, 4 more for each of the next
+ * twenty-nine, and 9 more for each level past thirty.
+ *
+ * It lives here as a plain function rather than only as a method so that the
+ * commands, which have no Survival instance to ask, use the same numbers
+ * instead of a second copy of the curve that drifts apart from this one.
+ *
+ * @param {number} level the current level
+ * @returns {number} the experience needed for the next one
+ */
+export function xpForLevel(level) {
+  return level >= 30 ? 112 + (level - 30) * 9 : 7 + level * 4;
+}
+
 export class Survival {
   constructor(world, player) {
     this.world = world;
@@ -105,9 +122,7 @@ export class Survival {
 
   /** Vanilla-style growing XP requirement. */
   xpForNextLevel() {
-    const l = this.level;
-    if (l >= 30) return 112 + (l - 30) * 9;
-    return 7 + l * 4;
+    return xpForLevel(this.level);
   }
 
   /* --------------------------------------------------- damage */

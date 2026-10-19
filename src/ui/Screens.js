@@ -405,6 +405,10 @@ export class OptionsScreen {
     } else if (this.category === 'gameplay') {
       R('sensitivity', this._slider(1, 15, 0.5, () => s.sensitivity, (v) => { s.sensitivity = v; }));
       R('waila', this._toggle(() => s.waila !== false, (v) => { s.waila = v; }));
+      // Sprinting and sneaking as latches rather than holds. Both are off by
+      // default, which is how the game has always behaved.
+      R('toggleSprint', this._toggle(() => s.toggleSprint !== false, (v) => { s.toggleSprint = v; }));
+      R('toggleSneak', this._toggle(() => s.toggleSneak !== false, (v) => { s.toggleSneak = v; }));
       // No second row for the debug overlay. There used to be a "showDebug"
       // toggle here written to `s.showFps` - the same field as the frame rate
       // option on the video screen - so the two rows fought over one setting and

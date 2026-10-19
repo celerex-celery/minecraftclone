@@ -185,6 +185,15 @@ export class Game {
     this.assets = assets;
     this.state = STATE.LOADING;
     this.settings = { ...DEFAULTS };
+    /**
+     * The latches for the toggle sprint and toggle sneak options.
+     *
+     * They live on the game rather than on the player because the player has
+     * no idea the options screen exists, and both are settings rather than
+     * anything the player decides about itself.
+     */
+    this._sprintToggled = false;
+    this._sneakToggled = false;
     this.audio = audio;
     this.saveGame = SaveGame;
     this.worldId = null;
@@ -1976,6 +1985,32 @@ const payload = {
     a.click();
   }
 
+  /**
+   * Copy the player's position, the way F3+C does in the real game.
+   *
+   * The clipboard is the useful half, but it is not always there: the browser
+   * refuses the write outside a secure context, and a permission can be
+   * refused as well. When the write does not happen the coordinates go into
+   * the chat box instead, where they can still be selected and copied by
+   * hand. A worse answer than a paste, but the player still gets them.
+   */
+  async copyCoordinates() {
+    const p = this.player?.position;
+    if (!p) return;
+    const text = `${p.x.toFixed(3)} ${p.y.toFixed(3)} ${p.z.toFixed(3)}`;
+    const clip = typeof navigator !== 'undefined' ? navigator.clipboard : null;
+    if (!clip?.writeText) {
+      this.chat.open(text);
+      return;
+    }
+    try {
+      await clip.writeText(text);
+      this.hud.toast(t('hud.coordsCopied', text), 'info');
+    } catch {
+      this.chat.open(text);
+    }
+  }
+
   /* ================================================================
      frame
      ================================================================ */
@@ -2085,10 +2120,16 @@ const payload = {
       return;
     }
 
-    // F2/F3/F5 are global: they work from any screen, like the real game.
+    // F1/F2/F3/F5 are global: they work from any screen, like the real game.
     if (input.pressed('screenshot')) this.screenshot();
     if (input.pressed('debug')) this.hud.toggleDebug();
+    if (input.pressed('toggleHud')) this.hud.toggleHud();
     if (input.pressed('perspective')) this.thirdPerson = (this.thirdPerson + 1) % 3;
+
+    // F3+C copies the position. The key is read directly rather than through
+    // the debug action, because the shortcut belongs to F3 itself and not to
+    // whatever the player has bound the debug overlay to.
+    if (input.keys.has('F3') && input.justPressed.has('KeyC')) this.copyCoordinates();
 
     if (input.pressed('pause')) {
       if (this.screens.languages.isOpen) this.screens.languages.hide();
@@ -2290,6 +2331,33 @@ const payload = {
 
     const f = (input.down('forward') ? 1 : 0) - (input.down('back') ? 1 : 0);
     const r = (input.down('right') ? 1 : 0) - (input.down('left') ? 1 : 0);
+
+    // Sprinting and sneaking can be latched rather than held. Both live here
+    // rather than in the player because they are options, and the player does
+    // not know about the options screen.
+    //
+    // With the sprint latch on, the double tap on forward is left alone. It is
+    // a separate way of asking for the same thing, and it latches on its own
+    // - so if both were live, a double tap from earlier in the session would
+    // keep the sprint on after the player had turned the latch back off.
+    const toggleSprint = this.settings.toggleSprint !== false;
+    const toggleSneak = this.settings.toggleSneak !== false;
+
+    if (toggleSprint) {
+      if (!uiOpen && input.pressed('sprint')) this._sprintToggled = !this._sprintToggled;
+    } else {
+      this._sprintToggled = false;
+    }
+
+    if (toggleSneak) {
+      // The latch is dropped while a screen is open, so that coming back from
+      // the options does not leave the player crouched for no reason.
+      if (uiOpen) this._sneakToggled = false;
+      else if (input.pressed('sneak')) this._sneakToggled = !this._sneakToggled;
+    } else {
+      this._sneakToggled = false;
+    }
+
     const intent = {
       forward: uiOpen ? 0 : f,
       right: uiOpen ? 0 : r,
@@ -2298,11 +2366,16 @@ const payload = {
       // nothing. Swimming and creative flight read the same held state, which is
       // right for both of them.
       jump: !uiOpen && input.down('jump'),
-      sneak: !uiOpen && input.down('sneak'),
+      sneak: !uiOpen && (toggleSneak ? this._sneakToggled : input.down('sneak')),
       // Sneaking is the controller's B, and sprinting is a full push of the
       // left stick - the way a console sprints, and the reason no one has to
       // be told to click a stick in.
-      sprint: !uiOpen && (input.down('sprint') || this.input.padSprinting),
+      sprint: !uiOpen && (toggleSprint
+        ? (this._sprintToggled || this.input.padSprinting)
+        : (input.down('sprint') || this.input.padSprinting)),
+      // Whether the sprint state is a latch, so the player can leave the
+      // double tap out of it.
+      sprintToggle: toggleSprint,
     };
 
     const wasInWater = player.inWater;

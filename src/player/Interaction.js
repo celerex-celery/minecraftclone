@@ -539,7 +539,7 @@ export class Interaction {
     if (mob.interact(player)) {
       this.game.viewModel.triggerSwing();
       audio.eat({ gain: 0.5 });
-      if (hud) hud.toast('Mob fed!', 'good');
+      if (hud) hud.toast(t('hud.mobFed'), 'good');
       return true;
     }
     return false;

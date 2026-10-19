@@ -28,20 +28,19 @@ export const WORLD_TYPES = [
   { id: 'cursed', icon: '' },
 ];
 
+/**
+ * The difficulties a world can be created with.
+ *
+ * The multipliers behind each one live in survival/Survival.js, which is the
+ * only place that applies them. They used to be duplicated here as well, with
+ * values that had drifted apart from the real ones, and nothing read the copy.
+ */
 export const DIFFICULTIES = [
   { id: 'peaceful', icon: '' },
   { id: 'easy', icon: '' },
   { id: 'normal', icon: '' },
   { id: 'hard', icon: '' },
 ];
-
-/** Multipliers that Survival applies, matching the vanilla difficulties. */
-export const DIFFICULTY = {
-  peaceful: { damage: 0, hunger: 0, regen: true },
-  easy: { damage: 0.5, hunger: 0.5, regen: true },
-  normal: { damage: 1, hunger: 1, regen: true },
-  hard: { damage: 1.5, hunger: 1.5, regen: true },
-};
 
 function el(tag, cls, text) {
   const e = document.createElement(tag);

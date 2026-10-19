@@ -2929,7 +2929,13 @@ this.mesh = buildMobMesh(variant);
         }
       } else if (v.spawn?.category === CATEGORY.monster) {
         // Other monsters - simple chase
-        if (target) {
+        //
+        // The target is worked out here rather than read from somewhere else.
+        // The zombie branch above has its own local `target`, and this code is
+        // outside that scope - reading it here was a ReferenceError waiting for
+        // the first monster that was neither an enderman nor a creeper.
+        const seesPlayer = away < (v.followRange ?? 16) && this._canSeeEntity(player, world);
+        if (seesPlayer) {
           facing = yawToward(dx, dz);
           if (away > 2.0) speed = v.speed;
           else {
@@ -2941,7 +2947,7 @@ this.mesh = buildMobMesh(variant);
             this.attackCooldown = (this.attackCooldown ?? 0) - dt;
           }
         }
-} else if (v.spawn?.category === CATEGORY.creature) {
+      } else if (v.spawn?.category === CATEGORY.creature) {
         // Passive mob wandering - matches vanilla WaterAvoidingRandomStrollGoal
         // Vanilla: chance to start strolling each tick (~1/120), picks random pos within 10 blocks,
         // avoids water, walks there, then idles for a while

@@ -1133,6 +1133,12 @@ this.slots.push(el);
     this.root.removeEventListener('mousemove', this._onMove);
     this.root.removeEventListener('mousedown', this._onDown);
     this.root.removeEventListener('contextmenu', this._onContext);
+    // The hotbar shortcut listens on the window rather than the panel, because
+    // a panel only receives keys it has focus on and it never does. That makes
+    // it the one listener that has to be taken off again here: without this it
+    // is added on every time the screen opens and never comes off, so the
+    // window's listener list grows for the rest of the session.
+    window.removeEventListener('keydown', this._onKey);
   }
 
   destroy() {

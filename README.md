@@ -94,17 +94,23 @@ Every key below is rebindable in **Options → Controls**.
 | Mouse | Look |
 | Left click | Mine (hold) |
 | Right click | Place / open block / hold to eat |
-| Middle click, or `B` | Pick Block — copies what you are looking at into the hotbar |
+| Middle click | Pick Block — copies what you are looking at into the hotbar |
 | `1`–`9`, scroll | Select hotbar slot (scroll only while the pointer is locked) |
 | `E` | Inventory + 2×2 crafting |
 | `I` | Creative inventory |
 | `Q` | Drop held item on the ground |
 | `T` | Chat |
 | `/` | Chat, with the command slash already typed |
+| `F1` | Hide the HUD |
 | `F3` | Debug overlay |
+| `F3`+`C` | Copy your coordinates to the clipboard |
 | `F5` | Cycle camera: first → third → front |
 | `F2` | Screenshot |
 | `Esc` | Pause menu |
+
+Sprinting and sneaking can be latched rather than held — **Options → Gameplay →
+Toggle Sprint / Toggle Sneak**. With the toggle on, one press of the key turns
+it on and the next turns it off, instead of the key having to stay down.
 
 Mouse in the inventory: **left click** pick up / drop, **right click** half,
 **shift + click** quick move, **shift + click a result** craft repeatedly.
