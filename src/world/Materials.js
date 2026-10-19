@@ -34,6 +34,15 @@ export const sharedUniforms = {
    */
   uAmbient: { value: 0.048 },
   uAmbientTint: { value: new THREE.Color(1, 1, 1) },
+  /**
+   * The flicker of the block light channel.
+   *
+   * Vanilla's lightmap is not a fixed table: the block light half of it is
+   * multiplied by a random walk of about a tenth, refreshed every tick, so a
+   * torch-lit room breathes instead of sitting at a constant brightness
+   * (LightmapRenderStateExtractor). One value drives it for every surface.
+   */
+  uFlicker: { value: 1.0 },
 };
 
 const LIGHT_PARS = /* glsl */`
@@ -43,11 +52,12 @@ const LIGHT_PARS = /* glsl */`
   uniform vec3 uTorchColor;
   uniform float uAmbient;
   uniform vec3 uAmbientTint;
+  uniform float uFlicker;
 `;
 
 const LIGHT_APPLY = /* glsl */`
   float skyL  = clamp( vAlight.x / 15.0, 0.0, 1.0 );
-  float blkL  = clamp( vAlight.y / 15.0, 0.0, 1.0 );
+  float blkL  = clamp( vAlight.y / 15.0 * uFlicker, 0.0, 1.0 );
   float skyC  = skyL * uDayLight;
   float lum   = max( skyC, blkL );
   // Minecraft's own light ramp, and it is a much harder curve than it looks.
@@ -81,19 +91,22 @@ const LIGHT_APPLY = /* glsl */`
  *
  * @param {THREE.MeshBasicMaterial} mat
  * @param {'solid'|'water'|'lava'|'portal'} kind
- *        `water` and `lava` scroll their texture, and neither surface is
- *        displaced: the water in the real game is a flat plane at the top of the
- *        block, and it is *only* flat. A nether portal does neither - it picks
- *        one cell out of a sheet of animation frames, which is how the vanilla
- *        sheet is meant to be played.
+ *        `portal` plays one animation frame per cell of a sheet, and neither
+ *        liquid surface is displaced: the water in the real game is a flat
+ *        plane at the top of the block, and it is *only* flat. A nether portal
+ *        does neither - it picks one cell out of a sheet of animation frames,
+ *        which is how the vanilla sheet is meant to be played.
  */
 function patchLightShader(mat, kind = 'solid') {
-  const scroll = kind === 'water' || kind === 'lava';
+  // Liquids used to scroll their texture across the surface. Vanilla does not
+  // scroll them: it plays a strip of animation frames, one every two ticks,
+  // the same way the portal and the fire play theirs. A scrolling texture
+  // slides under the player instead of staying where it was put, which is the
+  // most obvious way a clone's water can look wrong.
   const frames = kind === 'portal';
 
   mat.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, sharedUniforms);
-    if (scroll) shader.uniforms.uWaterOffset = { value: new THREE.Vector2() };
     if (frames) {
       shader.uniforms.uPortalFrame = { value: 0 };
       shader.uniforms.uPortalCells = { value: new THREE.Vector2(4, 2) };
@@ -106,19 +119,6 @@ function patchLightShader(mat, kind = 'solid') {
         varying vec2 vAlight;`)
       .replace('#include <begin_vertex>', `#include <begin_vertex>
         vAlight = alight;`);
-
-    // Liquids get an extra scrolling UV offset. This is folded into the single
-    // <common> and <color_fragment> injections below so the two passes cannot
-    // fight over the same marker, and so the shared light uniforms are only
-    // declared once.
-    // This is gated on `scroll` and not just on being a liquid: the plain
-    // materials carry a map too, and USE_MAP is defined for them, so emitting
-    // the scroll line without also declaring uWaterOffset fails to compile.
-    const SCROLL_APPLY = scroll ? /* glsl */`
-       // scrolling texture
-       #ifdef USE_MAP
-         diffuseColor *= texture2D( map, vMapUv + uWaterOffset );
-       #endif` : '';
 
     /* The portal sheet holds one animation frame per cell, and every cell of
        the portal shows a whole frame. The quad's own UVs run 0..1 across one
@@ -133,7 +133,6 @@ function patchLightShader(mat, kind = 'solid') {
        #endif` : '';
 
     const fragmentPars = [
-      scroll ? 'uniform vec2 uWaterOffset;' : '',
       frames ? 'uniform float uPortalFrame;' : '',
       frames ? 'uniform vec2 uPortalCells;' : '',
     ].filter(Boolean).join('\n');
@@ -143,15 +142,14 @@ function patchLightShader(mat, kind = 'solid') {
         ${LIGHT_PARS}
         uniform float uUnderwater;
         ${fragmentPars}`)
-      .replace('#include <map_fragment>', (scroll || frames) ? '// handled in color_fragment' : '#include <map_fragment>')
+      .replace('#include <map_fragment>', frames ? '// handled in color_fragment' : '#include <map_fragment>')
       .replace(
         '#include <color_fragment>',
         `#include <color_fragment>
-         ${SCROLL_APPLY}
          ${FRAME_APPLY}
          ${LIGHT_APPLY}
          // underwater absorption (vec3 multiply: diffuseColor is a vec4)
-         diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3( 0.24, 0.52, 0.92 ), uUnderwater * 0.85 );`,
+         diffuseColor.rgb = mix( diffuseColor.rgb, diffuseColor.rgb * vec3( 0.24, 0.52, 0.92 ), uUnderwater * 0.45 );`,
       );
   };
   mat.customProgramCacheKey = () => `mclight-${kind}`;
@@ -211,7 +209,7 @@ export function lightColor(sky, block, out) {
 export class ChunkMaterials {
   /**
    * @param {THREE.Texture} atlasTex
-   * @param {{water: THREE.Texture, lava: THREE.Texture}} liquidTex
+   * @param {{water: THREE.Texture[], lava: THREE.Texture[]}} liquidTex
    */
   constructor(atlasTex, liquidTex) {
     this.opaque = patchLightShader(new THREE.MeshBasicMaterial({
@@ -230,7 +228,7 @@ export class ChunkMaterials {
     }), 'solid');
 
     this.water = patchLightShader(new THREE.MeshBasicMaterial({
-      map: liquidTex.water,
+      map: liquidTex.water?.[0] ?? atlasTex,
       vertexColors: true,
       transparent: true,
       opacity: 0.72,
@@ -242,8 +240,9 @@ export class ChunkMaterials {
       fog: true,
     }), 'water');
 
-    // Lava is fully opaque and still, so it gets neither the transparency nor
-    // the wave displacement that water has - only the scrolling texture.
+    // Lava is fully opaque, and still: it gets neither the transparency nor
+    // the wave displacement that water has - only the animation frames, which
+    // vanilla plays at the same two ticks a frame as the water.
     //
     // DoubleSide, unlike water. A lava pool is a small fraction of the screen
     // where an ocean is most of it, so the extra fragment work is not worth
@@ -251,7 +250,7 @@ export class ChunkMaterials {
     // exactly what tells you how deep it is, and losing one reads as the lava
     // being a flat sheet painted on the cave floor.
     this.lava = patchLightShader(new THREE.MeshBasicMaterial({
-      map: liquidTex.lava,
+      map: liquidTex.lava?.[0] ?? atlasTex,
       vertexColors: true,
       side: THREE.DoubleSide,
       fog: true,
@@ -307,6 +306,28 @@ export class ChunkMaterials {
 
     this.all = [this.opaque, this.cutout, this.water, this.lava, this.portal, this.fire,
       this.seagrass];
+    // The animation frames the liquids play through. Vanilla's water_still is
+    // a strip of thirty-two 16x16 frames and its lava_still a strip of
+    // twenty, and each frame is its own sprite in the real game.
+    this.liquidFrames = {
+      water: liquidTex.water ?? [],
+      lava: liquidTex.lava ?? [],
+    };
+    /** the running torch flicker, kept between frames */
+    this._flicker = 0;
+  }
+
+  /**
+   * Put the next frame of a liquid's strip on its material.
+   *
+   * Swapping the texture is enough: the material's map uniform is refreshed
+   * every frame, and the program does not change because both frames are the
+   * same size and format.
+   */
+  _playFrames(material, frames, time, fps) {
+    if (!frames || frames.length < 2) return;
+    const index = Math.floor(time * fps) % frames.length;
+    if (material.map !== frames[index]) material.map = frames[index];
   }
 
   update(time, dayLight, brightness, underwater, ambient, ambientTint) {
@@ -316,12 +337,18 @@ export class ChunkMaterials {
     sharedUniforms.uUnderwater.value = underwater;
     if (ambient !== undefined) sharedUniforms.uAmbient.value = ambient;
     if (ambientTint) sharedUniforms.uAmbientTint.value.copy(ambientTint);
-    for (const m of [this.water, this.lava]) {
-      const s = m.userData.shader;
-      if (s?.uniforms?.uWaterOffset) {
-        s.uniforms.uWaterOffset.value.set(time * 0.014, time * 0.026);
-      }
-    }
+    // The torch flicker: a random walk that is nudged by up to a tenth each
+    // tick and then decays, which is what vanilla's lightmap does to the
+    // block light channel.
+    this._flicker += (Math.random() - Math.random()) * Math.random() * 0.1;
+    this._flicker *= 0.9;
+    sharedUniforms.uFlicker.value = 1 + this._flicker;
+    // Water and lava play their animation strips: vanilla's `.mcmeta` gives
+    // them two ticks a frame, which at twenty ticks a second is ten frames a
+    // second. Thirty-two frames of water is a cycle of just over three
+    // seconds; the twenty frames of lava run a little faster.
+    this._playFrames(this.water, this.liquidFrames?.water, time, 10);
+    this._playFrames(this.lava, this.liquidFrames?.lava, time, 10);
     // The vanilla portal runs a whole frame cycle in well under a second; this
     // lands close to it without shipping all 32 frames the pack holds. Fire is
     // slower, as it is in the real game - a flicker rather than a strobe.

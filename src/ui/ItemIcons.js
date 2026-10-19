@@ -126,6 +126,10 @@ function drawBlockIcon(ctx, blockName, size, assets) {
   const imgTop = tileImage(tileTop, assets);
   const imgLeft = tileImage(tileLeft, assets);
   const imgRight = tileImage(tileRight, assets);
+  // the second layer a block draws over its sides - the grass block's
+  // greyscale fringe, which carries the biome colour on a side face
+  const imgOverlay = def.sideOverlay ? tileImage(def.sideOverlay, assets) : null;
+  const tintOverlay = def.tint ? ICON_TINT[def.tint] : null;
 
   // Isometric cube laid out to exactly fill a size x size box.
   const s = size;
@@ -148,6 +152,7 @@ function drawBlockIcon(ctx, blockName, size, assets) {
     ctx.save();
     ctx.setTransform(hw / 16, hh / 16, 0, H / 16, cx - hw, top + hh);
     drawTile(ctx, imgLeft, SHADE_LEFT, tintSide);
+    if (imgOverlay) drawTile(ctx, imgOverlay, SHADE_LEFT, tintOverlay);
     ctx.restore();
   }
 
@@ -156,6 +161,7 @@ function drawBlockIcon(ctx, blockName, size, assets) {
     ctx.save();
     ctx.setTransform(hw / 16, -hh / 16, 0, H / 16, cx, top + 2 * hh);
     drawTile(ctx, imgRight, SHADE_RIGHT, tintSide);
+    if (imgOverlay) drawTile(ctx, imgOverlay, SHADE_RIGHT, tintOverlay);
     ctx.restore();
   }
 }

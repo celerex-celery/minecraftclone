@@ -27,24 +27,26 @@ const SKY_FRAG = /* glsl */`
   void main() {
     vec3 d = normalize(vDir);
     float h = d.y;
-    vec3 col;
-    if (h > 0.0) {
-      col = mix(uHorizon, uTop, pow(clamp(h, 0.0, 1.0), 0.62));
-    } else {
-      col = mix(uHorizon, uBottom, pow(clamp(-h, 0.0, 1.0), 0.5));
-    }
-    // warm glow around the sun, strongest at the horizon
-    float sun = max(dot(d, normalize(uSunDir)), 0.0);
-    col += uSunColor * pow(sun, 7.0) * uSunGlow;
-    col += uSunColor * pow(sun, 1.6) * uSunGlow * 0.14;
+    // Vanilla's sky is flat. SkyRenderer draws a disc of one colour above the
+    // horizon and a second one below it - there is no gradient and no halo
+    // around the sun, which is a separate sprite. What reads as a gradient in
+    // vanilla is the fog colour changing with the clock, and that is what the
+    // single horizon colour here is for.
+    vec3 col = h > 0.0 ? uHorizon : uBottom;
+    // a narrow blend right at the horizon, so the seam between the two discs
+    // does not read as a cut line
+    col = mix(col, uHorizon, smoothstep(0.0, 0.04, abs(h)));
     gl_FragColor = vec4(col, 1.0);
   }
 `;
 
-/* The vanilla clouds.png is a 4x4 sheet of different cloud cells, not one
-   tileable image. Sampling the whole sheet with a plain repeat shows every cell
-   side by side and reads as a visible grid, so each world tile picks one
-   hashed cell out of the atlas instead. */
+/* Vanilla's clouds are a grid of cells, not a picture of clouds: one texel of
+   clouds.png is one 12 x 12 block cell of cloud, and the sheet repeats every
+   (texture width * 12) blocks. The texture is sampled in world space so the
+   pattern is anchored to the world and does not re-roll when the camera moves;
+   only the drift moves it, at 0.6 blocks a second along the X axis
+   (CloudRenderer.CELL_SIZE_IN_BLOCKS / BLOCKS_PER_SECOND). A cell whose alpha
+   is below 10 counts as empty and is not drawn at all. */
 const CLOUD_VERT = /* glsl */`
   varying vec2 vCloudWorld;
   varying float vFogDepth;
@@ -64,45 +66,29 @@ const CLOUD_VERT = /* glsl */`
 const CLOUD_FRAG = /* glsl */`
   uniform sampler2D map;
   uniform float uTime;
-  uniform float uCells;
   uniform vec3 uColor;
   uniform float uOpacity;
   uniform vec3 uFogColor;
   uniform float uFogNear;
   uniform float uFogFar;
-  uniform vec2 uHashOffset;
   uniform vec2 uDrift;
+  uniform float uTexels;
+  uniform float uCellSize;
   varying vec2 vCloudWorld;
   varying float vFogDepth;
 
-  float hash(vec2 p) {
-    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-  }
-
   void main() {
-    // one cloud cell is 16 world blocks across
-    float cellSize = 16.0;
-    vec2 world = vCloudWorld / cellSize;
-    world.x += uTime * uDrift.x;
-    world.y += uTime * uDrift.y;
-
-    vec2 cellId = floor(world);
-    // each layer adds its own offset so adjacent layers sample different cells
-    // and read as separate clouds rather than one stacked sheet
-    cellId += uHashOffset;
-    vec2 local = fract(world);
-    // pick one of the atlas cells, deterministically per world tile
-    vec2 pick = floor(vec2(hash(cellId), hash(cellId + 17.3)) * uCells);
-    vec2 sampleUv = (pick + local) / uCells;
-
-    vec4 texel = texture2D(map, sampleUv);
-    if (texel.a < 0.02) discard;
+    vec2 world = vCloudWorld + uDrift * uTime;
+    vec2 uv = world / (uTexels * uCellSize);
+    vec4 texel = texture2D(map, uv);
+    // vanilla treats a cell with alpha below 10 as empty
+    if (texel.a < 0.04) discard;
 
     vec3 col = texel.rgb * uColor;
     // blend into the horizon so the layer does not end in a hard edge
     float fog = smoothstep(uFogNear, uFogFar, vFogDepth);
     col = mix(col, uFogColor, fog);
-    gl_FragColor = vec4(col, texel.a * uOpacity * (1.0 - fog * 0.85));
+    gl_FragColor = vec4(col, texel.a * uOpacity * (1.0 - fog));
   }
 `;
 
@@ -181,6 +167,7 @@ export class Sky {
         fragmentShader: CELESTIAL_FRAG,
         fog: false,
         depthWrite: false,
+        depthTest: false,
         transparent: true,
       }),
     );
@@ -216,6 +203,7 @@ export class Sky {
         fragmentShader: CELESTIAL_FRAG,
         fog: false,
         depthWrite: false,
+        depthTest: false,
         transparent: true,
       }),
     );
@@ -224,7 +212,7 @@ export class Sky {
     scene.add(this.moon);
 
     /* ---- stars ---- */
-    const starCount = 900;
+    const starCount = 1500;
     const pos = new Float32Array(starCount * 3);
     const sizes = new Float32Array(starCount);
     for (let i = 0; i < starCount; i++) {
@@ -235,7 +223,7 @@ export class Sky {
       pos[i * 3] = Math.cos(t) * r;
       pos[i * 3 + 1] = Math.abs(u) * 0.98 + 0.02;
       pos[i * 3 + 2] = Math.sin(t) * r;
-      sizes[i] = 1 + Math.random() * 2.2;
+      sizes[i] = 1 + Math.random() * 1.1;
     }
     const starGeo = new THREE.BufferGeometry();
     starGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -261,6 +249,7 @@ export class Sky {
         }`,
       transparent: true,
       depthWrite: false,
+      depthTest: false,
       fog: false,
     });
     this.stars = new THREE.Points(starGeo, this.starMat);
@@ -287,11 +276,11 @@ export class Sky {
     scene.add(this.ceiling);
     this._ceilingOpacity = 0;
 
-    /* ---- clouds (3D layered) ----
-        Vanilla draws three cloud sheets at different heights that drift
-        apart, reading as a volume rather than a flat card. Each layer
-        gets its own material so it can carry an independent time offset
-        and opacity. */
+    /* ---- clouds ----
+        Vanilla draws one cloud sheet: a flat plane of cells, twelve blocks to a
+        cell, drifting slowly along the X axis, at a fixed height above the
+        world. It is a single layer, and the texture is sampled in world space
+        so the pattern is anchored to the world rather than to the camera. */
     this.cloudLayers = [];
     if (cloudTexture) {
       const tex = cloudTexture instanceof THREE.Texture
@@ -302,54 +291,50 @@ export class Sky {
       tex.minFilter = THREE.LinearFilter;
       tex.generateMipmaps = false;
       tex.colorSpace = THREE.SRGBColorSpace;
-      tex.repeat.set(6, 6);
       tex.needsUpdate = true;
       this.cloudMap = tex;
 
-      // height as a fraction of the dome radius, speed multiplier, base opacity
-      // All layers sit at the same world height (like vanilla) so the player
-      // never sees clouds both above and below at once; per-layer drift and
-      // hash offsets keep them reading as separate clouds rather than one sheet.
-      const LAYERS = [
-        { height: 1.00, speed: 1.00, opacity: 0.55 },
-        { height: 1.00, speed: 0.75, opacity: 0.80 },
-        { height: 1.00, speed: 0.45, opacity: 0.90 },
-      ];
+      // one texel of clouds.png is one cloud cell, twelve blocks across
+      const texels = Math.max(1, tex.image?.width ?? 256);
+      const cellSize = 12;
 
-      for (const def of LAYERS) {
-        const uniforms = {
-          map: { value: tex },
-          uTime: { value: 0 },
-          uCells: { value: 4 },
-          uColor: { value: new THREE.Color(1, 1, 1) },
-          uOpacity: { value: def.opacity },
-          uFogColor: { value: new THREE.Color(0xa8c8ee) },
-          uFogNear: { value: 40 },
-          uFogFar: { value: 160 },
-          uHashOffset: { value: new THREE.Vector2(0, 0) },
-          uDrift: { value: new THREE.Vector2(0.004, -0.002) },
-        };
-        const mat = new THREE.ShaderMaterial({
-          uniforms,
-          vertexShader: CLOUD_VERT,
-          fragmentShader: CLOUD_FRAG,
-          transparent: true,
-          depthWrite: false,
-          side: THREE.DoubleSide,
-        });
-        const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1600, 1600), mat);
-        mesh.rotation.x = -Math.PI / 2;
-        mesh.renderOrder = -800;
-        mesh.frustumCulled = false;
-        mesh.userData = { height: def.height, speed: def.speed };
-        scene.add(mesh);
-        this.cloudLayers.push(mesh);
-      }
+      const uniforms = {
+        map: { value: tex },
+        uTime: { value: 0 },
+        uTexels: { value: texels },
+        uCellSize: { value: cellSize },
+        uColor: { value: new THREE.Color(1, 1, 1) },
+        uOpacity: { value: 0.85 },
+        uFogColor: { value: new THREE.Color(0xa8c8ee) },
+        uFogNear: { value: 40 },
+        uFogFar: { value: 160 },
+        uDrift: { value: new THREE.Vector2(0.6, 0) },
+      };
+      const mat = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: CLOUD_VERT,
+        fragmentShader: CLOUD_FRAG,
+        transparent: true,
+        depthWrite: false,
+        // The sheet reaches far past the camera's far plane, so it must not be
+        // depth tested against it - vanilla draws the clouds as part of the
+        // sky, before the world, and the terrain then paints over them.
+        depthTest: false,
+        side: THREE.DoubleSide,
+      });
+      // The sheet has to reach past the horizon: vanilla fades clouds out with
+      // their own fog, out to twice the render distance.
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(4096, 4096), mat);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.renderOrder = -800;
+      mesh.frustumCulled = false;
+      mesh.userData = { height: 1.00, speed: 1.00 };
+      scene.add(mesh);
+      this.cloudLayers.push(mesh);
 
-      // convenience handle to the mid layer for legacy visibility checks
-      this.cloudMat = this.cloudLayers[1].material;
-      this.cloudUniforms = this.cloudMat.uniforms;
-      this.clouds = this.cloudLayers[1];
+      this.cloudMat = mat;
+      this.cloudUniforms = uniforms;
+      this.clouds = mesh;
     }
 
     this.fogColor = new THREE.Color(0xa8c8ee);
@@ -372,7 +357,7 @@ export class Sky {
      */
     this.dimming = 1;
     /** height of the cloud layer above y=0, adjustable in the options */
-    this.cloudHeight = 160;
+    this.cloudHeight = 192;
      this.dimension = 'overworld';
     /** whether sun/moon are swapped at day/night in a cursed world */
     this.cursedSky = false;
@@ -473,18 +458,23 @@ export class Sky {
     this.cloudHeight = y;
   }
 
-  setRadius(r) {
+  setRadius(far) {
+    // Vanilla's sky disc is 512 blocks across, the sun and the moon are thirty
+    // and twenty blocks wide and sit a hundred blocks out, and the stars are
+    // drawn on a sphere of that same radius (SkyRenderer). The sizes are fixed
+    // in vanilla rather than scaled with the render distance, so they stay the
+    // same size on screen no matter how far the world is drawn.
+    //
+    // The disc itself has to fit inside the camera's far plane. Vanilla can
+    // draw it at 512 because its own far plane is far beyond that, but a
+    // three.js camera clipped at the end of the render distance cuts the disc
+    // away in pieces - and a sky with holes in it is a black sky.
+    const r = far ? Math.min(512, far * 0.9) : 512;
     this.radius = r;
     this.dome.scale.setScalar(r);
-    this.stars.scale.setScalar(r * 0.92);
-    const disc = Math.max(6, r * 0.13);
-    this.sun.scale.setScalar(disc / 60);
-    this.moon.scale.setScalar(disc / 34);
-    if (this.cloudLayers) {
-      for (const layer of this.cloudLayers) {
-        layer.scale.setScalar((r * 2.2) / 1600);
-      }
-    }
+    this.stars.scale.setScalar(100);
+    this.sun.scale.setScalar(30 / 60);
+    this.moon.scale.setScalar(20 / 34);
   }
 
   /**
@@ -569,16 +559,26 @@ export class Sky {
 
     this.stars.position.copy(p);
 
-    this.sun.position.copy(p).addScaledVector(sunDir, r * 0.78);
+    // vanilla draws the sun and the moon a hundred blocks out, on the far side
+    // of the sky disc, and their size does not depend on the render distance
+    this.sun.position.copy(p).addScaledVector(sunDir, 100);
     this.sun.lookAt(p);
     let sunOpacity = THREE.MathUtils.clamp(sunDir.y * 6 + 0.35, 0, 1);
     this.sun.material.uniforms.opacity.value = sunOpacity;
 
     this._moonDir.copy(sunDir).multiplyScalar(-1);
-    this.moon.position.copy(p).addScaledVector(this._moonDir, r * 0.78);
+    this.moon.position.copy(p).addScaledVector(this._moonDir, 100);
     this.moon.lookAt(p);
     let moonOpacity = THREE.MathUtils.clamp(-sunDir.y * 6 + 0.35, 0, 1) * 0.95;
     this.moon.material.uniforms.opacity.value = moonOpacity;
+
+    // The moon goes through its eight phases one per in-game day, starting on
+    // a full moon (MoonPhase).
+    const phase = Math.floor(time / CONFIG.DAY_TICKS) % 8;
+    if (phase !== this._moonIndex) {
+      this._moonIndex = phase;
+      this.moon.material.uniforms.map.value = this._moonTextures[phase];
+    }
 
     // Cursed world: sun and moon swap at day/night
     if (this.cursedSky) {
@@ -590,33 +590,17 @@ export class Sky {
     }
 
     if (this.cloudLayers) {
-      const HASH_OFFSETS = [
-        new THREE.Vector2(0, 0),
-        new THREE.Vector2(1000, 500),
-        new THREE.Vector2(2000, 1000),
-      ];
-      const DRIFTS = [
-        new THREE.Vector2(0.004, -0.002),
-        new THREE.Vector2(-0.003, 0.003),
-        new THREE.Vector2(0.005, 0.001),
-      ];
       for (const layer of this.cloudLayers) {
         const u = layer.material.uniforms;
         const def = layer.userData;
-        const i = this.cloudLayers.indexOf(layer);
-        // position each layer at its fixed world height
+        // the sheet sits at its fixed world height and follows the camera
         layer.position.set(p.x, this.cloudHeight * def.height, p.z);
-        // independent drift speed and direction for parallax depth
+        // vanilla drifts the sheet along the X axis at 0.6 blocks a second
         u.uTime.value = elapsed * def.speed;
-        u.uDrift.value.copy(DRIFTS[i] ?? new THREE.Vector2(0.004, -0.002));
-        // each layer samples different cells so they read as separate clouds
-        u.uHashOffset.value.copy(HASH_OFFSETS[i] ?? new THREE.Vector2());
-        // overcast thickens the cloud sheet and drains its colour toward the
-        // grey of the sky behind it, so the two agree instead of showing white
-        // cloud against a grey lid
-        u.uColor.value.setScalar(0.6 + day * 0.4).lerp(this._cloudGrey, this.overcast * 0.7);
-        // higher layers are a touch thicker
-        u.uOpacity.value = (0.35 + day * 0.4 + this.overcast * 0.3) * (1 + def.height * 0.15);
+        // overcast drains the colour toward the grey of the sky behind it, so
+        // the two agree instead of showing white cloud against a grey lid
+        u.uColor.value.setScalar(0.45 + day * 0.55).lerp(this._cloudGrey, this.overcast * 0.7);
+        u.uOpacity.value = 0.85;
         u.uFogColor.value.copy(horizon);
       }
     }
@@ -643,17 +627,26 @@ export class Sky {
     }
   }
 
-  /** Fog distances derived from the render distance. */
+  /**
+   * Fog distances derived from the render distance.
+   *
+   * Vanilla starts the fog about a tenth of the render distance before the edge
+   * of the loaded world and ends it exactly at that edge
+   * (FogRenderer.renderDistanceStart / renderDistanceEnd):
+   *
+   *   span  = clamp(renderDistanceInBlocks / 10, 4, 64)
+   *   start = renderDistanceInBlocks - span
+   *   end   = renderDistanceInBlocks
+   *
+   * At the default twelve chunks that is a hundred and ninety two blocks with
+   * the last nineteen of them fogged, so the far edge of the world dissolves
+   * instead of the middle distance turning grey. Starting it earlier - which is
+   * what this used to do, at just over half the distance - hazes over the whole
+   * view and makes the world look flat and close.
+   */
   fogRange(renderDistance) {
-    // The Nether's haze is thicker than the overworld's and does not follow the
-    // render distance: the far wall is about a hundred blocks away at any
-    // setting, which is what gives the dimension its closed-in feel. It is not
-    // so close that it becomes a wall of red in front of the player's face.
-    if (this.dimension === 'nether') {
-      const far = Math.min(renderDistance * 16, 132);
-      return { near: far * 0.42, far: far * 0.97 };
-    }
-    const far = renderDistance * 16;
-    return { near: far * 0.55, far: far * 0.96 };
+    const blocks = renderDistance * 16;
+    const span = Math.min(Math.max(blocks / 10, 4), 64);
+    return { near: blocks - span, far: blocks };
   }
 }

@@ -64,24 +64,43 @@ const FACE_DEFS = [
 ];
 /**
  * Ambient occlusion, as a multiplier on the face shade, by how enclosed a corner
- * is: 0 for a corner walled in on two sides, 3 for one that is open.
+ * is. The index is the corner's occlusion rank: 3 for a corner with nothing
+ * around it, 0 for one walled in on both sides.
  *
- * These are the vanilla values, and the 0.2 at the closed end is the number
- * that matters. A fully enclosed corner in Minecraft receives a fifth of the
- * light, not two thirds of it. That much contrast is what makes a Minecraft
- * corner read as a corner: the crease is dark enough to draw the edge of the
- * cube, so a stack of blocks still looks like a stack of blocks even though
- * the lighting itself is flat and unlit.
+ * These are the vanilla values, and they come out of an average rather than a
+ * lookup. Vanilla averages four samples per corner - the two edge neighbours,
+ * the diagonal across the corner, and the block the face belongs to - where a
+ * full block contributes 0.2 and anything else contributes 1.0
+ * (BlockModelLighter.prepareQuadAmbientOcclusion, and
+ * BlockBehaviour.getShadeBrightness). The block itself counts, so even an
+ * entirely open corner of a full block lands on 0.8, not 1.0: a bare stone
+ * wall in daylight is drawn at four fifths of its texture, and every step
+ * between there and a sealed corner is exactly 0.2.
  *
- * The three interior steps are 3/15, 7/15 and 11/15 - evenly spaced by 4/15,
- * which is not a coincidence. Vanilla quantises occlusion into the same 0..15
- * ladder as the light levels and blends the two, so the steps land on the same
- * grid rather than being four arbitrary constants. The old values here were
- * [0.66, 0.78, 0.90, 1.0], chosen to keep corners soft on the grounds that the
- * darker ramp "made the world look photographic". It did - but that is what
- * Minecraft looks like, and matching it is the point.
+ * A sealed corner receives a fifth of the light. That much contrast is what
+ * makes a Minecraft corner read as a corner: the crease is dark enough to draw
+ * the edge of the cube, so a stack of blocks still looks like a stack of blocks
+ * even though the lighting itself is flat and unlit.
+ *
+ * The second table is for blocks that are not full cubes - slabs, stairs,
+ * fences, plants. Their own sample counts as 1.0 instead of 0.2, so every step
+ * of their ramp is 0.2 higher and an open corner is drawn at full strength.
  */
-const AO_LEVELS = [3 / 15, 7 / 15, 11 / 15, 1.0];
+const AO_LEVELS = [0.2, 0.4, 0.6, 0.8];
+const AO_LEVELS_OPEN = [0.4, 0.6, 0.8, 1.0];
+
+/**
+ * The per-face shading multipliers, per dimension, in FACE order
+ * (+X, -X, +Y, -Y, +Z, -Z).
+ *
+ * These are vanilla's (CardinalLighting.DEFAULT and CardinalLighting.NETHER).
+ * The Overworld's set is the one baked into FACE_DEFS above; the Nether's
+ * lifts the top and bottom faces from 1.0 and 0.5 to a flat 0.9, because a
+ * dimension with no sky has no reason for an upward face to be brighter than
+ * the rest.
+ */
+const OVERWORLD_SHADES = [0.60, 0.60, 1.00, 0.50, 0.80, 0.80];
+const NETHER_SHADES = [0.60, 0.60, 0.90, 0.90, 0.80, 0.80];
 
 /* Internal face bitmask, in FACE order: +X,-X,+Y,-Y,+Z,-Z */
 export const FACE_PX = 1, FACE_NX = 2, FACE_PY = 4, FACE_NY = 8, FACE_PZ = 16, FACE_NZ = 32;
@@ -358,6 +377,8 @@ export function buildBlockGeometry(atlas, def, sky, block) {
 export class ChunkMesher {
   constructor(atlas) {
     this.atlas = atlas;
+    /** the per-face shades for the dimension being meshed */
+    this.shades = OVERWORLD_SHADES;
     this.opaque = new Builder();
     this.cutout = new Builder();
     // Water and lava get separate builders because they get separate materials:
@@ -469,6 +490,10 @@ export class ChunkMesher {
     this.buildPadCache(chunk, world);
     // the liquid emitter needs the flow sim to know how deep each cell is
     this.world = world;
+    // Vanilla shades faces per dimension: the Nether's top and bottom faces
+    // are much closer to its sides, because there is no sky above it to make
+    // a top face brighter than the rest (CardinalLighting).
+    this.shades = world?.dimension === 'nether' ? NETHER_SHADES : OVERWORLD_SHADES;
     this.buildChunk = chunk;
     this.buildTop = Math.min(MAX_Y, chunk.maxY + 1);
     this.buildY = MIN_Y;
@@ -622,6 +647,26 @@ export class ChunkMesher {
     const tintG = col ? col[1] : 1;
     const tintB = col ? col[2] : 1;
 
+    // A full cube contributes 0.2 to its own occlusion average; anything else
+    // contributes 1.0, which lifts the whole ramp by 0.2 (see AO_LEVELS).
+    const fullCube = minX === 0 && minY === 0 && minZ === 0
+      && maxX === 1 && maxY === 1 && maxZ === 1;
+    const aoLevels = fullCube ? AO_LEVELS : AO_LEVELS_OPEN;
+
+    /**
+     * The second layer some blocks draw over their side faces.
+     *
+     * The grass block is the one that has it: a greyscale fringe of grass that
+     * lies along the top of the side face and carries the biome colour, while
+     * the dirt under it stays brown. Vanilla draws it as a separate alpha
+     * tested layer, so it goes into the cutout group and lands on top of the
+     * side face rather than replacing it.
+     *
+     * It needs a tint to be worth drawing at all - untinted it is a grey
+     * fringe - so a block without one is left alone.
+     */
+    const overlayUvr = (def.sideOverlay && col) ? atlas.get(def.sideOverlay) : null;
+
     // Which way this block's front faces, for the blocks that have one.
     //
     // Read once per block rather than once per face, and only for the blocks
@@ -672,7 +717,7 @@ export class ChunkMesher {
       const du = uvr[2] - uvr[0];
       const dv = uvr[3] - uvr[1];
       const useTint = tintMode === 2 || (tintMode === 1 && fi === FACE.PY);
-      const shade = f.shade;
+      const shade = this.shades[fi];
 
       this.sampleFace(sx, sy, sz, fi);
       faceCorners(fi, minX, minY, minZ, maxX, maxY, maxZ, CORNER);
@@ -689,14 +734,32 @@ export class ChunkMesher {
         a[4] = uvr[1] + (c === 0 || c === 1 ? dv : 0);
         a[5] = CORNER_SKY[c];
         a[6] = CORNER_BLK[c];
-        const s = AO_LEVELS[CORNER_AO[c]] * shade;
+        const s = aoLevels[CORNER_AO[c]] * shade;
         if (useTint) {
           a[7] = s * tintR; a[8] = s * tintG; a[9] = s * tintB;
         } else {
           a[7] = s; a[8] = s; a[9] = s;
         }
       }
-builder.pushQuad();
+      builder.pushQuad();
+
+      // The overlay layer, over the four sides only: the top and bottom faces
+      // of a block are its own texture, and the fringe is shaped for a side.
+      // The corners are the side face's own, so only the texture coordinates
+      // and the colour change - and the colour is the biome tint, which is the
+      // whole point of the layer.
+      if (overlayUvr && fi !== FACE.PY && fi !== FACE.NY) {
+        const odu = overlayUvr[2] - overlayUvr[0];
+        const odv = overlayUvr[3] - overlayUvr[1];
+        for (let c = 0; c < 4; c++) {
+          const a = V[c];
+          a[3] = overlayUvr[0] + (c === 1 || c === 2 ? odu : 0);
+          a[4] = overlayUvr[1] + (c === 0 || c === 1 ? odv : 0);
+          const os = aoLevels[CORNER_AO[c]] * shade;
+          a[7] = os * tintR; a[8] = os * tintG; a[9] = os * tintB;
+        }
+        this.cutout.pushQuad();
+      }
     }
   
 
@@ -988,7 +1051,7 @@ builder.pushQuad();
       this.sampleFace(px + f.n[0], py + f.n[1], pz + f.n[2], fi);
       // the box is the whole cell, except the top which sits at the water line
       faceCorners(fi, 0, 0, 0, 1, surface, 1, CORNER);
-      const shade = f.shade * 0.9;
+      const shade = this.shades[fi] * 0.9;
       const axis = FACE_AXIS[fi];
 
       for (let c = 0; c < 4; c++) {
@@ -1146,18 +1209,18 @@ export const BIOME_ORDER = [
 const grass = (r, g, b) => [r, g, b];
 export const BIOME_TINT = {
   grass: {
-    0: grass(0.51, 0.70, 0.36), 1: grass(0.57, 0.74, 0.35), 2: grass(0.57, 0.74, 0.35),
-    3: grass(0.49, 0.75, 0.40), 4: grass(0.53, 0.72, 0.38), 5: grass(0.50, 0.78, 0.51),
-    6: grass(0.75, 0.72, 0.33), 7: grass(0.75, 0.72, 0.33), 8: grass(0.42, 0.44, 0.24),
-    9: grass(0.54, 0.71, 0.47), 10: grass(0.35, 0.79, 0.24),
+    0: grass(0.30, 0.80, 0.16), 1: grass(0.32, 0.85, 0.14), 2: grass(0.32, 0.85, 0.14),
+    3: grass(0.24, 0.86, 0.18), 4: grass(0.28, 0.83, 0.16), 5: grass(0.26, 0.88, 0.30),
+    6: grass(0.75, 0.72, 0.33), 7: grass(0.75, 0.72, 0.33), 8: grass(0.20, 0.52, 0.09),
+    9: grass(0.28, 0.81, 0.26), 10: grass(0.12, 0.89, 0.06),
     11: grass(0.68, 0.44, 0.36),
     12: grass(0.20, 0.20, 0.35),  // the_end: dark purple-grey
   },
   foliage: {
-    0: grass(0.47, 0.67, 0.27), 1: grass(0.47, 0.67, 0.27), 2: grass(0.47, 0.67, 0.27),
-    3: grass(0.42, 0.74, 0.33), 4: grass(0.41, 0.66, 0.32), 5: grass(0.41, 0.75, 0.38),
-    6: grass(0.68, 0.66, 0.22), 7: grass(0.68, 0.66, 0.22), 8: grass(0.40, 0.42, 0.19),
-    9: grass(0.43, 0.64, 0.40), 10: grass(0.19, 0.73, 0.11),
+    0: grass(0.22, 0.75, 0.10), 1: grass(0.22, 0.75, 0.10), 2: grass(0.22, 0.75, 0.10),
+    3: grass(0.18, 0.83, 0.14), 4: grass(0.18, 0.75, 0.14), 5: grass(0.18, 0.85, 0.20),
+    6: grass(0.68, 0.66, 0.22), 7: grass(0.68, 0.66, 0.22), 8: grass(0.18, 0.50, 0.06),
+    9: grass(0.20, 0.73, 0.20), 10: grass(0.06, 0.83, 0.03),
     // the Nether has no foliage, but any block that does ask for a tint gets a
     // dry, dusty colour rather than falling through to white
     11: grass(0.62, 0.40, 0.34),

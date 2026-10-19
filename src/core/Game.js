@@ -26,6 +26,7 @@ import { World } from '../world/World.js';
 import { Sky } from '../world/Sky.js';
 import { Particles } from '../world/Particles.js';
 import { ItemDrops } from '../world/ItemDrops.js';
+import { EntityShadows } from '../world/EntityShadows.js';
 import { FallingBlocks } from '../world/FallingBlocks.js';
 import { EnderPearls } from '../world/EnderPearls.js';
 import { Spreading } from '../world/Spreading.js';
@@ -218,6 +219,9 @@ export class Game {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.Fog(0xa8c8ee, 60, 140);
     this.camera = new THREE.PerspectiveCamera(this.settings.fov, 1, 0.08, 600);
+    // The flat contact shadows under mobs and dropped items - vanilla has no
+    // real shadow maps, only a soft quad on the ground.
+    this.shadows = new EntityShadows(this.scene);
 
     /* ---------------- shared resources ---------------- */
     // The anisotropy ceiling is the driver's, and it has to be read off the
@@ -227,8 +231,8 @@ export class Game {
     this.atlas = new TextureAtlas(
       assets.blockImages, 16, 16, MAX_ANISOTROPY);
     this.liquidTextures = {
-      water: makeLiquidTexture(assets.blockImages.water_still),
-      lava: makeLiquidTexture(assets.blockImages.lava_still),
+      water: makeLiquidFrames(assets.blockImages.water_still),
+      lava: makeLiquidFrames(assets.blockImages.lava_still),
       // The nether portal and the fire both play through animation frames cut out
       // of the pack's 16 x 512 strips, so both get their own texture rather than
       // going through the block atlas.
@@ -269,6 +273,8 @@ export class Game {
      *  not still be there after a trip to the Nether */
     this._mobsByDimension = {};
     this.mobs = null;
+    /** the entities that get a contact shadow this frame */
+    this._shadowCasters = [];
     /** Boats, per world, for the same reason the mobs are: both systems live in
      *  the one three.js scene, so a boat left floating in the Overworld would
      *  keep drawing over the top of the Nether. */
@@ -575,7 +581,7 @@ this._bedsByDimension = {};
     audio.musicToasts = s.musicToasts ?? true;
     // the cave rumble is off by default and the option is what turns it on
     CONFIG.AMBIENT_CAVE.ENABLED = !!s.caveAmbience;
-    this.sky.setCloudHeight(s.cloudHeight ?? 148);
+    this.sky.setCloudHeight(s.cloudHeight ?? 192);
     const cloudsOn = s.clouds !== false;
     if (this.sky.cloudLayers) {
       for (const layer of this.sky.cloudLayers) layer.visible = cloudsOn;
@@ -612,7 +618,7 @@ this._bedsByDimension = {};
     const far = this.settings.renderDistance * CONFIG.CHUNK_SIZE + 60;
     this.camera.far = far;
     this.camera.updateProjectionMatrix();
-    this.sky.setRadius(Math.min(400, far * 0.42));
+    this.sky.setRadius(far);
   }
 
   /**
@@ -2614,6 +2620,32 @@ const payload = {
           () => audio.bubble(),
         );
 
+    /* ---- contact shadows ----
+       Every mob and every dropped item gets a soft quad on the ground under
+       it. Vanilla draws the same thing - it has no shadow maps at all - and
+       without it the entities look pasted onto the floor rather than standing
+       on it. */
+    this._shadowCasters.length = 0;
+    const mobs = this.mobs?.list;
+    if (mobs) {
+      for (const mob of mobs) {
+        const p = mob.pos;
+        if (!p) continue;
+        this._shadowCasters.push({
+          x: p.x, y: p.y, z: p.z,
+          width: (mob.variant?.width ?? 0.6) * 1.6,
+        });
+      }
+    }
+    for (const it of this.itemDrops.items) {
+      if (it.dead) continue;
+      this._shadowCasters.push({
+        x: it.pos.x, y: it.pos.y + it.lift, z: it.pos.z,
+        width: 0.35,
+      });
+    }
+    this.shadows.update(this._shadowCasters, this.camera.position, world);
+
     /* ---- ambience ----
        Three beds, and which one is playing is a state, not an event: underwater
        while the head is in water, the hum of a portal while one is near, the
@@ -2916,7 +2948,21 @@ const payload = {
       world.scene.fog.color.copy(sky.fogColor);
       world.scene.fog.near = range.near;
       world.scene.fog.far = range.far * reach;
-      sky.setFogRange(range.near * 0.5, range.far * reach);
+      // Under water, vanilla replaces the world's fog with its own: a blue one
+      // that starts right at the camera and ends after ninety six blocks
+      // (EnvironmentAttributes.WATER_FOG_START/END_DISTANCE). That is what
+      // makes the view underwater close in and blue instead of showing the
+      // whole ocean.
+      if (this.player?.headInWater) {
+        world.scene.fog.color.setHex(0x050533);
+        world.scene.fog.near = 0;
+        world.scene.fog.far = 96;
+      }
+      // The clouds have their own fog, which reaches much further than the
+      // world's: they stay visible past the far edge of the loaded chunks and
+      // fade out over the next two thousand blocks, which is what puts them on
+      // the horizon instead of ending at the edge of the world.
+      sky.setFogRange(range.far, 2048);
       materials.update(
         this.elapsed,
         // a lightning flash, added on top of the weather's own dimming rather
@@ -3049,22 +3095,46 @@ const payload = {
 /**
  * The liquid sheets tile independently of the block atlas, so they are built
  * as their own repeating textures rather than going through the atlas packer.
+ *
+ * They are also animation strips: vanilla's water_still.png is 16 wide and 512
+ * tall, which is 32 frames of 16x16, and lava_still.png is 16 by 320, twenty
+ * frames. Vanilla plays them one frame at a time - it does not scroll them, and
+ * a scrolling texture slides under the player instead of staying put, which is
+ * the single most obvious way a clone's water can look wrong.
+ *
+ * Each frame is cut into its own texture rather than sampled out of the strip.
+ * A strip that is mipmapped blends the bottom of one frame into the top of the
+ * next as the distance grows; separate textures keep each frame's mip chain
+ * inside itself.
  */
-function makeLiquidTexture(img) {
-  const tex = new THREE.Texture(img);
-  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-  tex.magFilter = THREE.NearestFilter;
-  // Mipmapped, unlike the frame sheets below. Water and lava repeat across a
-  // whole ocean, and an ocean is nearly always seen at a shallow angle, so
-  // without a mip chain the far half of it is a boiling mess of aliased
-  // texels. These tile rather than sit in an atlas, so there are no
-  // neighbours to bleed in and no gutter is needed.
-  tex.minFilter = THREE.NearestMipmapLinearFilter;
-  tex.generateMipmaps = true;
-  tex.anisotropy = Math.min(4, MAX_ANISOTROPY);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  tex.needsUpdate = true;
-  return tex;
+function makeLiquidFrames(img) {
+  const frames = [];
+  if (!img) return frames;
+  const frameSize = 16;
+  const count = Math.max(1, Math.floor(img.height / frameSize));
+  for (let i = 0; i < count; i++) {
+    const canvas = document.createElement('canvas');
+    canvas.width = frameSize;
+    canvas.height = frameSize;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, i * frameSize, frameSize, frameSize, 0, 0, frameSize, frameSize);
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.magFilter = THREE.NearestFilter;
+    // Mipmapped, unlike the frame sheets below. Water and lava repeat across a
+    // whole ocean, and an ocean is nearly always seen at a shallow angle, so
+    // without a mip chain the far half of it is a boiling mess of aliased
+    // texels. These tile rather than sit in an atlas, so there are no
+    // neighbours to bleed in and no gutter is needed.
+    tex.minFilter = THREE.NearestMipmapLinearFilter;
+    tex.generateMipmaps = true;
+    tex.anisotropy = Math.min(4, MAX_ANISOTROPY);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    frames.push(tex);
+  }
+  return frames;
 }
 
 /**

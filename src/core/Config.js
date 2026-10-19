@@ -358,7 +358,7 @@ export const CONFIG = {
   },
 
   /* --- rendering --- */
-  RENDER_DISTANCE: 7,          // chunks
+  RENDER_DISTANCE: 12,         // chunks - vanilla's default (Options.renderDistance)
   FOV: 70,                   // Java's default
   MAX_FRAMETIME_MS: 1000 / 30,
 
@@ -1521,7 +1521,7 @@ export const DEFAULTS = {
   musicVolume: 0.45,
   muted: false,
   guiScale: 0,           // 0 = auto, otherwise 1..4
-  cloudHeight: 148,      // y level of the cloud layer
+    cloudHeight: 192,      // y level of the cloud layer - vanilla's CLOUD_HEIGHT
   language: 'en_us',
   viewBobbing: true,
   smoothLighting: true,

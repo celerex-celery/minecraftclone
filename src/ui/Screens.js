@@ -385,7 +385,7 @@ export class OptionsScreen {
       R('fov', this._slider(50, 110, 1, () => s.fov, (v) => { s.fov = v; }));
       R('brightness', this._slider(-0.5, 0.8, 0.05, () => s.brightness, (v) => { s.brightness = v; }));
       R('clouds', this._toggle(() => s.clouds !== false, (v) => { s.clouds = v; }));
-      R('cloudHeight', this._slider(80, 240, 2, () => s.cloudHeight ?? 148, (v) => { s.cloudHeight = v; }));
+      R('cloudHeight', this._slider(80, 240, 2, () => s.cloudHeight ?? 192, (v) => { s.cloudHeight = v; }));
       R('viewBobbing', this._toggle(() => s.viewBobbing, (v) => { s.viewBobbing = v; }));
       R('showFps', this._toggle(() => s.showFps, (v) => { s.showFps = v; }));
     } else if (this.category === 'audio') {

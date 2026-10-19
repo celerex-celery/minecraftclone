@@ -184,6 +184,18 @@ class BlockRegistry {
       particle: opts.particle ?? null,          // override tile used for break particles
       tint: opts.tint ?? null,                  // biome tint colour: grass | foliage | null
       tintFace: opts.tintFace ?? 'all',        // 'all' | 'top'
+      /**
+       * A second tile drawn over the four side faces of a block, and tinted
+       * with the biome colour.
+       *
+       * Vanilla's grass block is two layers on its sides: the block texture
+       * underneath, and a greyscale grass overlay on top of it. The overlay is
+       * the layer that takes the tint, which is the whole reason vanilla has
+       * it - the base texture carries a green already baked in, and without
+       * the overlay on top of it the side of a grass block keeps that baked
+       * green while its top face follows the biome, so the two disagree.
+       */
+      sideOverlay: opts.sideOverlay ?? null,
       // --- flags the rest of the game reads but this list used to forget ---
       // `cutout` decides which draw group a block goes in, and `noDrop` decides
       // whether breaking it hands you anything. Both were read as `undefined`
@@ -366,6 +378,9 @@ Blocks.add('grass_block', {
   hardness: 0.6, tool: 'shovel',
   drops: [{ item: 'dirt' }],
   tint: 'grass', tintFace: 'top',
+  // the green fringe along the top of the side, drawn over the dirt and
+  // carrying the biome colour - vanilla's grass block side, in two layers
+  sideOverlay: 'grass_block_side_overlay',
   particle: 'grass_block_side',
 });
 Blocks.add('podzol', {
@@ -920,12 +935,12 @@ for (const [parent, label] of [
 Blocks.add('water', {
   label: 'Water', tiles: 'water_still', solid: false, opaque: false,
   shape: 'liquid', liquid: true, replaceable: true,
-  hardness: -1, placeable: true, liquidTop: 0.875, cutout: true,
+  hardness: -1, placeable: true, liquidTop: 8 / 9, cutout: true,
 });
 Blocks.add('lava', {
   label: 'Lava', tiles: 'lava_still', solid: false, opaque: false,
   shape: 'liquid', liquid: true, replaceable: true,
-  light: 15, damage: 4, hardness: -1, placeable: true, liquidTop: 0.9, cutout: true,
+  light: 15, damage: 4, hardness: -1, placeable: true, liquidTop: 8 / 9, cutout: true,
 });
 
 /* ================================================================

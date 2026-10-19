@@ -194,6 +194,9 @@ export function blockTextureManifest(Blocks) {
     else {
       for (const k of Object.keys(b.tiles)) if (b.tiles[k]) names.add(b.tiles[k]);
     }
+    // the second layer a block draws over its sides - the grass block's
+    // greyscale fringe, which is what takes the biome tint on a side face
+    if (b.sideOverlay) names.add(b.sideOverlay);
     if (b.particle) names.add(b.particle);
   }
   // slab and fence sheets are generated at load time, so never request them
