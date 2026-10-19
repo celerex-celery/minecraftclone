@@ -219,6 +219,17 @@ export class WorldListScreen {
         w.seedText || w.seed), { scale: 2, color: '#b8b8b8' });
       info.appendChild(meta);
 
+      // A world whose file was damaged says so here rather than looking like
+      // any other world. `recovered` means it was read back from the backup,
+      // so it plays but is one save behind.
+      if (w.damaged) {
+        const note = el('div', 'worldlist-note');
+        this.game.font.set(note,
+          t(w.recovered ? 'menu.worldRecoveredNote' : 'menu.worldDamagedNote'),
+          { scale: 2, color: '#e0a03a' });
+        info.appendChild(note);
+      }
+
       const actions = el('div', 'worldlist-actions');
       for (const [action, key, cls] of [
         ['play', 'menu.play', 'primary'],

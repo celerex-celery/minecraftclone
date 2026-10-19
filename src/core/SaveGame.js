@@ -9,6 +9,11 @@
  * That means saves can be inspected, backed up or moved like any other
  * folder, and they survive profile tweaks.
  *
+ * Each world also has a <id>.json.bak beside it - the previous version, the
+ * last one that parsed. Writes are atomic, so the file on disk is never half
+ * written, but a file that is damaged for any other reason can still be read
+ * back from the backup.
+ *
  * In a plain browser (start.bat) there is no main process, so saves fall
  * back to in-memory storage: the game still plays, but nothing persists
  * after the tab closes. Use the desktop app for saving.
@@ -48,12 +53,15 @@ const memory = {
   settings: null,
 
   async list() {
-    return [...this.worlds.values()].sort(
-      (a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0),
-    );
+    return [...this.worlds.values()]
+      .map((w) => ({ ...w, damaged: false, recovered: false }))
+      .sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0));
   },
   async get(id) {
-    return this.worlds.get(id) ?? null;
+    // Nothing on disk to damage in browser mode, so the record is always
+    // whole. The shape matches the desktop app's so callers do not branch on
+    // which one they are talking to.
+    return { record: this.worlds.get(id) ?? null, damaged: false, recovered: false };
   },
   async put(record) {
     this.worlds.set(record.id, record);
@@ -85,6 +93,16 @@ export const SaveGame = {
   /** @returns {Promise<Array>} worlds, most recently played first */
   list: () => store.list(),
 
+  /**
+   * Read one world.
+   *
+   * @returns {Promise<{record: object|null, damaged: boolean, recovered: boolean}>}
+   *   `damaged` means the file on disk would not parse. `recovered` means the
+   *   record came from the backup instead, so the world is one save behind.
+   *   The two are told apart because "this world does not exist" and "this
+   *   world is damaged and we fell back to an older copy" are very different
+   *   things to tell a player whose work is on the line.
+   */
   get: (id) => store.get(id),
 
   /** Insert or update a world record. */

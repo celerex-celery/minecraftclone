@@ -9,8 +9,6 @@
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
-const fs = require('node:fs');
-const fsp = require('node:fs/promises');
 
 // Make the app show up as "Minecraft Voxel" in Task Manager and the
 // notification area instead of the generic Electron entry.
@@ -80,87 +78,34 @@ const URL = `http://localhost:${PORT}/`;
 
 /* ============================ saves on disk ============================
  *
- * Worlds live as plain JSON files in %APPDATA%\Minecraft Voxel\worlds,
- * one file per world, so they can be inspected and backed up without
- * digging through the Electron profile's IndexedDB.
+ * The save logic lives in electron/saves.cjs so it can be exercised without
+ * starting Electron. This wires it to the app's folder and hands each call to
+ * the renderer over IPC.
  */
 
-function worldsDir() {
-  const dir = path.join(app.getPath('userData'), 'worlds');
-  fs.mkdirSync(dir, { recursive: true });
-  return dir;
+const { createSaves } = require('./saves.cjs');
+
+let saves = null;
+
+/** The store, built on first use because app.getPath needs the app to be up. */
+function saveStore() {
+  if (!saves) {
+    saves = createSaves({
+      dir: () => path.join(app.getPath('userData'), 'worlds'),
+      settingsFile: () => path.join(app.getPath('userData'), 'settings.json'),
+      log: (level, text) => logLine('main', level, text),
+    });
+  }
+  return saves;
 }
 
-function worldFile(id) {
-  if (typeof id !== 'string' || !/^[\w.-]{1,128}$/.test(id)) {
-    throw new Error(`invalid world id: ${id}`);
-  }
-  return path.join(worldsDir(), `${id}.json`);
-}
-
-function settingsFile() {
-  return path.join(app.getPath('userData'), 'settings.json');
-}
-
-async function readJson(file, fallback) {
-  try {
-    return JSON.parse(await fsp.readFile(file, 'utf8'));
-  } catch {
-    return fallback;
-  }
-}
-
-ipcMain.handle('saves:list', async () => {
-  const dir = worldsDir();
-  const out = [];
-  for (const name of await fsp.readdir(dir)) {
-    if (!name.endsWith('.json')) continue;
-    const rec = await readJson(path.join(dir, name), null);
-    if (rec) out.push(rec);
-  }
-  return out.sort((a, b) => (b.lastPlayed ?? 0) - (a.lastPlayed ?? 0));
-});
-
-ipcMain.handle('saves:get', async (_e, id) => {
-  return (await readJson(worldFile(id), null)) ?? null;
-});
-
-ipcMain.handle('saves:put', async (_e, record) => {
-  const file = worldFile(record.id);
-  await fsp.writeFile(file, JSON.stringify(record), 'utf8');
-  return record;
-});
-
-ipcMain.handle('saves:remove', async (_e, id) => {
-  try {
-    await fsp.rm(worldFile(id), { force: true });
-  } catch {
-    /* already gone */
-  }
-  return true;
-});
-
-ipcMain.handle('saves:usage', async () => {
-  const dir = worldsDir();
-  let total = 0;
-  for (const name of await fsp.readdir(dir)) {
-    try {
-      total += (await fsp.stat(path.join(dir, name))).size;
-    } catch {
-      /* ignore */
-    }
-  }
-  return total;
-});
-
-ipcMain.handle('saves:getSettings', async () => {
-  return (await readJson(settingsFile(), null)) ?? null;
-});
-
-ipcMain.handle('saves:putSettings', async (_e, settings) => {
-  await fsp.writeFile(settingsFile(), JSON.stringify(settings), 'utf8');
-  return true;
-});
+ipcMain.handle('saves:list', () => saveStore().list());
+ipcMain.handle('saves:get', (_e, id) => saveStore().get(id));
+ipcMain.handle('saves:put', (_e, record) => saveStore().put(record));
+ipcMain.handle('saves:remove', (_e, id) => saveStore().remove(id));
+ipcMain.handle('saves:usage', () => saveStore().usage());
+ipcMain.handle('saves:getSettings', () => saveStore().getSettings());
+ipcMain.handle('saves:putSettings', (_e, settings) => saveStore().putSettings(settings));
 
 ipcMain.handle('app:quit', () => app.quit());
 

@@ -1199,6 +1199,16 @@ input[type="range"]::-moz-range-thumb {
   overflow: hidden;
 }
 
+/* Shown under the meta line of a world whose save file was damaged. Amber
+   rather than red: the world is usually still playable from the backup, so it
+   is a warning and not an error. */
+.worldlist-note {
+  line-height: 0;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+
 .worldlist-actions {
   display: flex;
   gap: 6px;

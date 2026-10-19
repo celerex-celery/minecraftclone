@@ -654,16 +654,23 @@ this._bedsByDimension = {};
 
   /** Load a stored world by id. */
   async playWorld(id) {
-    const record = await this.saveGame.get(id);
+    const { record, damaged, recovered } = await this.saveGame.get(id);
     if (!record) {
-      this.hud.toast(t('menu.worldMissing'), 'bad');
+      // A world whose file is on disk but will not parse is a different
+      // problem from one that is not there at all, and the player needs to
+      // know which of the two they are looking at.
+      this.hud.toast(t(damaged ? 'menu.worldDamaged' : 'menu.worldMissing'), 'bad');
       return;
+    }
+    if (recovered) {
+      // The record came from the backup, so this world is one save behind.
+      this.hud.toast(t('menu.worldRecovered'), 'bad');
     }
     this.enterWorld(record);
   }
 
   async renameWorld(id, name, seedText) {
-    const record = await this.saveGame.get(id);
+    const { record } = await this.saveGame.get(id);
     if (!record) return;
     if (name) record.name = name;
     if (seedText !== undefined && seedText !== record.seedText) {
@@ -1591,7 +1598,7 @@ const payload = {
     this._saveShownAt = performance.now();
     this.hud.setSaving(true);
     this.saveGame.get(this.worldId)
-      .then((record) => {
+      .then(({ record }) => {
         const next = record ?? { id: this.worldId, created: Date.now() };
         next.payload = payload;
         next.name ??= t('menu.newWorld');
@@ -1897,7 +1904,7 @@ const payload = {
     // the new mode is what a fresh load of this world has to start in
     if (this.worldId && this.saveGame?.get) {
       this.saveGame.get(this.worldId)
-        .then((record) => {
+        .then(({ record }) => {
           if (record) this.saveGame.put({ ...record, gameMode: mode });
         })
         .catch(() => { /* the mode still applies to this session */ });

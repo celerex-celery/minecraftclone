@@ -219,6 +219,27 @@ A real two-channel voxel light engine:
 
 ---
 
+## Saves
+
+Worlds are plain JSON files in `%APPDATA%\Minecraft Voxel\worlds`, one per
+world, so they can be inspected, backed up or moved like any other folder.
+
+- **Writes are atomic.** A save goes to a temporary file, is flushed to disk,
+  and is then renamed over the world file. A rename is atomic, so the file on
+  disk is always either the whole old world or the whole new one — never a
+  half-written mix of the two.
+- **Every world keeps a backup.** The previous version is kept beside it as
+  `<id>.json.bak`. If a world file is ever damaged for any reason, the last
+  version that parsed is read back instead, and the world list says so.
+- **Damage is reported, not hidden.** A world that will not parse is listed
+  with a warning rather than quietly disappearing, and the error is written to
+  the log.
+
+Only the desktop app saves. In a plain browser the game runs but nothing
+persists after the tab closes.
+
+---
+
 ## The Nether
 
 A second dimension reached through a portal you build yourself out of obsidian
@@ -342,6 +363,9 @@ CHANGELOG 1.4.md        release notes, newest last
 start.bat / start-electron.bat  launchers
 package.json            app manifest and scripts
 electron/               Electron desktop wrapper
+  main.cjs              window, dev server, IPC
+  saves.cjs             save files: atomic writes, backups, recovery
+  preload.cjs           the bridge the game talks to
 styles/
   main.css              base, screens, title, crash, options
   hud.css               hotbar, hearts, hunger, xp, debug
@@ -355,7 +379,7 @@ src/
     Config.js           all tunables and keybinds
     Assets.js           texture / GUI / font / sound loading
     Input.js            keyboard + pointer lock
-    SaveGame.js         IndexedDB persistence
+    SaveGame.js         save store wrapper (JSON files on disk)
     Statistics.js       per-session and per-world counters
   world/
     Blocks.js           block registry (render + physical + survival data)
@@ -411,6 +435,7 @@ assets/
 tools/
   serve.js              dev server
   smoke-test.mjs        headless test suite
+  save-test.mjs         save file writes, backups and recovery
   portal-test.mjs       portal frame and travel checks
   nether-test.mjs       nether generation checks
   profile.mjs           chunk pipeline profiler
