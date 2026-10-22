@@ -46,7 +46,7 @@ export const WEATHER = {
   cloudy: { id: 'cloudy', overcast: 0.45, rain: 0, snow: 0, thunder: 0 },
   rain: { id: 'rain', overcast: 0.78, rain: 1, snow: 0, thunder: 0 },
   thunder: { id: 'thunder', overcast: 0.92, rain: 1, snow: 0, thunder: 1 },
-  snow: { id: 'snow', overcast: 0.7, rain: 0, snow: 1, thunder: 0 },
+  snow: { id: 'snow', overcast: 0.35, rain: 0, snow: 1, thunder: 0 },
 };
 
 /**
