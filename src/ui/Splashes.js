@@ -152,6 +152,7 @@ export const SPLASHES = [
   'Now in 3D!',
   'Zero gravity (mostly)!',
   'Contains 90% more dirt!',
+  'DIRT, DIRT DIRT!',
 ];
 
 export function randomSplash(active = SPLASHES) {
