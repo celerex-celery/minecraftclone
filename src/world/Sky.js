@@ -206,12 +206,13 @@ export class Sky {
     this._moonIndex = 0;
 
     this.moon = new THREE.Mesh(
-      new THREE.PlaneGeometry(34, 34),
+      new THREE.PlaneGeometry(120, 120),
       new THREE.ShaderMaterial({
         uniforms: {
           map: { value: this._moonTextures[0] },
           tint: { value: new THREE.Color(0xdfe6f5) },
           opacity: { value: 1 },
+          uSunGlow: { value: 0.4 },
         },
         vertexShader: CELESTIAL_VERT,
         fragmentShader: CELESTIAL_FRAG,
@@ -593,6 +594,7 @@ export class Sky {
     this.moon.lookAt(p);
     let moonOpacity = THREE.MathUtils.clamp(-sunDir.y * 6 + 0.35, 0, 1) * 0.95;
     this.moon.material.uniforms.opacity.value = moonOpacity;
+    this.moon.material.uniforms.uSunGlow.value = this.uniforms.uSunGlow.value * 0.4;
 
     // The moon goes through its eight phases one per in-game day, starting on
     // a full moon (MoonPhase).
