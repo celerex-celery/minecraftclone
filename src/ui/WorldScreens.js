@@ -42,6 +42,11 @@ export const DIFFICULTIES = [
   { id: 'hard', icon: '' },
 ];
 
+export const BONUS_CHEST_OPTIONS = [
+  { id: 'off', icon: '' },
+  { id: 'on', icon: '' },
+];
+
 function el(tag, cls, text) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -66,12 +71,14 @@ const ICONS = {
   creative: 'command_block',
   default: 'grass_block',
   flat: 'oak_planks',
-   amplified: 'deepslate',
+  amplified: 'deepslate',
   cursed: 'bedrock',
   peaceful: 'wheat_seeds',
   easy: 'cooked_chicken',
   normal: 'wheat',
   hard: 'iron_sword',
+  off: 'redstone',
+  on: 'chest',
 };
 
 function iconCanvas(game, optionId, size = 30) {
@@ -281,6 +288,7 @@ export class CreateWorldScreen {
       gameMode: 'survival',
       worldType: 'default',
       difficulty: 'normal',
+      bonusChest: 'off',
     };
     this._nameInput = null;
     this._seedInput = null;
@@ -322,6 +330,7 @@ export class CreateWorldScreen {
       gameMode: existing?.gameMode ?? 'survival',
       worldType: existing?.worldType ?? 'default',
       difficulty: existing?.difficulty ?? 'normal',
+      bonusChest: existing?.bonusChest ?? 'off',
     };
 
     game.font.set(
@@ -374,6 +383,8 @@ export class CreateWorldScreen {
       (id) => { this.opts.worldType = id; }));
     this.body.appendChild(optionRow(game, t('create.difficulty'), DIFFICULTIES, this.opts.difficulty,
       (id) => { this.opts.difficulty = id; }));
+    this.body.appendChild(optionRow(game, t('create.bonusChest'), BONUS_CHEST_OPTIONS, this.opts.bonusChest,
+      (id) => { this.opts.bonusChest = id; }));
 
     const actions = el('div', 'wc-actions');
     const create = el('button', 'mc-btn primary');
