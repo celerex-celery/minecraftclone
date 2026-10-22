@@ -126,7 +126,6 @@ export const SPLASHES = [
   // ---- mobs ----
   'Passive mobs: also 0',
   'Hostile mobs: 0',
-  'Mobs coming soon!',
   'Chickens have opinions',
   'Pigs are friends, and dinner',
   'Zombies clubbing again',
