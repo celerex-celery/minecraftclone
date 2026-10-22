@@ -220,6 +220,12 @@ export class Game {
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.Fog(0xa8c8ee, 60, 140);
     this.camera = new THREE.PerspectiveCamera(this.settings.fov, 1, 0.08, 600);
+    // Lights for mob/item lighting
+    this.sunLight = new THREE.DirectionalLight(0xffffee, 1);
+    this.sunLight.position.set(0, 100, 0);
+    this.scene.add(this.sunLight);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    this.scene.add(this.ambientLight);
     // The flat contact shadows under mobs and dropped items - vanilla has no
     // real shadow maps, only a soft quad on the ground.
     this.shadows = new EntityShadows(this.scene);
@@ -2950,6 +2956,13 @@ const payload = {
         sky.dimming = wx.dimming;
       }
       const { dayLight } = sky.update(world.time, camera.position, this.elapsed);
+
+      // Update sun/ambient lights for mob/item lighting
+      this.sunLight.position.copy(sky._sunDir).multiplyScalar(-100);
+      this.sunLight.intensity = sky.uniforms.uSunGlow.value * dayLight;
+      this.sunLight.color.set(0xffffee).lerp(new THREE.Color(0xffcc88), 1 - dayLight);
+      this.ambientLight.intensity = sky.ambient * 2;
+      this.ambientLight.color.copy(sky.ambientTint);
 
       // Hide sky when player is underground (no sky access)
       const player = this.player;

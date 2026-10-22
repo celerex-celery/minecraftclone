@@ -934,7 +934,7 @@ export const CONFIG = {
      * game did: the old rule was "at least four blocks", which put a chicken on
      * the grass at your feet and called it a chicken farm.
      */
-    MIN_DISTANCE: 24,
+    MIN_DISTANCE: 28,
     /**
      * The light a passive mob needs to spawn on, as a level.
      *
@@ -1549,4 +1549,5 @@ export const DEFAULTS = {
   playerName: 'Player',
   /** Overrides on top of DEFAULT_BINDS; absent or null means "all default". */
   keybinds: null,
+  bonusChest: false,
 };

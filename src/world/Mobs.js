@@ -1430,14 +1430,13 @@ function prepareModel(gltf, variant) {
     map.needsUpdate = true;
   }
 
-  state.material = new THREE.MeshBasicMaterial({
+state.material = new THREE.MeshStandardMaterial({
     map,
     vertexColors: true,
     transparent: false,
-    // the glTF asks for 0.05; the box model used 0.5 and the sheets are 64x32
-    // pixel art, where a low cut-off lets the semi-transparent edge texels of
-    // the beak and comb bleed in as a halo
     alphaTest: 0.5,
+    roughness: 0.9,
+    metalness: 0.0,
   });
 
   // replace every skinned mesh with a plain one, in place
@@ -2899,8 +2898,13 @@ this.mesh = buildMobMesh(variant);
         // Creeper: stalk the player, light its fuse when close, and explode.
         // Creepers hunt in the dark, so use raw line of sight rather than
         // _canSeeEntity (which needs light and would blind them at night).
-        const close = away < 3.0 && this._lineOfSight(player, world);
-        if (close) {
+        // In creative mode, creepers ignore the player entirely.
+        const creativePlayer = this.game?.player?.creative || this.game?.player?.spectator;
+        if (creativePlayer) {
+          speed = 0;
+        } else {
+          const close = away < 3.0 && this._lineOfSight(player, world);
+          if (close) {
           this.primed = true;
           this.fuseTimer = (this.fuseTimer ?? 0) + dt;
           this.primedFlash = v.fuseTime;
@@ -2929,22 +2933,21 @@ this.mesh = buildMobMesh(variant);
         }
       } else if (v.spawn?.category === CATEGORY.monster) {
         // Other monsters - simple chase
-        //
-        // The target is worked out here rather than read from somewhere else.
-        // The zombie branch above has its own local `target`, and this code is
-        // outside that scope - reading it here was a ReferenceError waiting for
-        // the first monster that was neither an enderman nor a creeper.
-        const seesPlayer = away < (v.followRange ?? 16) && this._canSeeEntity(player, world);
-        if (seesPlayer) {
-          facing = yawToward(dx, dz);
-          if (away > 2.0) speed = v.speed;
-          else {
-            speed = 0;
-            if ((this.attackCooldown ?? 0) <= 0) {
-              this.attackCooldown = 1.0;
-              if (this.game && this.game.survival) this.game.survival.damage(v.attackDamage ?? 2, v.id);
+        // In creative mode, monsters ignore the player entirely.
+        const creativePlayer = this.game?.player?.creative || this.game?.player?.spectator;
+        if (!creativePlayer) {
+          const seesPlayer = away < (v.followRange ?? 16) && this._canSeeEntity(player, world);
+          if (seesPlayer) {
+            facing = yawToward(dx, dz);
+            if (away > 2.0) speed = v.speed;
+            else {
+              speed = 0;
+              if ((this.attackCooldown ?? 0) <= 0) {
+                this.attackCooldown = 1.0;
+                if (this.game && this.game.survival) this.game.survival.damage(v.attackDamage ?? 2, v.id);
+              }
+              this.attackCooldown = (this.attackCooldown ?? 0) - dt;
             }
-            this.attackCooldown = (this.attackCooldown ?? 0) - dt;
           }
         }
       } else if (v.spawn?.category === CATEGORY.creature) {
