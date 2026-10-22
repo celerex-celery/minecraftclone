@@ -34,6 +34,7 @@ import { Mobs } from '../world/Mobs.js';
 import { Boats } from '../world/Boat.js';
 import { Beds } from '../world/Beds.js';
 import { Chests, chestOwner } from '../world/Chests.js';
+import { placeBonusChest } from '../world/BonusChest.js';
 import {
   findPortalNear, playerInPortal, buildArrivalPortal, findArrivalBase, buildReturnPortal,
   portalNearby, findEndPortalFrame, activateEndPortal, playerInEndPortal, buildEndExitPortal,
@@ -659,6 +660,7 @@ this._bedsByDimension = {};
       gameMode: opts.gameMode ?? 'survival',
       worldType: opts.worldType ?? 'default',
       difficulty: opts.difficulty ?? 'normal',
+      bonusChest: opts.bonusChest === 'on',
       created: Date.now(),
       lastPlayed: Date.now(),
       payload: null,
@@ -708,6 +710,7 @@ this._bedsByDimension = {};
       gameMode: record.gameMode ?? 'survival',
       worldType: record.worldType ?? 'default',
       difficulty: record.difficulty ?? 'normal',
+      bonusChest: record.bonusChest,
       worldId: record.id,
     });
     // Write straight away. A world that has only just been created would
@@ -754,8 +757,10 @@ this._bedsByDimension = {};
       worldType = 'default',
       difficulty = 'normal',
       worldId = null,
+      bonusChest = false,
     } = opts;
 
+    this.bonusChest = bonusChest;
     this._finishCreateWorld(opts);
   }
 
@@ -848,6 +853,13 @@ this._bedsByDimension = {};
     this.world.settleSpawn(this.player.position);
     this.player.velocity.set(0, 0, 0);
     this.player.fallDistance = 0;
+
+    // Place bonus chest if enabled (only for new survival worlds)
+    if (this.bonusChest && gameMode === 'survival' && !saveData) {
+      const spawnPos = this.world.findSpawn();
+      placeBonusChest(this.world, spawnPos.x, spawnPos.y, spawnPos.z);
+    }
+
     this.statistics.beginSession();
 
     // Cursed world: show initial gravity direction
@@ -2938,6 +2950,22 @@ const payload = {
         sky.dimming = wx.dimming;
       }
       const { dayLight } = sky.update(world.time, camera.position, this.elapsed);
+
+      // Hide sky when player is underground (no sky access)
+      const player = this.player;
+      if (player && world.hasSky) {
+        const px = Math.floor(player.position.x);
+        const py = Math.floor(player.position.y);
+        const pz = Math.floor(player.position.z);
+        const skyLight = world.getSky(px, py, pz);
+        const buried = !player.headInWater && skyLight <= 4;
+        sky.dome.visible = !buried;
+        sky.sun.visible = !buried;
+        sky.moon.visible = !buried;
+        sky.stars.visible = !buried;
+        for (const layer of sky.cloudLayers) layer.visible = !buried;
+      }
+
       const range = sky.fogRange(this.settings.renderDistance);
       // Rain pulls the far plane in. It is the cheapest honest way to say
       // "you cannot see as far" - the drops are drawn either way, but a
