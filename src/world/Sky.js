@@ -106,13 +106,24 @@ const CELESTIAL_FRAG = /* glsl */`
   uniform sampler2D map;
   uniform vec3 tint;
   uniform float opacity;
+  uniform float uSunGlow;
   varying vec2 vUv;
+
   void main() {
     vec4 color = texture2D(map, vUv);
     // The sun/moon textures are indexed PNGs with no alpha: their transparent
     // background is pure black. Discard those pixels so the sky shows through.
-    if (max(color.r, max(color.g, color.b)) < 0.02) discard;
-    gl_FragColor = vec4(color.rgb * tint, opacity);
+    // Use a slightly higher threshold to avoid dark edge artifacts.
+    if (max(color.r, max(color.g, color.b)) < 0.05) discard;
+    
+    // Add a subtle glow/halo around the sun based on distance from center
+    vec2 center = vUv - 0.5;
+    float dist = length(center);
+    float glow = smoothstep(0.5, 0.35, dist) * uSunGlow;
+    
+    vec3 result = color.rgb * tint;
+    result += vec3(1.0, 0.9, 0.7) * glow; // warm glow color
+    gl_FragColor = vec4(result, opacity);
   }
 `;
 
@@ -162,6 +173,7 @@ export class Sky {
           map: { value: this._sunTexture },
           tint: { value: new THREE.Color(0xfff4d0) },
           opacity: { value: 1 },
+          uSunGlow: { value: 0.6 },
         },
         vertexShader: CELESTIAL_VERT,
         fragmentShader: CELESTIAL_FRAG,
@@ -572,6 +584,7 @@ export class Sky {
     this.sun.lookAt(p);
     let sunOpacity = THREE.MathUtils.clamp(sunDir.y * 6 + 0.35, 0, 1);
     this.sun.material.uniforms.opacity.value = sunOpacity;
+    this.sun.material.uniforms.uSunGlow.value = this.uniforms.uSunGlow.value;
 
     this._moonDir.copy(sunDir).multiplyScalar(-1);
     this.moon.position.copy(p).addScaledVector(this._moonDir, 100);
