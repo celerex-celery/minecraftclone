@@ -2954,9 +2954,11 @@ const payload = {
       // Hide sky when player is underground (no sky access)
       const player = this.player;
       if (player && world.hasSky) {
-        const px = Math.floor(player.position.x);
-        const py = Math.floor(player.position.y);
-        const pz = Math.floor(player.position.z);
+        // Check at camera position (eye level) since that's what the player sees
+        const cam = camera.position;
+        const px = Math.floor(cam.x);
+        const py = Math.floor(cam.y);
+        const pz = Math.floor(cam.z);
         const skyLight = world.getSky(px, py, pz);
         const buried = !player.headInWater && skyLight <= 4;
         sky.dome.visible = !buried;
