@@ -255,7 +255,7 @@ const SPAWN_TABLE = [
     // Creepers spawn in the overworld's land biomes after dark: monsters want
     // the dark, so they turn up in caves and at night, never near torches.
     biomes: ['plains', 'forest', 'taiga', 'snowy_plains', 'desert', 'savanna', 'swamp', 'jungle', 'mountains', 'beach'],
-    creeper: { min: 1, max: 4, weight: 6 },
+    creeper: { min: 1, max: 1, weight: 6 },
   },
   {
     // the End: only endermen spawn here, in small groups
@@ -1266,7 +1266,7 @@ const VARIANTS = {
     followRange: 16,
     // Creeper-specific
     explodes: true,
-    explosionPower: 3,
+    explosionPower: 2.5,
     fuseTime: 1.5,
   },
 };

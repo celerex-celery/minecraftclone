@@ -1275,11 +1275,11 @@ let c = -1;
               } else if (r < 0.022) {
                 local(x, surface, z, Blocks.id('dead_bush'));
               }
-              // Desert well - rare structure (1 in 1000 chunks, like vanilla)
+              // Desert well - rare structure (vanilla 1 in 1000 chunks, increased slightly)
               // Use chunk coordinates for per-chunk rarity
               if (x === 0 && z === 0) {
                 const wellRoll = hash2(chunk.cx, chunk.cz, this.seed ^ 0x5ea7);
-                if (wellRoll < 0.001) {
+                if (wellRoll < 0.002) {
                   this.desertWell(wx, wz, surface, local, x, z, chunk);
                 }
               }

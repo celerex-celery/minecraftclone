@@ -264,7 +264,7 @@ export class Sky {
         }`,
       transparent: true,
       depthWrite: false,
-      depthTest: false,
+      depthTest: true,
       fog: false,
     });
     this.stars = new THREE.Points(starGeo, this.starMat);
