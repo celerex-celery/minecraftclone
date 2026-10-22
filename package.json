@@ -1,6 +1,6 @@
 {
   "name": "minecraft-voxel",
-  "version": "1.10",
+  "version": "1.11",
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
