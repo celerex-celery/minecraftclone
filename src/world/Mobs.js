@@ -2894,7 +2894,7 @@ this.mesh = buildMobMesh(variant);
       // Monster AI
       if (v.id === 'enderman') {
         speed = this._updateEnderman(dt, world, player, solid, defAt, away, dx, dz, gain, inWater, this.underwater);
-        } else if (v.id === 'creeper') {
+} else if (v.id === 'creeper') {
         // Creeper: stalk the player, light its fuse when close, and explode.
         // Creepers hunt in the dark, so use raw line of sight rather than
         // _canSeeEntity (which needs light and would blind them at night).
@@ -2905,31 +2905,32 @@ this.mesh = buildMobMesh(variant);
         } else {
           const close = away < 3.0 && this._lineOfSight(player, world);
           if (close) {
-          this.primed = true;
-          this.fuseTimer = (this.fuseTimer ?? 0) + dt;
-          this.primedFlash = v.fuseTime;
-          if (gain > 0 && Math.random() < dt * 8) audio.creeperIdle?.(gain); // fuse hiss
-          if (this.fuseTimer >= v.fuseTime) {
-            this.fuseTimer = 0;
-            this.primed = false;
-            this.primedFlash = 0;
-            this.exploded = true;
-            if (this.game?.explode) this.game.explode(this.pos, v.explosionPower);
-            this.kill();
-            speed = 0;
+            this.primed = true;
+            this.fuseTimer = (this.fuseTimer ?? 0) + dt;
+            this.primedFlash = v.fuseTime;
+            if (gain > 0 && Math.random() < dt * 8) audio.creeperIdle?.(gain); // fuse hiss
+            if (this.fuseTimer >= v.fuseTime) {
+              this.fuseTimer = 0;
+              this.primed = false;
+              this.primedFlash = 0;
+              this.exploded = true;
+              if (this.game?.explode) this.game.explode(this.pos, v.explosionPower);
+              this.kill();
+              speed = 0;
+            } else {
+              speed = 0;
+            }
           } else {
-            speed = 0;
+            // Defuse when the player backs off (vanilla: creepers calm down).
+            if (this.primed && away > 7.0) {
+              this.primed = false;
+              this.fuseTimer = 0;
+              this.primedFlash = 0;
+            }
+            if (away > v.followRange) speed = 0;
+            else if (away > 2.0) { facing = yawToward(dx, dz); speed = v.speed; }
+            else speed = 0;
           }
-        } else {
-          // Defuse when the player backs off (vanilla: creepers calm down).
-          if (this.primed && away > 7.0) {
-            this.primed = false;
-            this.fuseTimer = 0;
-            this.primedFlash = 0;
-          }
-          if (away > v.followRange) speed = 0;
-          else if (away > 2.0) { facing = yawToward(dx, dz); speed = v.speed; }
-          else speed = 0;
         }
       } else if (v.spawn?.category === CATEGORY.monster) {
         // Other monsters - simple chase

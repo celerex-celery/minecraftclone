@@ -458,11 +458,22 @@ export class Advancements {
     this._pump();
   }
 
-  award(a) {
+award(a) {
     if (this.earned.has(a.id)) return;
     this.earned.add(a.id);
     this._queue.push(a);
     this.game.onAdvancementEarned?.(a);
+  }
+
+  /** Grant an advancement by ID (for commands). */
+  grant(id) {
+    const a = ADVANCEMENTS.find((x) => x.id === id);
+    if (a) this.award(a);
+  }
+
+  /** Revoke an advancement by ID (for commands). */
+  revoke(id) {
+    this.earned.delete(id);
   }
 
   _pump() {
