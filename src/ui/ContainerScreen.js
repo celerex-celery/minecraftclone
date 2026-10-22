@@ -22,6 +22,7 @@ import { creativeTabs } from '../world/Items.js';
 import { SMELT_TIME } from '../survival/Recipes.js';
 import { CHEST_SLOTS } from '../world/Chests.js';
 import { playerPreviewCanvas } from './PlayerPreview.js';
+import { RecipeBook } from './RecipeBook.js';
 import { t } from './Lang.js';
 
 const MAIN_START = HOTBAR_SIZE;         // first main-inventory slot index
@@ -58,6 +59,7 @@ export class ContainerScreen {
     this.gridSize = kind === 'crafting' ? 3 : kind === 'creative' ? 0 : 2;
 
     this.root = document.getElementById('container-screen');
+    this.panel = this.root.querySelector('.container-panel');
     this.craftArea = document.getElementById('craft-area');
     this.invArea = document.getElementById('inv-area');
     this.titleEl = document.getElementById('container-title');
@@ -78,6 +80,11 @@ export class ContainerScreen {
     this.chest = null;
 
     this.slots = [];   // DOM slot descriptors
+
+    // Recipe book (for inventory and crafting table)
+    this.recipeBook = (this.kind === 'inventory' || this.kind === 'crafting')
+      ? new RecipeBook(this.game, this)
+      : null;
 
     this._build();
     this._bind();
@@ -155,6 +162,24 @@ export class ContainerScreen {
     // No "Inventory" caption. The real game does not label the 3x9 grid - the
     // arrow above already says what the widget is, and the row you reach for is
     // obvious from the gap under it.
+
+    // Recipe Book button (for inventory and crafting table) - above the inventory grid
+    if ((this.kind === 'inventory' || this.kind === 'crafting') && this.recipeBook) {
+      const btnWrap = document.createElement('div');
+      btnWrap.className = 'recipe-book-btn-wrap';
+      const btn = document.createElement('button');
+      btn.className = 'recipe-book-btn';
+      btn.type = 'button';
+      this.game.font.set(btn, t('container.recipeBook'), { scale: 2, color: COLORS.white });
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.game.audio.click();
+        this.recipeBook.toggle(this.gridSize);
+      });
+      btnWrap.appendChild(btn);
+      this.invArea.appendChild(btnWrap);
+    }
+
     const main = document.createElement('div');
     main.className = 'grid g9 inv-main';
     for (let i = 0; i < 27; i++) {
@@ -170,6 +195,11 @@ export class ContainerScreen {
       hot.appendChild(this._makeSlot({ kind: 'inv', index: i, hotbar: i }));
     }
     this.invArea.appendChild(hot);
+
+    // Recipe book sidebar (for inventory and crafting table) - positioned to the left of inventory
+    if ((this.kind === 'inventory' || this.kind === 'crafting') && this.recipeBook) {
+      this.panel.appendChild(this.recipeBook.build());
+    }
   }
 
   /**
@@ -387,6 +417,7 @@ export class ContainerScreen {
       grid.appendChild(el);
     }
     wrap.appendChild(grid);
+
     return wrap;
   }
 
@@ -511,6 +542,10 @@ this.slots.push(el);
      ================================================================ */
 
   get craftGrid() {
+    return this.game.craftGrid;
+  }
+
+  getCraftingGrid() {
     return this.game.craftGrid;
   }
 

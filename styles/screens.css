@@ -16,8 +16,7 @@
   width: 340px;
   max-width: 96vw;
   max-height: 92vh;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
 }
 
 .container-body {
@@ -656,6 +655,178 @@ input.pad-focus[type='range'] {
   padding: 8px 10px 10px;
   box-shadow: inset 1px 1px 0 #ffffff22;
   max-width: 640px;
+}
+
+/* =============================================================
+   Recipe Book
+   ============================================================= */
+
+.recipe-book-btn-wrap {
+  margin-top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.recipe-book-btn {
+  width: 120px;
+  height: 28px;
+  padding: 0;
+  background: #5a5a5a;
+  border: 2px solid #2f2f2f;
+  cursor: pointer;
+  color: #ffffff;
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 12px;
+  box-shadow: inset 1px 1px 0 #ffffff55, inset -1px -1px 0 #00000066;
+  image-rendering: pixelated;
+}
+
+.recipe-book-btn:hover {
+  background: #6d6d6d;
+}
+
+.recipe-book-btn:active {
+  background: #4a4a4a;
+}
+
+.container-panel {
+  position: relative;
+}
+
+.container-panel .recipe-book {
+  position: absolute;
+  top: 50%;
+  right: 100%;
+  margin-right: 16px;
+  transform: translateY(-50%);
+  z-index: 80;
+  width: 320px;
+  max-height: 80vh;
+  background: #1a1a1a;
+  border: 3px solid;
+  border-color: #e6d91a #a68c00 #a68c00 #e6d91a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  image-rendering: pixelated;
+}
+
+.recipe-book.hidden {
+  display: none;
+}
+
+.recipe-book-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #3a3a3a;
+  border-bottom: 2px solid #2a2a2a;
+}
+
+.recipe-book-title {
+  color: #e6d91a;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.recipe-book-toggle,
+.recipe-book-close {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: #5a5a5a;
+  border: 2px solid #2f2f2f;
+  color: #ffffff;
+  cursor: pointer;
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  image-rendering: pixelated;
+}
+
+.recipe-book-toggle:hover,
+.recipe-book-close:hover {
+  background: #6d6d6d;
+}
+
+.recipe-book-toggle.all {
+  background: #8a6d00;
+}
+
+.recipe-book-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+}
+
+.recipe-book-entry {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background 0.1s;
+}
+
+.recipe-book-entry:hover,
+.recipe-book-entry.selected {
+  background: #4a4a4a;
+  border-color: #e6d91a;
+}
+
+.recipe-book-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #3a3a3a;
+  border: 1px solid #4a4a4a;
+}
+
+.recipe-book-icon canvas {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+}
+
+.recipe-book-count {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 10px;
+  color: #ffffff;
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
+}
+
+.recipe-book-name {
+  color: #ffffff;
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 13px;
+  text-shadow: 1px 1px 0 #000;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recipe-book-empty {
+  padding: 20px;
+  text-align: center;
+  color: #888888;
+  font-family: 'Minecraft', 'Minecraftia', monospace;
+  font-size: 13px;
 }
 
 .osk-title {
