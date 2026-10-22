@@ -591,6 +591,62 @@ const COMMANDS = {
     }
     ok(chat, doneKey, doneValue, doneType);
   },
+
+  /**
+   * /advancement grant|revoke <targets> <everything|only|from|until|through|advancement>
+   *
+   * Mirrors vanilla's advancement command. Only @s/@p targets are supported.
+   * grant: unlock advancement(s)
+   * revoke: lock advancement(s)
+   */
+  advancement(game, args, chat) {
+    const [action, targetArg, spec, ...extra] = args;
+    if (!action || !targetArg || !spec || extra.length) {
+      fail(chat, 'cmd.advancement.usage');
+      return;
+    }
+    if (!resolveTarget(game, targetArg)) {
+      fail(chat, 'cmd.noPlayer');
+      return;
+    }
+    const adv = game.advancements;
+    if (!adv) {
+      fail(chat, 'cmd.advancement.noAdvancements');
+      return;
+    }
+
+    const grant = action === 'grant';
+    const revoke = action === 'revoke';
+    if (!grant && !revoke) {
+      fail(chat, 'cmd.advancement.usage');
+      return;
+    }
+
+    if (spec === 'everything') {
+      // Grant/revoke all advancements
+      for (const a of adv.tree) {
+        if (grant) adv.grant(a.id);
+        else adv.revoke(a.id);
+      }
+      ok(chat, grant ? 'cmd.advancement.grant.everything' : 'cmd.advancement.revoke.everything');
+      return;
+    }
+
+    // Find specific advancement
+    const advancement = adv.tree.find((a) => a.id === spec);
+    if (!advancement) {
+      fail(chat, 'cmd.advancement.unknown', spec);
+      return;
+    }
+
+    if (grant) {
+      adv.grant(spec);
+      ok(chat, 'cmd.advancement.grant.one', spec);
+    } else {
+      adv.revoke(spec);
+      ok(chat, 'cmd.advancement.revoke.one', spec);
+    }
+  },
 };
 
 /**
@@ -619,6 +675,7 @@ function helpEntries() {
     ['experience <add|set|query> <targets> <amount> [levels|points]', t('cmd.help.experience')],
     ['teleport <x> <y> <z> [yaw] [pitch]', t('cmd.help.teleport')],
     ['summon <entity> [<x> <y> <z>]', t('cmd.help.summon')],
+    ['advancement grant|revoke <targets> <everything|advancement>', t('cmd.help.advancement')],
   ];
 }
 
@@ -639,7 +696,7 @@ export function isCommand(line) {
 /** Every command name, in the order /help lists them. */
 export const COMMAND_NAMES = [
   'help', 'give', 'gamemode', 'clear', 'time', 'say', 'kill', 'list', 'seed', 'difficulty',
-  'teleport', 'tp', 'summon', 'experience', 'xp',
+  'teleport', 'tp', 'summon', 'experience', 'xp', 'advancement',
 ];
 
 /** What each argument position accepts. Index 0 is the first argument. */
@@ -681,7 +738,59 @@ const SUGGESTIONS = {
     if (args.length === 2) return ['levels', 'points'];
     return [];
   },
+  advancement(args) {
+    if (args.length === 0) return ['grant', 'revoke'];
+    if (args.length === 1) return ['@s', '@p'];
+    if (args.length === 2) {
+      const action = args[0].toLowerCase();
+      if (action === 'grant' || action === 'revoke') {
+        return ['everything', ...advList()];
+      }
+    }
+    return [];
+  },
 };
+
+/**
+ * Known advancement IDs for tab completion.
+ * These match the IDs in Advancements.js
+ */
+const ADVANCEMENT_IDS = [
+  'root',
+  'a_complete_catalogue',
+  'getting_wood',
+  'bake_bread',
+  'a_balanced_diet',
+  'sticky_situation',
+  'getting_an_upgrade',
+  'isnt_it_iron_pick',
+  'acquire_hardware',
+  'diamonds',
+  'suit_up',
+  'cover_me_with_diamonds',
+  'survive_the_night',
+  'a_three_day_hunt',
+  'stone_age',
+  'bench_crafting',
+  'build_a_home',
+  'time_to_mine',
+  'a_seedy_place',
+  'hot_stuff',
+  'bucketful_of_cold',
+  'we_need_to_go_deeper',
+  'country_lode',
+  'smelt_it',
+  'adventuring_time',
+  'adrenaline',
+  'a_close_call',
+  'living_on_a_breadline',
+  'monster_hunter',
+  'how_could_you',
+];
+
+function advList() {
+  return ADVANCEMENT_IDS;
+}
 
 /**
  * What could complete the word the caret sits in.
