@@ -315,16 +315,14 @@ export class Sky {
         vertexShader: CLOUD_VERT,
         fragmentShader: CLOUD_FRAG,
         transparent: true,
-        depthWrite: false,
-        // The sheet reaches far past the camera's far plane, so it must not be
-        // depth tested against it - vanilla draws the clouds as part of the
-        // sky, before the world, and the terrain then paints over them.
-        depthTest: false,
+        depthWrite: true,
+        depthTest: true,
         side: THREE.DoubleSide,
       });
-      // The sheet has to reach past the horizon: vanilla fades clouds out with
-      // their own fog, out to twice the render distance.
-      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(4096, 4096), mat);
+      // Cloud plane sized to fit within camera far plane so depth test works
+      // far = renderDistance * 16 + 60, so 2x far covers horizon
+      const cloudPlaneSize = 2048;
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(cloudPlaneSize, cloudPlaneSize), mat);
       mesh.rotation.x = -Math.PI / 2;
       mesh.renderOrder = -800;
       mesh.frustumCulled = false;
@@ -475,6 +473,15 @@ export class Sky {
     this.stars.scale.setScalar(100);
     this.sun.scale.setScalar(30 / 60);
     this.moon.scale.setScalar(20 / 34);
+
+    // Resize cloud plane to fit within far plane so depth test works
+    if (this.cloudLayers && this.cloudLayers.length > 0) {
+      const cloudSize = far ? Math.min(2048, far * 2) : 2048;
+      for (const layer of this.cloudLayers) {
+        layer.geometry.dispose();
+        layer.geometry = new THREE.PlaneGeometry(cloudSize, cloudSize);
+      }
+    }
   }
 
   /**
