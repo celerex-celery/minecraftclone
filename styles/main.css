@@ -675,13 +675,13 @@ canvas.mc-text,
 .btn-pair {
   display: flex;
   gap: 4px;
-  width: 200px;
+  width: 240px;
   max-width: 95vw;
 }
 
 /* A full-width button; the halves that share a row with one. */
 .mc-btn.full {
-  width: 200px;
+  width: 240px;
   max-width: 95vw;
 }
 
