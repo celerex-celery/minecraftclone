@@ -116,13 +116,15 @@ const CELESTIAL_FRAG = /* glsl */`
     // Use a slightly higher threshold to avoid dark edge artifacts.
     if (max(color.r, max(color.g, color.b)) < 0.05) discard;
     
-    // Add a subtle glow/halo around the sun based on distance from center
+    // Add a prominent glow/halo around the sun based on distance from center
     vec2 center = vUv - 0.5;
     float dist = length(center);
-    float glow = smoothstep(0.5, 0.35, dist) * uSunGlow;
+    // Wider glow: smoothstep from edge (0.5) to 0.2 (40% of radius)
+    float glow = smoothstep(0.5, 0.2, dist) * uSunGlow;
     
     vec3 result = color.rgb * tint;
-    result += vec3(1.0, 0.9, 0.7) * glow; // warm glow color
+    // Brighter, more visible glow
+    result += vec3(1.0, 0.95, 0.8) * glow * 1.5;
     gl_FragColor = vec4(result, opacity);
   }
 `;
@@ -167,13 +169,13 @@ export class Sky {
     this._sunTexture.colorSpace = THREE.SRGBColorSpace;
 
     this.sun = new THREE.Mesh(
-      new THREE.PlaneGeometry(60, 60),
+      new THREE.PlaneGeometry(120, 120),
       new THREE.ShaderMaterial({
         uniforms: {
           map: { value: this._sunTexture },
           tint: { value: new THREE.Color(0xfff4d0) },
           opacity: { value: 1 },
-          uSunGlow: { value: 0.6 },
+          uSunGlow: { value: 1.0 },
         },
         vertexShader: CELESTIAL_VERT,
         fragmentShader: CELESTIAL_FRAG,
