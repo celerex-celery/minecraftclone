@@ -2973,7 +2973,9 @@ const payload = {
         const py = Math.floor(cam.y);
         const pz = Math.floor(cam.z);
         const skyLight = world.getSky(px, py, pz);
-        const buried = !player.headInWater && skyLight <= 4;
+        // Only hide sky when completely underground (sky light = 0).
+        // Sky light 1-4 means there's some sky access (holes, caves near surface).
+        const buried = !player.headInWater && skyLight === 0;
         sky.dome.visible = !buried;
         sky.sun.visible = !buried;
         sky.moon.visible = !buried;
