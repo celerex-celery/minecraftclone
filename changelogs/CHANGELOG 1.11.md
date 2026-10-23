@@ -9,6 +9,7 @@ All notable changes to Minecraft Voxel, newest first.
 
 ### Removed
 - Removed splash text: "Mobs coming soon!" because we have mobs
+- Removed "Project layout" section from README
 
 ### Changed
 - Version bumped to 1.11 (1.10 "Visual & Survival Refinement Update" is complete)
