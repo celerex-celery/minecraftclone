@@ -66,6 +66,9 @@ export class Chunk {
 
     this.meshes = null;
     this.empty = true;
+
+    /** Timestamp of the last player edit in this chunk. */
+    this.lastEdited = 0;
   }
 
   get(x, y, z) {

@@ -376,6 +376,7 @@ export class World {
 
     c.dirtyMesh = true;
     c.modified = true;
+    c.lastEdited = Date.now();
     this.markDirty(c);
     for (const n of this.touchingChunks(x, z)) this.markDirty(n);
 
@@ -1557,8 +1558,11 @@ export class World {
 
   serialize() {
     const chunks = [];
+    const now = Date.now();
+    const STALE_CHUNK_MS = 10 * 60 * 1000; // 10 minutes
     for (const c of this.chunks.values()) {
       if (!c.modified) continue;
+      if (c.lastEdited && now - c.lastEdited > STALE_CHUNK_MS) continue;
       chunks.push({
         x: c.cx, z: c.cz,
         blocks: rleEncode(c.blocks),

@@ -1400,7 +1400,7 @@ export const CONFIG = {
   // a stats string per tick and no IndexedDB traffic at all. The cost shows up
   // when the player *is* moving, since a walk counts as a change and a large
   // world then re-encodes every two hundred visited chunks twice as often.
-  AUTOSAVE_SECONDS: 5,
+  AUTOSAVE_SECONDS: 15,
 
   /**
    * How long the saving indicator stays up, in milliseconds.
