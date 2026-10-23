@@ -261,18 +261,6 @@ if (Test-Path -LiteralPath $autosaveSrc) {
     Write-Host "  gui/autosave.png $outW x $outH ($frames frames of $($cellW - 1)x$($cellH - 1), guide removed)"
 }
 
-# --- the chest icon ---------------------------------------------------------------
-# The inventory icon for a chest. The pack has no such picture - a chest borrows
-# oak planks for its faces in this game, and in the real one its icon is drawn -
-# so it is kept in the repository next to the pack, like the autosave sheet, and
-# copied into the GUI folder where the icon renderer looks for it.
-$chestIconSrc = Join-Path $root 'assets\textures\gui\Chest.png'
-$chestIconDst = Join-Path $guiDir 'chest_icon.png'
-if (Test-Path -LiteralPath $chestIconSrc) {
-    Copy-Item -LiteralPath $chestIconSrc -Destination $chestIconDst -Force
-    Write-Host '  gui/chest_icon.png copied'
-}
-
 # --- the app icon -----------------------------------------------------------------
 # The pack already ships the finished Minecraft icon at every size an .ico needs.
 # There is nothing to draw, crop, resample or invent: copy them, and `npm run
