@@ -24,6 +24,10 @@ All notable changes to Minecraft Voxel, newest first.
 ### Fixed
 - Enable depth test for sun/moon to prevent seeing through blocks
 - Only hide sky when completely underground (sky light = 0)
+- **Sky light seeding**: fixed bug where sky light at 15 didn't decay through semi-transparent blocks (leaves, water), causing light leaks
+- **Sky column update**: fixed duplicate condition in `updateSkyColumn` that prevented proper decay
+- **Cave darkness**: lowered overworld ambient floor from 0.048 to 0.01 for genuinely dark caves
+- **Removed sun directional light** (penetrated caves without shadows) and reduced ambient light intensity for mobs
 
 ### Planned for 1.11
 - Additional visual refinements
