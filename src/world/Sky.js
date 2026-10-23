@@ -181,7 +181,7 @@ export class Sky {
         fragmentShader: CELESTIAL_FRAG,
         fog: false,
         depthWrite: false,
-        depthTest: false,
+        depthTest: true,
         transparent: true,
       }),
     );
@@ -218,7 +218,7 @@ export class Sky {
         fragmentShader: CELESTIAL_FRAG,
         fog: false,
         depthWrite: false,
-        depthTest: false,
+        depthTest: true,
         transparent: true,
       }),
     );
