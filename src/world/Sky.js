@@ -462,7 +462,7 @@ export class Sky {
       this.ambient = this.endAmbient;
       this.ambientTint = this.endAmbientTint;
     } else {
-      this.ambient = 0.048;
+this.ambient = 0.01;
       this.ambientTint.setRGB(1, 1, 1);
     }
   }

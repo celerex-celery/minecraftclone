@@ -289,11 +289,12 @@ export class LightEngine {
           for (let y = MAX_Y; y >= MIN_Y; y--) {
             const def = list[blocks[lay(y, col)]];
             if (def.opacity > 0) {
-              if (level === 15 && def.opacity < 15) {
-              } else {
-                level -= def.opacity;
-                if (level <= 0) break;
-              }
+              // Sky light decays through ALL blocks with opacity > 0.
+              // The previous code had a bug: when level === 15 and opacity < 15,
+              // it would skip decay entirely, letting sky light penetrate leaves,
+              // water, etc. at full strength.
+              level -= def.opacity;
+              if (level <= 0) break;
             }
             light[lay(y, col)] |= level << 4;
           }
@@ -644,8 +645,10 @@ export class LightEngine {
     for (let y = MAX_Y; y >= MIN_Y; y--) {
       const i = lay(y, col);
       const def = list[c.blocks[i]];
-      if (def.opacity > 0) level = 0;
-      else if (def.opacity > 0) level = Math.max(0, level - def.opacity);
+      if (def.opacity > 0) {
+        level -= def.opacity;
+        if (level <= 0) { level = 0; break; }
+      }
       const cur = c.light[i] >> 4;
       if (cur !== level) changed.push(y, cur, level);
     }
