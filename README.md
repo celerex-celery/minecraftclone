@@ -12,71 +12,14 @@ three.js and the real Minecraft asset pack (textures, GUI sprites, bitmap font,
 sound effects and music). Packaged as an Electron desktop app; three.js is
 vendored so it works fully offline.
 
-![build](https://img.shields.io/badge/build-1.10-55ff55)
+![build](https://img.shields.io/badge/build-1.11-55ff55)
 ![tests](https://img.shields.io/badge/tests-headless-yellow)
 ![deps](https://img.shields.io/badge/dependencies-none-blue)
 
 ---
 
-## Running it
-
-ES modules need a real HTTP origin, so open it through the dev server rather
-than double-clicking the HTML file.
-
-```bash
-start.bat
-```
-
-or manually:
-
-```bash
-node tools/serve.js 3066
-```
-
-then open <http://localhost:3066/>. Node.js is the only requirement.
-
-```bash
-npm test              # headless checks: worldgen, lighting, meshing, crafting,
-                      # survival, shaders, commands and the keybind table
-npm run electron      # run as the packaged Electron desktop app
-```
-
----
-
-## What's new in 1.10
-
-- **Creeper** — spawns in overworld land biomes at night, stalks the player,
-  lights its fuse when close, and explodes after a short countdown. Back away
-  before it detonates and the fuse defuses. Drops gunpowder when killed by the
-  player; explodes in place if it detonates itself.
-- **TNT** — place a TNT block, prime it with flint and steel or set it alight,
-  and it burns down its 4-second fuse before exploding. Explosions prime
-  nearby TNT blocks too, giving chain reactions. Blocks in the blast are
-  destroyed with blast resistance, players and mobs take distance-based damage
-  and knockback, and destroyed blocks spill loot.
-
----
-
-## Running it
-
-Open via the dev server:
-
-```bash
-start.bat
-# or
-node tools/serve.js 3066
-```
-
-then open <http://localhost:3066/>. For the desktop app:
-
 ```bash
 npm run electron
-```
-
-Tests:
-
-```bash
-npm test
 ```
 
 ---
