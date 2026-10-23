@@ -1,6 +1,6 @@
 # Minecraft Voxel
 
-![Minecraft Voxel title screen](Main.png)
+![Minecraft Voxel title screen](assets/images/Main.png)
 
 **Asset notice:** All original Minecraft textures, sounds, music, models and
 other assets belong to Mojang/Microsoft and are extracted from the Minecraft
@@ -171,7 +171,7 @@ When you create a world you can pick one of four world types:
 
 ## World
 
-![Create New World UI](CreateNewWorldUI.png)
+![Create New World UI](assets/images/CreateNewWorldUI.png)
 
 - **Infinite chunked terrain**, 16 × 128 × 16, streamed around the player with
   distance-based unloading that keeps your edits alive.
@@ -315,7 +315,7 @@ and light with flint and steel:
 
 ## UI
 
-![Options screen](Options.png)
+![Options screen](assets/images/Options.png)
 
 - **One texture atlas** for all block geometry; four draw groups per chunk
   (opaque, alpha-cutout, water, lava).
