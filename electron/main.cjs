@@ -192,24 +192,8 @@ async function createWindow() {
   win.setMenu(null);
   await win.loadURL(URL);
 
-  // Every half minute, print what each side is holding. The Node side here
-  // should stay flat; if the renderer numbers keep climbing that is a leak in
-  // the game, not in the shell, and the two sides log separately.
+  // Every half minute, print GPU info.
   setInterval(async () => {
-    const main = process.memoryUsage();
-    logLine('main', 'INFO',
-      `memory main rss ${(main.rss / 1048576).toFixed(0)}MB, ` +
-      `heapUsed ${(main.heapUsed / 1048576).toFixed(0)}MB`);
-    try {
-      const m = await win.webContents.executeJavaScript(
-        '({ js: performance.memory.usedJSHeapSize, total: performance.memory.totalJSHeapSize })'
-      );
-      logLine('Render thread', 'INFO',
-        `memory heapUsed ${(m.js / 1048576).toFixed(0)}MB, ` +
-        `heapTotal ${(m.total / 1048576).toFixed(0)}MB`);
-    } catch {
-      /* window gone */
-    }
     try {
       const gpu = await win.webContents.getGPUInfo();
       const d = gpu.gpuDevice;
