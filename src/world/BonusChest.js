@@ -138,6 +138,10 @@ function findEmptySlot(slots, usedSlots) {
  */
 export function placeBonusChest(world, x, y, z) {
   console.log('[BonusChest] placeBonusChest called at', x, y, z);
+  // Convert to integer block coordinates
+  const startX = Math.floor(x);
+  const startY = Math.floor(y);
+  const startZ = Math.floor(z);
   const chestId = Blocks.id('chest');
   if (chestId === undefined) {
     console.log('[BonusChest] No chest block id found');
@@ -145,19 +149,19 @@ export function placeBonusChest(world, x, y, z) {
   }
   
   // Try to find a good spot: on top of a solid block, with air above
-  let placeX = x;
-  let placeY = y;
-  let placeZ = z;
+  let placeX = startX;
+  let placeY = startY;
+  let placeZ = startZ;
   
   // Search in a small radius for a good spot
   const radius = 3;
   for (let dz = -radius; dz <= radius; dz++) {
     for (let dx = -radius; dx <= radius; dx++) {
-      const cx = x + dx;
-      const cz = z + dz;
+      const cx = startX + dx;
+      const cz = startZ + dz;
       
       // Find ground level
-      let groundY = world.findSpawn ? world.findSpawn().y : y;
+      let groundY = world.findSpawn ? Math.floor(world.findSpawn().y) : startY;
       
       // Look for a solid block with air above
       for (let checkY = groundY + 2; checkY >= groundY - 2; checkY--) {

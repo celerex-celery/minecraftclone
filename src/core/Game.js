@@ -859,13 +859,8 @@ this._bedsByDimension = {};
 
     // Place bonus chest if enabled (only for new survival worlds)
     if (this.bonusChest && gameMode === 'survival' && !saveData) {
-      console.log('[BonusChest] Placing bonus chest at spawn');
       const spawnPos = this.world.findSpawn();
-      console.log('[BonusChest] Spawn pos:', spawnPos);
-      const result = placeBonusChest(this.world, spawnPos.x, spawnPos.y, spawnPos.z);
-      console.log('[BonusChest] Placement result:', result);
-    } else {
-      console.log('[BonusChest] Skipped:', { bonusChest: this.bonusChest, gameMode, saveData: !!saveData });
+      placeBonusChest(this.world, spawnPos.x, spawnPos.y, spawnPos.z);
     }
 
     this.statistics.beginSession();
