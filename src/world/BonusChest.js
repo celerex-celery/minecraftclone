@@ -136,7 +136,7 @@ function findEmptySlot(slots, usedSlots) {
  * @param {number} z
  * @returns {boolean} Whether chest was placed
  */
-export function placeBonusChest(world, x, y, z) {
+export async function placeBonusChest(world, x, y, z) {
   console.log('[BonusChest] placeBonusChest called at', x, y, z);
   // Convert to integer block coordinates
   const startX = Math.floor(x);
@@ -209,6 +209,10 @@ export function placeBonusChest(world, x, y, z) {
       chestEntity.items[i] = loot[i];
     }
     console.log('[BonusChest] Chest filled:', chestEntity.items);
+    
+    // Refresh chest to update mesh/renderer
+    const { refreshChest } = await import('./Chests.js');
+    refreshChest(world, placeX, placeY, placeZ);
   } else {
     console.log('[BonusChest] ERROR: No chest entity or no items array!');
   }

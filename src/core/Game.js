@@ -857,12 +857,12 @@ this._bedsByDimension = {};
     this.player.velocity.set(0, 0, 0);
     this.player.fallDistance = 0;
 
-    // Place bonus chest if enabled (only for new survival worlds)
-    if (this.bonusChest && gameMode === 'survival' && !saveData) {
+    // Place bonus chest if enabled (only for new worlds, not loaded ones)
+    if (this.bonusChest && !saveData) {
       console.log('[BonusChest] Conditions met - placing chest');
       const spawnPos = this.world.findSpawn();
       console.log('[BonusChest] Spawn pos:', spawnPos);
-      placeBonusChest(this.world, spawnPos.x, spawnPos.y, spawnPos.z);
+      await placeBonusChest(this.world, spawnPos.x, spawnPos.y, spawnPos.z);
     } else {
       console.log('[BonusChest] Skipped:', { bonusChest: this.bonusChest, gameMode, saveData: !!saveData });
     }
