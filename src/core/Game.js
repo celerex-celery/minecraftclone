@@ -207,6 +207,8 @@ export class Game {
       antialias: false,
       powerPreference: 'high-performance',
       stencil: false,
+      // Sort objects by material to reduce shader switches
+      sortObjects: true,
     });
     // Whole device pixels per CSS pixel - see crispPixelRatio(). The blocky 16px
     // textures are crisp anyway, so anything fractional only costs fill rate
@@ -215,10 +217,15 @@ export class Game {
     this.renderer.setPixelRatio(this._basePixelRatio);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.NoToneMapping;
-    this.renderer.autoClear = true;
+    // Manual clear for optimization - we'll clear depth+color only when needed
+    this.renderer.autoClear = false;
+    // Enable frustum culling (default true, but explicit)
+    this.renderer.localClippingEnabled = false;
 
     this.scene = new THREE.Scene();
     this.scene.fog = new THREE.Fog(0xa8c8ee, 60, 140);
+    // Enable frustum culling on scene (default true)
+    this.scene.frustumCulled = true;
     this.camera = new THREE.PerspectiveCamera(this.settings.fov, 1, 0.08, 600);
     // Minimal ambient for mobs (MeshStandardMaterial) - terrain uses voxel light engine.
     this.ambientLight = new THREE.AmbientLight(0xffffff, 0.08);
@@ -3116,6 +3123,28 @@ const payload = {
       );
     } else {
       this.breakOverlay.hide();
+    }
+
+    // Adaptive resolution scaling for critically low FPS (non-noticeable at <30 FPS)
+    if (this.fps < 25 && this._basePixelRatio > 1) {
+      const targetRatio = Math.max(1, Math.floor(this._basePixelRatio * 0.75));
+      if (targetRatio !== this.renderer.getPixelRatio()) {
+        this.renderer.setPixelRatio(targetRatio);
+      }
+    } else if (this.fps > 40 && this.renderer.getPixelRatio() !== this._basePixelRatio) {
+      this.renderer.setPixelRatio(this._basePixelRatio);
+    }
+
+    // Manual clear: color + depth only (stencil not used)
+    this.renderer.clear(true, true, false);
+
+    // Cache fog/sky uniform values to avoid redundant GPU uploads
+    if (this._lastFogColor === undefined || !this._lastFogColor.equals(world.scene.fog.color)) {
+      this._lastFogColor = world.scene.fog.color.clone();
+    }
+    if (this._lastFogNear !== world.scene.fog.near || this._lastFogFar !== world.scene.fog.far) {
+      this._lastFogNear = world.scene.fog.near;
+      this._lastFogFar = world.scene.fog.far;
     }
 
     this.renderer.info.reset();
