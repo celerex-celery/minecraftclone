@@ -69,6 +69,55 @@ async function boot() {
   log.info('Version %s', game.version ?? 'unknown');
 
   // show the title screen
+  // Check if running in Electron desktop app
+  if (!window.electronSaves) {
+    // Not in Electron - show blocking message
+    const container = document.getElementById('viewport');
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(16, 16, 16, 0.98);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #fff; font-family: 'Minecraft', 'Minecraftia', monospace;
+      text-align: center; padding: 40px;
+    `;
+    overlay.innerHTML = `
+      <h1 style="font-size: 28px; margin-bottom: 16px; color: #e6d91a; text-shadow: 2px 2px 0 #000;">
+        Cannot Play on Localhost
+      </h1>
+      <p style="font-size: 18px; max-width: 500px; margin-bottom: 24px; line-height: 1.5;">
+        Minecraft Voxel requires the <strong>Electron desktop app</strong> to save worlds and settings.
+        Running in a browser (localhost) only provides session-only storage — your world will be lost when you close the tab.
+      </p>
+      <p style="font-size: 16px; color: #aaa; margin-bottom: 32px;">
+        Please launch the game using <code style="background:#333;padding:2px 6px;">start-electron.bat</code> or <code style="background:#333;padding:2px 6px;">npm run electron</code>.
+      </p>
+      <button id="retry-btn" style="
+        padding: 12px 32px;
+        font-size: 16px;
+        font-family: 'Minecraft', 'Minecraftia', monospace;
+        background: #5a5a5a;
+        border: 2px solid #2f2f2f;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: inset 1px 1px 0 #ffffff55, inset -1px -1px 0 #00000066;
+      ">Open in Electron App</button>
+    `;
+    container.appendChild(overlay);
+    
+    document.getElementById('retry-btn').addEventListener('click', () => {
+      overlay.remove();
+      // Try to launch Electron via protocol or just refresh
+      if (window.electronSaves) {
+        location.reload();
+      } else {
+        alert('Please close this tab and run "start-electron.bat" or "npm run electron" from the project folder.');
+      }
+    });
+    
+    return; // Stop boot
+  }
+  
   game.screens.title.show();
   game.start();
   game.applySettings();
