@@ -137,8 +137,12 @@ function findEmptySlot(slots, usedSlots) {
  * @returns {boolean} Whether chest was placed
  */
 export function placeBonusChest(world, x, y, z) {
+  console.log('[BonusChest] placeBonusChest called at', x, y, z);
   const chestId = Blocks.id('chest');
-  if (chestId === undefined) return false;
+  if (chestId === undefined) {
+    console.log('[BonusChest] No chest block id found');
+    return false;
+  }
   
   // Try to find a good spot: on top of a solid block, with air above
   let placeX = x;
@@ -178,15 +182,20 @@ export function placeBonusChest(world, x, y, z) {
   }
   
   // Place the chest
+  console.log('[BonusChest] Setting block at', placeX, placeY, placeZ);
   world.setBlock(placeX, placeY, placeZ, chestId);
   
   // Fill the chest with loot
-  const loot = generateBonusChestLoot();
+  console.log('[BonusChest] Getting chest entity at', placeX, placeY, placeZ);
   const chestEntity = world.getBlockEntity(placeX, placeY, placeZ);
+  console.log('[BonusChest] Chest entity:', chestEntity);
   if (chestEntity && chestEntity.items) {
+    console.log('[BonusChest] Filling chest with loot');
+    const loot = generateBonusChestLoot();
     for (let i = 0; i < loot.length; i++) {
       chestEntity.items[i] = loot[i];
     }
+    console.log('[BonusChest] Chest filled:', chestEntity.items);
   }
   
   return true;
