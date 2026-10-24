@@ -557,6 +557,7 @@ export class SoundEngine {
   fuse() { this.playFrom(MANIFEST.one.fuse, { volume: 0.5 }); }
   explode() { this.playFrom(MANIFEST.one.explode, { volume: 1.0 }); }
   chestOpen() { this.playFrom(MANIFEST.one.chestOpen, { volume: 0.6 }); }
+  chestClose() { this.playFrom(MANIFEST.one.chestClose, { volume: 0.6 }); }
   /**
    * Softer than a pig's step, for the same reason a chick's is louder than a
    * chicken's: the recording is pitched for a much smaller animal, so it gets
