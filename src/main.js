@@ -115,10 +115,12 @@ async function boot() {
         ">Open in Electron App</button>
       </div>
     `;
-    container.appendChild(overlay);
+    document.body.appendChild(overlay);
     
     document.getElementById('continue-btn').addEventListener('click', () => {
       overlay.remove();
+      // Ensure clean state before starting
+      game.state = STATE.LOADING;
       game.screens.title.show();
       game.start();
       game.applySettings();
