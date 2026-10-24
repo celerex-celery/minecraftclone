@@ -3138,13 +3138,15 @@ const payload = {
     // Manual clear: color + depth only (stencil not used)
     this.renderer.clear(true, true, false);
 
-    // Cache fog/sky uniform values to avoid redundant GPU uploads
-    if (this._lastFogColor === undefined || !this._lastFogColor.equals(world.scene.fog.color)) {
-      this._lastFogColor = world.scene.fog.color.clone();
-    }
-    if (this._lastFogNear !== world.scene.fog.near || this._lastFogFar !== world.scene.fog.far) {
-      this._lastFogNear = world.scene.fog.near;
-      this._lastFogFar = world.scene.fog.far;
+    // Cache fog/sky uniform values to avoid redundant GPU uploads (only when world exists)
+    if (this.world) {
+      if (this._lastFogColor === undefined || !this._lastFogColor.equals(this.world.scene.fog.color)) {
+        this._lastFogColor = this.world.scene.fog.color.clone();
+      }
+      if (this._lastFogNear !== this.world.scene.fog.near || this._lastFogFar !== this.world.scene.fog.far) {
+        this._lastFogNear = this.world.scene.fog.near;
+        this._lastFogFar = this.world.scene.fog.far;
+      }
     }
 
     this.renderer.info.reset();
