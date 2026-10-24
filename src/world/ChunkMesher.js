@@ -396,6 +396,39 @@ export class ChunkMesher {
     this.padBlocks = new Uint8Array(PAD_VOL);
     this.padLight = new Uint8Array(PAD_VOL);
     this.padBiome = new Uint8Array(PXW * PZW);
+
+    // Fast shape handler lookup by block ID (populated lazily)
+    this._shapeHandlers = null;
+    // Fast opacity array for isOpaqueAt (populated lazily)
+    this._opacityCache = null;
+  }
+
+  /** Initialize fast lookup tables from block registry. */
+  _ensureLookupTables() {
+    if (this._shapeHandlers !== null) return;
+    const maxId = Blocks.list.length;
+    this._shapeHandlers = new Array(maxId);
+    this._opacityCache = new Uint8Array(maxId);
+    for (let id = 0; id < maxId; id++) {
+      const def = Blocks.list[id];
+      if (!def) continue;
+      const shape = def.shape;
+      // Map shape string to handler function
+      if (shape === 'none') this._shapeHandlers[id] = 0;
+      else if (shape === 'cross') this._shapeHandlers[id] = 1;
+      else if (shape === 'liquid') this._shapeHandlers[id] = 2;
+      else if (shape === 'portal') this._shapeHandlers[id] = 3;
+      else if (shape === 'cube') this._shapeHandlers[id] = 4;
+      else if (shape === 'end_portal_frame') this._shapeHandlers[id] = 5;
+      else if (shape === 'slab_bottom') this._shapeHandlers[id] = 6;
+      else if (shape === 'slab_top') this._shapeHandlers[id] = 7;
+      else if (shape === 'pillar') this._shapeHandlers[id] = 8;
+      else if (shape === 'stairs') this._shapeHandlers[id] = 9;
+      else if (shape === 'post') this._shapeHandlers[id] = 10;
+      else if (shape === 'layer') this._shapeHandlers[id] = 11;
+      else this._shapeHandlers[id] = 4; // default to cube
+      this._opacityCache[id] = def.opaque ? 1 : 0;
+    }
   }
   /** Copy the chunk plus a one-block skirt into flat arrays. */
   buildPadCache(chunk, world) {
@@ -460,9 +493,10 @@ export class ChunkMesher {
   }
   /** true when the padded cell is a fully opaque block */
   isOpaqueAt(px, py, pz) {
+    this._ensureLookupTables();
     const b = this.padGet(px, py, pz);
     if (b < 0) return true;
-    return Blocks.get(b).opaque;
+    return this._opacityCache[b] === 1;
   }
 
   /* -------------------------------------------------- connection helper */
@@ -520,10 +554,12 @@ export class ChunkMesher {
    */
   band(maxMs) {
     if (!this.buildChunk) return null;
+    this._ensureLookupTables(); // Initialize fast lookups
     const deadline = performance.now() + maxMs;
     const chunk = this.buildChunk;
     const pb = this.padBlocks;
     const top = this.buildTop;
+    const handlers = this._shapeHandlers;
 
     // one band is sixteen scanlines: small enough that a check costs little next
     // to the work, big enough that the check is not the work
@@ -537,46 +573,32 @@ export class ChunkMesher {
           const id = pb[pIdx(px, py, pz)];
           if (id === 0) continue;
           const def = Blocks.get(id);
-          switch (def.shape) {
-            // A block whose geometry is not the mesher's to make. A bed is two
-            // cells of one model with a texture embedded in it, drawn by `Beds`
-            // as a scene object, so what the mesher must not do is draw the bed
-            // *again* as a cube - which is what the `default` case below would do
-            // for any shape string it does not recognise.
-            //
-            // This is the only way to say "no geometry", short of leaving the
-            // cell as air, and it is deliberately not a per-def flag: there is
-            // exactly one thing that needs it, and a shape string puts it beside
-            // every other "how is this block drawn" answer in the same list.
-            case 'none': break;
-            case 'cross': this.emitCross(x, y, z, px, py, pz, def); break;
-            case 'liquid': this.emitLiquid(x, y, z, px, py, pz, def); break;
-            case 'portal':
-              const defName = Blocks.get(id).name;
-              if (defName === 'end_portal') {
-                this.emitEndPortal(x, y, z, px, py, pz);
-              } else {
-                this.emitPortal(x, y, z, px, py, pz);
-              }
-              break;
-            case 'cube': this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 1, 1, 0); break;
-            case 'end_portal_frame': this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 0.8125, 1, 0); break;
-            case 'slab_bottom': this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 0.5, 1, 0); break;
-            case 'slab_top': this.emitBox(x, y, z, px, py, pz, def, id, 0, 0.5, 0, 1, 1, 1, 0); break;
-            // logs are 12/16 wide, like the vanilla 2-pixel inset
-            case 'pillar': this.emitBox(x, y, z, px, py, pz, def, id, 0.125, 0, 0.125, 0.875, 1, 0.875, 0); break;
-            case 'stairs': this.emitStairs(x, y, z, px, py, pz, def, id); break;
-            case 'post': this.emitPost(x, y, z, px, py, pz, def, id); break;
-            // snow and anything else that accumulates a fractional depth: one
-            // layer is an eighth of a block, eight is a whole one
-            case 'layer':
-              this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, def.layerHeight ?? 0.125, 1, 0);
-              break;
-            default:
-              this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 1, 1, 0);
+          const handler = handlers[id] ?? 4;
+          // Fast path: inline the common cases
+          if (handler === 0) continue; // none
+          if (handler === 1) { this.emitCross(x, y, z, px, py, pz, def); continue; } // cross
+          if (handler === 2) { this.emitLiquid(x, y, z, px, py, pz, def); continue; } // liquid
+          if (handler === 3) { // portal
+            const defName = def.name;
+            if (defName === 'end_portal') this.emitEndPortal(x, y, z, px, py, pz);
+            else this.emitPortal(x, y, z, px, py, pz);
+            continue;
           }
+          if (handler === 4) { this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 1, 1, 0); continue; }
+          if (handler === 5) { this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 0.8125, 1, 0); continue; }
+          if (handler === 6) { this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 0.5, 1, 0); continue; }
+          if (handler === 7) { this.emitBox(x, y, z, px, py, pz, def, id, 0, 0.5, 0, 1, 1, 1, 0); continue; }
+          if (handler === 8) { this.emitBox(x, y, z, px, py, pz, def, id, 0.125, 0, 0.125, 0.875, 1, 0.875, 0); continue; }
+          if (handler === 9) { this.emitStairs(x, y, z, px, py, pz, def, id); continue; }
+          if (handler === 10) { this.emitPost(x, y, z, px, py, pz, def, id); continue; }
+          if (handler === 11) { // layer
+            this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, def.layerHeight ?? 0.125, 1, 0);
+            continue;
+          }
+          this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 1, 1, 0);
         }
       }
+      // Check deadline less frequently (every band, not every cell)
       if (performance.now() >= deadline && this.buildY <= top) return null;
     }
     if (this.buildY <= top) return null;
