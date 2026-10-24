@@ -254,16 +254,68 @@ export class Spreading {
   /**
    * A scatter of positions around the player, so the queue does not have to
    * cover the world and a spot nobody scheduled still gets its turn.
+   *
+   * Also implements vanilla grass random tick: each grass block checks
+   * 4 random positions within 3x5x3 range and converts dirt to grass.
    */
   _scatter(near) {
     const bx = Math.floor(near.x);
     const by = Math.floor(near.y);
     const bz = Math.floor(near.z);
+    const world = this.world;
+    const { grass, dirt } = this.id;
+
+    // Vanilla: each grass block random tick checks 4 positions within 3x5x3
+    // We approximate by checking grass blocks in the scatter radius
     for (let i = 0; i < ATTEMPTS; i++) {
       const x = bx + Math.floor(this._rng() * RADIUS_XZ * 2) - RADIUS_XZ;
       const z = bz + Math.floor(this._rng() * RADIUS_XZ * 2) - RADIUS_XZ;
       const y = by + Math.floor(this._rng() * RADIUS_Y * 2) - RADIUS_Y;
       this._grass(x, y, z);
+      this._seagrass(x, y, z);
+      this._cactus(x, y, z);
+    }
+
+    // Vanilla grass spread: check 4 random positions per grass block in range
+    // We sample a few grass blocks and do their random tick spread
+    for (let i = 0; i < 4; i++) {
+      const gx = bx + Math.floor(this._rng() * RADIUS_XZ * 2) - RADIUS_XZ;
+      const gz = bz + Math.floor(this._rng() * RADIUS_XZ * 2) - RADIUS_XZ;
+      const gy = by + Math.floor(this._rng() * RADIUS_Y * 2) - RADIUS_Y;
+      
+      if (world.getBlock(gx, gy, gz) === grass) {
+        // This grass block gets a random tick - check 4 positions in 3x5x3 range
+        for (let j = 0; j < 4; j++) {
+          const dx = Math.floor(this._rng() * 3) - 1;  // -1, 0, 1
+          const dz = Math.floor(this._rng() * 3) - 1;  // -1, 0, 1
+          const dy = Math.floor(this._rng() * 5) - 1;  // -1, 0, 1, 2, 3 (0..3, but vanilla is y to y+3 from source)
+          // Vanilla: source is at center of 2nd topmost layer, so check y to y+3 from source
+          // Source at (gx, gy, gz), check dirt at (gx+dx, gy+dy, gz+dz) where dy in 0..3
+          const checkY = gy + Math.floor(this._rng() * 4);  // gy to gy+3
+          const checkX = gx + dx;
+          const checkZ = gz + dz;
+          
+          if (world.getBlock(checkX, checkY, checkZ) === air &&
+              world.getBlock(checkX, checkY - 1, checkZ) === dirt) {
+            // Check light above source grass (9+)
+            const light = world.getLight(gx, gy + 1, gz) >> 4;
+            if (light >= 9) {
+              // Check block above dirt allows light through
+              const up = world.getBlock(checkX, checkY + 1, checkZ);
+              if (!Blocks.get(up).liquid) {
+                this._place(checkX, checkY - 1, checkZ, grass, GRASS_DELAY);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Regular scatter for other systems
+    for (let i = 0; i < ATTEMPTS; i++) {
+      const x = bx + Math.floor(this._rng() * RADIUS_XZ * 2) - RADIUS_XZ;
+      const z = bz + Math.floor(this._rng() * RADIUS_XZ * 2) - RADIUS_XZ;
+      const y = by + Math.floor(this._rng() * RADIUS_Y * 2) - RADIUS_Y;
       this._seagrass(x, y, z);
       this._cactus(x, y, z);
     }
@@ -295,42 +347,82 @@ export class Spreading {
   /* -------------------------------------------------- grass */
 
   /**
-   * One position, asked whether it should be grass.
-   *
-   * Two questions of one shape, which is how the real game writes it: a bare
-   * dirt block with clear air over it grows grass, and a grass block whose space
-   * above has been taken goes back to dirt.
-   *
-   * It spreads over dirt only. Coarse dirt, rooted dirt and farmland are left
-   * alone, and so is dirt under water - a lawn underwater stays as it was,
-   * because the rule is about air above, and water is not air.
+   * Vanilla grass spreading mechanics:
+   * - Source grass block must have light level 9+ directly above it
+   * - Dirt block must be within 3x5x3 range (source at center of 2nd topmost layer)
+   * - Block above dirt must allow light through (not solid, not water/lava)
+   * - On random tick, grass checks 4 blocks within range and converts dirt to grass
+   * - Bone meal on grass causes short grass, tall grass, ferns, flowers to grow
    */
   _grass(x, y, z) {
-    const { air, dirt, grass } = this.id;
+    const { air, dirt, grass, coarse_dirt, rooted_dirt, farmland } = this.id;
     const world = this.world;
     if (!this._ready(x, z)) return;
     const here = world.getBlock(x, y, z);
-    const below = world.getBlock(x, y - 1, z);
 
+    // Grass dying: check if smothered by solid block
     if (here === grass) {
-      // What decides a lawn's fate is the cell *above* the grass, not the grass
-      // itself. It used to test `here` twice - having found the cell was grass,
-      // it asked whether that same cell was air or water, which it never is -
-      // so every grass block in the world was on a two second fuse back to dirt,
-      // and the scatter pass, asking twenty new positions a tick, kept setting
-      // that fuse again. A lawn did not die, it flickered, at random, forever,
-      // and the growing rule spent its whole budget putting back what the dying
-      // rule had just taken away.
       const up = Blocks.get(world.getBlock(x, y + 1, z));
-      // Only something solid smothering it counts. Air and water do not, and
-      // neither does a plant standing in it - a torch on a lawn does not kill
-      // the lawn, and that is the real game's rule too.
       if (up.solid && !up.replaceable) this._place(x, y, z, dirt, GRASS_DELAY);
       return;
     }
-    if (here !== air) return;          // only grows into clear air
-    if (below !== dirt) return;        // and only over dirt
+
+    // Only air can become grass-covered dirt
+    if (here !== air) return;
+
+    // Check below is dirt (not coarse_dirt, rooted_dirt, or farmland)
+    const below = world.getBlock(x, y - 1, z);
+    if (below !== dirt) return;  // Only spreads to regular dirt
+
+    // Check light level 9+ above the grass source (the block at x, y+1, z would be the source)
+    // The grass source is at (x, y, z) - one block below this air block
+    const sourceY = y - 1;
+    if (!world.chunkAtBlock(x, sourceY)) return;
+    const lightAboveSource = world.getLight(x, sourceY + 1, z) >> 4;  // sky light
+    if (lightAboveSource < 9) return;  // Need light level 9+
+
+    // Check block above dirt (which is 'here' - air) allows light through
+    // and is not water/lava
+    const aboveDirt = world.getBlock(x, y, z);  // this is 'here' = air
+    const upBlock = Blocks.get(world.getBlock(x, y + 1, z));
+    if (upBlock.liquid) return;  // water/lava above blocks grass spread
+
+    // Check 3x5x3 range: source at center of 2nd topmost layer
+    // For a source at (sx, sy, sz), valid dirt positions are:
+    // sx-1 to sx+1, sy to sy+3, sz-1 to sz+1
+    // The source grass is at (x, y-1, z) - but we need to find actual grass sources nearby
+    // For simplicity, check if there's a grass block within the 3x5x3 range that can spread here
+    if (!this._hasGrassSourceNearby(x, y - 1, z)) return;
+
     this._place(x, y - 1, z, grass, GRASS_DELAY);
+  }
+
+  /**
+   * Check if there's a grass block within 3x5x3 range that can spread to target.
+   * Source must be at center of 2nd topmost layer of the 3x5x3 volume.
+   * @param {number} x dirt x
+   * @param {number} y dirt y
+   * @param {number} z dirt z
+   * @returns {boolean}
+   */
+  _hasGrassSourceNearby(x, y, z) {
+    const world = this.world;
+    const { grass } = this.id;
+    // 3x5x3 range: x-1..x+1, y..y+3, z-1..z+1
+    // Source grass is at center of 2nd topmost layer: y+1
+    const srcY = y + 1;
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        const sx = x + dx;
+        const sz = z + dz;
+        if (world.getBlock(sx, srcY, sz) === grass) {
+          // Check light level 9+ above this grass source
+          const light = world.getLight(sx, srcY + 1, sz) >> 4;
+          if (light >= 9) return true;
+        }
+      }
+    }
+    return false;
   }
 
   /* -------------------------------------------------- seagrass */

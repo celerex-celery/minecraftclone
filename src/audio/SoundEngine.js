@@ -479,6 +479,7 @@ export class SoundEngine {
   ignite() { this.playFrom(MANIFEST.one.ignite, { volume: 0.55, rate: 0.9 }); }
 
   pickup() { this.playFrom(MANIFEST.one.pickup, { volume: 0.4, rate: 1.1 }); }
+  bonemeal() { this.playFrom(MANIFEST.one.pickup, { volume: 0.5, rate: 1.3 }); }
   hurt() { this.playFrom(MANIFEST.one.hurt, { volume: 0.7 }); }
   fall() { this.playFrom(MANIFEST.one.fall, { volume: 0.7 }); }
   fallSmall() { this.playFrom(MANIFEST.one.fallSmall, { volume: 0.5 }); }

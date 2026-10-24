@@ -19,12 +19,14 @@ const VERT = /* glsl */`
   attribute float scale;
   varying vec2 vUv;
   varying float vLife;
+  varying float vScale;
 
   void main() {
     vUv = mix(rect.xy, rect.zw, vec2(corner.x, 1.0 - corner.y));
     vLife = life;
+    vScale = scale;
     vec4 mv = modelViewMatrix * vec4(offset, 1.0);
-    mv.xy += corner * scale;
+    mv.xy += corner * abs(scale);
     gl_Position = projectionMatrix * mv;
   }
 `;
@@ -33,9 +35,16 @@ const FRAG = /* glsl */`
   uniform sampler2D atlas;
   varying vec2 vUv;
   varying float vLife;
+  varying float vScale;
 
   void main() {
     if (vLife <= 0.0) discard;
+    // Bonemeal particles have negative scale - render as green sparkles
+    if (vScale < 0.0) {
+      float fade = clamp(vLife * 3.0, 0.0, 1.0);
+      gl_FragColor = vec4(0.2, 1.0, 0.2, fade);
+      return;
+    }
     vec4 tex = texture2D(atlas, vUv);
     if (tex.a < 0.5) discard;
     // fade out over the last third of the lifetime
@@ -152,6 +161,40 @@ export class Particles {
     for (let i = 0; i < this.count; i++) {
       const o = i * 3;
       this.vel[o + 1] = -Math.abs(this.vel[o + 1]) * 0.4;
+    }
+  }
+
+  /** Green sparkle particles for bone meal use. */
+  spawnBonemeal(x, y, z) {
+    const n = 20;
+    for (let i = 0; i < n; i++) {
+      if (this.count >= MAX_PARTICLES) break;
+      const idx = this.count++;
+      const o = idx * 3;
+      // Spawn in a sphere around the position
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 0.3 + Math.random() * 0.4;
+      this.offset[o] = x + r * Math.sin(phi) * Math.cos(theta);
+      this.offset[o + 1] = y + r * Math.sin(phi) * Math.sin(theta);
+      this.offset[o + 2] = z + r * Math.cos(phi);
+      // Upward velocity with some spread
+      this.vel[o] = (Math.random() - 0.5) * 0.8;
+      this.vel[o + 1] = Math.random() * 1.5 + 0.5;
+      this.vel[o + 2] = (Math.random() - 0.5) * 0.8;
+
+      // Use a simple white/green particle (no texture atlas needed for simple color)
+      // We'll use a blank UV rect and rely on vertex color
+      const r = idx * 4;
+      this.rect[r] = 0; this.rect[r + 1] = 0;
+      this.rect[r + 2] = 0; this.rect[r + 3] = 0;
+
+      const life = 0.6 + Math.random() * 0.4;
+      this.life[idx] = life;
+      this.maxLife[idx] = life;
+      this.scale[idx] = 0.08 + Math.random() * 0.04;
+      // Store color in scale's high bits (hack: use negative scale for bonemeal color)
+      this.scale[idx] = -Math.abs(this.scale[idx]);
     }
   }
 

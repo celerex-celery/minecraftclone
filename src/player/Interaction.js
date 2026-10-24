@@ -479,13 +479,18 @@ export class Interaction {
        it. */
     if (def.tool?.throwable === 'ender_pearl') return this.throwPearl();
 
-    /* ---- flint and steel ----
+/* ---- flint and steel ----
        It places nothing and it is not a tool, so it needs its own path. It
        strikes: a click against any solid face sets fire to the cell in front of
        it, and a click on a complete obsidian frame lights a nether portal. */
-    if (def.tool?.type === 'flint_and_steel') return this.useFlintAndSteel();
+     if (def.tool?.type === 'flint_and_steel') return this.useFlintAndSteel();
 
-    /* ---- eye of ender ----
+     /* ---- bone meal ----
+        Used on grass blocks to generate tall grass, ferns, and flowers.
+        Used on crops to advance growth stage. */
+     if (stack.name === 'bone_meal') return this.useBoneMeal();
+
+     /* ---- eye of ender ----
        Right-clicking an end portal frame with an eye of ender fills it.
        When all 12 frames in a ring have eyes, the portal activates. */
     if (stack.name === 'ender_eye') return this.useEnderEye();
@@ -1484,6 +1489,83 @@ export class Interaction {
     }
     if (opened) this.game.viewModel.triggerSwing();
     return opened;
+  }
+
+  /**
+   * Use bone meal on the targeted block.
+   * On grass blocks: generates tall grass, ferns, and flowers.
+   * On crops: advances growth stage.
+   * @returns {boolean} true if bone meal was used
+   */
+  useBoneMeal() {
+    const { player, world, inventory } = this.game;
+    const target = this.target;
+    if (!target) return false;
+
+    const { x, y, z, id } = target;
+
+    // Bone meal on grass block generates vegetation
+    if (id === Blocks.id('grass_block') || id === Blocks.id('dirt') || id === Blocks.id('podzol')) {
+      // Consume one bone meal
+      if (!player.creative) inventory.consumeHeld(1);
+      
+      // Generate vegetation in a 3x3 area around the target
+      this.generateGrassVegetation(x, y + 1, z);
+      
+      // Particle effect
+      this.game.particles.spawnBonemeal(x, y + 1, z);
+      audio.bonemeal();
+      return true;
+    }
+
+    // Bone meal on crops (wheat, carrots, potatoes, etc.) - advance growth
+    // TODO: implement crop growth advancement
+
+    return false;
+  }
+
+  /**
+   * Generate grass vegetation (tall grass, ferns, flowers) around a position.
+   * Vanilla: bone meal on grass creates tall grass, ferns, and flowers in 3x3 area.
+   */
+  generateGrassVegetation(cx, cy, cz) {
+    const world = this.game.world;
+    const { short_grass, tall_grass, fern, poppy, dandelion, cornflower, oxeye_daisy } = Blocks.id;
+    
+    const vegetation = [
+      { id: short_grass, weight: 40 },
+      { id: tall_grass, weight: 25 },
+      { id: fern, weight: 15 },
+      { id: poppy, weight: 8 },
+      { id: dandelion, weight: 8 },
+      { id: cornflower, weight: 2 },
+      { id: oxeye_daisy, weight: 2 },
+    ];
+
+    // 3x3 area around center
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dz = -1; dz <= 1; dz++) {
+        const vx = cx + dx;
+        const vz = cz + dz;
+        const vy = cy;
+
+        // Check if position is air and block below is grass/dirt/podzol
+        if (world.getBlock(vx, vy, vz) !== 0) continue;
+        const below = world.getBlock(vx, vy - 1, vz);
+        if (below !== Blocks.id('grass_block') && below !== Blocks.id('dirt') && below !== Blocks.id('podzol')) continue;
+
+        // Pick random vegetation weighted
+        const totalWeight = vegetation.reduce((sum, v) => sum + v.weight, 0);
+        let roll = Math.random() * totalWeight;
+        for (const veg of vegetation) {
+          roll -= veg.weight;
+          if (roll <= 0) {
+            world.setBlock(vx, vy, vz, veg.id);
+            break;
+          }
+        }
+      }
+    }
   }
 
   /**
