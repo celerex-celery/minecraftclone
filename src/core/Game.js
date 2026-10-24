@@ -1863,11 +1863,14 @@ const payload = {
      container screens
      ================================================================ */
 
-  openScreen(kind, blockPos) {
+  openScreen(kind, blockPos, chestEntity) {
     this.closeScreen();
     const screen = new ContainerScreen(this, kind, blockPos);
     if (kind === 'furnace' && blockPos) {
       screen.attachFurnace(this.world.getBlockEntity(blockPos.x, blockPos.y, blockPos.z));
+    }
+    if (kind === 'chest' && chestEntity) {
+      screen.attachChest(chestEntity);
     }
     screen.open(blockPos);
     this.screen = screen;
@@ -1888,8 +1891,8 @@ const payload = {
    * deliberate rule.
    */
   openChest(x, y, z) {
-    this.openScreen('chest', { x, y, z });
-    this.screen?.attachChest(chestOwner(this.world, x, y, z));
+    const owner = chestOwner(this.world, x, y, z);
+    this.openScreen('chest', { x, y, z }, owner);
     audio.chestOpen();
   }
 
