@@ -123,6 +123,15 @@ async function boot() {
       game.start();
       game.applySettings();
       log.info('Reached the title screen (localhost mode, no saves)');
+      
+      // resume audio on first interaction (browser autoplay policy)
+      const resume = () => {
+        audio.init();
+        audio.resume();
+        if (game.state === 'title') audio.playMusic('menu');
+      };
+      window.addEventListener('pointerdown', resume, { once: true });
+      window.addEventListener('keydown', resume, { once: true });
     });
     
     document.getElementById('electron-btn').addEventListener('click', () => {
