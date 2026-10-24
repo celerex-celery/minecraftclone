@@ -12,7 +12,7 @@
  *    game actually hits in normal use.
  */
 
-import { Game } from './core/Game.js';
+import { Game, STATE } from './core/Game.js';
 import { Assets, blockTextureManifest, itemTextureManifest } from './core/Assets.js';
 import { Blocks } from './world/Blocks.js';
 import { Items } from './world/Items.js';
@@ -138,11 +138,35 @@ async function boot() {
     
     document.getElementById('electron-btn').addEventListener('click', () => {
       overlay.remove();
-      if (window.electronSaves) {
-        location.reload();
-      } else {
-        alert('Please close this tab and run "start-electron.bat" or "npm run electron" from the project folder.');
-      }
+      // Can't launch Electron from browser - show helpful instructions
+      const msg = document.createElement('div');
+      msg.style.cssText = `
+        position: fixed; inset: 0; z-index: 1000;
+        background: rgba(16, 16, 16, 0.98);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #fff; font-family: 'Minecraft', 'Minecraftia', monospace;
+        text-align: center; padding: 40px;
+      `;
+      msg.innerHTML = `
+        <h2 style="color: #e6d91a; margin-bottom: 20px;">Launch Electron App</h2>
+        <p style="max-width: 500px; margin-bottom: 16px; line-height: 1.6;">
+          You need to close this browser tab and run the game from the <strong>Electron desktop app</strong>:
+        </p>
+        <pre style="background: #1a1a1a; padding: 16px; border: 2px solid #373737; border-radius: 4px; margin: 16px 0; text-align: left;">
+<code>start-electron.bat</code>
+        </pre>
+        <p style="font-size: 14px; color: #aaa;">Or run: <code>npm run electron</code></p>
+        <button id="close-msg" style="
+          padding: 10px 24px;
+          font-family: 'Minecraft', 'Minecraftia', monospace;
+          background: #5a5a5a;
+          border: 2px solid #2f2f2f;
+          color: #fff;
+          cursor: pointer;
+        ">Close</button>
+      `;
+      document.body.appendChild(msg);
+      document.getElementById('close-msg').addEventListener('click', () => msg.remove());
     });
     
     return; // Wait for user choice
