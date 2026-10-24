@@ -23,10 +23,10 @@ import { mulberry32 } from './Noise.js';
 import { CONFIG } from '../core/Config.js';
 
 /** How many scattered positions are examined per tick. */
-const ATTEMPTS = 12;  // Reduced from 20 to reduce CPU load
+const ATTEMPTS = 8;  // Reduced from 12 to 8
 
 /** Ticks each rule waits before trying again, at the vanilla 20 ticks a second. */
-const GRASS_DELAY = 60;   // ~3s, increased from ~2.25s to reduce spread frequency
+const GRASS_DELAY = 90;   // ~4.5s
 const SEAGRASS_DELAY = 40;   // ~2s
 const CACTUS_DELAY = 60;     // ~3s
 const LEAF_DECAY_DELAY = 20;   // ~1s, faster so leaves don't hang long after chopping

@@ -1388,11 +1388,11 @@ let c = -1;
    * flowers only ever appear on grass-like soil while sand stays barren.
    */
   groundCover(local, ground, x, y, z, wx, wz, r) {
-    if (r > 0.60) return;  // Reduced from 0.44 to 0.60 (less ground cover)
+    if (r > 0.75) return;  // Reduced from 0.60 to 0.75 (even less ground cover)
     const pick = hash2(wx, wz, this.seed ^ 0x1eaf);
 
     if (ground === Blocks.id('sand') || ground === Blocks.id('red_sand')) {
-      if (pick < 0.20) local(x, y, z, Blocks.id('dead_bush'));  // Reduced from 0.30
+      if (pick < 0.15) local(x, y, z, Blocks.id('dead_bush'));  // Reduced from 0.20
       return;
     }
     if (ground !== Blocks.id('grass_block')
@@ -1401,12 +1401,12 @@ let c = -1;
       return;
     }
 
-    if (pick < 0.55) local(x, y, z, Blocks.id('short_grass'));  // Reduced from 0.70
-    else if (pick < 0.62) local(x, y, z, Blocks.id('fern'));  // Reduced from 0.09 to 0.07
-    else if (pick < 0.67) local(x, y, z, Blocks.id('poppy'));  // Reduced from 0.06 to 0.05
-    else if (pick < 0.71) local(x, y, z, Blocks.id('dandelion'));  // Reduced from 0.06 to 0.04
-    else if (pick < 0.73) local(x, y, z, Blocks.id('cornflower'));  // Reduced from 0.03 to 0.02
-    else if (pick < 0.74) local(x, y, z, Blocks.id('oxeye_daisy'));  // Reduced from 0.025 to 0.01
+    if (pick < 0.45) local(x, y, z, Blocks.id('short_grass'));  // Reduced from 0.55
+    else if (pick < 0.50) local(x, y, z, Blocks.id('fern'));  // Reduced from 0.07 to 0.05
+    else if (pick < 0.54) local(x, y, z, Blocks.id('poppy'));  // Reduced from 0.05 to 0.04
+    else if (pick < 0.57) local(x, y, z, Blocks.id('dandelion'));  // Reduced from 0.04 to 0.03
+    else if (pick < 0.58) local(x, y, z, Blocks.id('cornflower'));  // Reduced from 0.02 to 0.01
+    else if (pick < 0.59) local(x, y, z, Blocks.id('oxeye_daisy'));  // Reduced from 0.01 to 0.01
     // ...and nothing else. A sapling used to be the last resort here, so every
     // patch of open ground with a high roll grew one - which put saplings
     // scattered across forests, plains and savannas, and then the growth sim
