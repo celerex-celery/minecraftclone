@@ -751,7 +751,11 @@ this.slots.push(el);
     }
     const font = this.game.font;
     this.tooltipInner.textContent = '';
+    this.tooltipInner.classList.remove('enchanted');
 
+    // Check for enchanted item (has durability and is not at max, or has special properties)
+    const isEnchanted = stack.dur !== undefined && def.tool && stack.dur > 0;
+    
     const add = (cls, text) => {
       const d = document.createElement('div');
       d.className = cls;
@@ -759,11 +763,27 @@ this.slots.push(el);
       this.tooltipInner.appendChild(d);
     };
 
+    // Determine item type for color coding
+    let itemTypeClass = 'tt-item'; // default
+    if (Blocks.has(def.name)) itemTypeClass = 'tt-block';
+    else if (def.tool) itemTypeClass = 'tt-tool';
+    else if (def.armour) itemTypeClass = 'tt-armor';
+    else if (def.food) itemTypeClass = 'tt-food';
+    else if (def.fuel > 0) itemTypeClass = 'tt-fuel';
+
     const name = document.createElement('div');
-    name.className = 'tt-name';
+    name.className = `tt-name ${itemTypeClass}`;
     const rarityColor = def.rarity === 'uncommon' ? '#55ff55' : def.rarity === 'rare' ? '#ff55ff' : COLORS.white;
     font.set(name, Items.label(stack.name), { scale: 2, color: rarityColor });
     this.tooltipInner.appendChild(name);
+
+    // Show stack count for multiples
+    if (stack.count > 1) {
+      const count = document.createElement('div');
+      count.className = 'tt-count';
+      font.set(count, `×${stack.count}`, { scale: 1.5, color: COLORS.gray });
+      this.tooltipInner.appendChild(count);
+    }
 
     if (def.tool) {
       add('tt-line', t('tooltip.attack', def.tool.damage));
@@ -780,6 +800,11 @@ this.slots.push(el);
     if (def.fuel > 0) add('tt-line', t('tooltip.burns', def.fuel));
     if (Blocks.has(def.name)) {
       add('tt-line', t('tooltip.block', Blocks.label(Blocks.id(def.name))));
+    }
+
+    // Mark as enchanted for animation
+    if (isEnchanted) {
+      this.tooltipInner.classList.add('enchanted');
     }
 
     this.tooltipEl.classList.remove('hidden');

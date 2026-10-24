@@ -457,23 +457,47 @@
   background-image: url("../assets/textures/gui/background.png");
   background-size: 100% 100%;
   padding: 6px 10px 7px;
-  min-width: 104px;
+  min-width: 120px;
+  max-width: 300px;
   filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.55));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border-radius: 0;
 }
 
 .tooltip-inner .tt-name {
   margin-bottom: 4px;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .tooltip-inner .tt-line {
   opacity: 0.85;
   margin-top: 3px;
+  text-shadow: 1px 1px 0 #000;
 }
 
 .tooltip-inner .tt-rarity {
   margin-top: 5px;
   opacity: 0.9;
+  text-shadow: 1px 1px 0 #000;
 }
+
+/* Enchanted item glow animation */
+.tooltip-inner.enchanted .tt-name {
+  animation: enchanted-shimmer 2s linear infinite;
+}
+
+@keyframes enchanted-shimmer {
+  0%, 100% { filter: hue-rotate(0deg); }
+  50% { filter: hue-rotate(360deg); }
+}
+
+/* Item type color indicators */
+.tooltip-inner .tt-block { color: #fff; }
+.tooltip-inner .tt-item { color: #aaa; }
+.tooltip-inner .tt-tool { color: #55ff55; }
+.tooltip-inner .tt-armor { color: #ffaa00; }
+.tooltip-inner .tt-food { color: #ff5555; }
+.tooltip-inner .tt-fuel { color: #ffaa00; }
 
 /* ---------------- cursor stack ---------------- */
 
