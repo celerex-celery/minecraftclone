@@ -12,10 +12,6 @@
     "electron": "electron .",
     "dev": "concurrently \"npm start\" \"npm run electron\"",
     "build": "electron-builder --win",
-    "test": "node tools/smoke-test.mjs",
-    "test:save": "node tools/save-test.mjs",
-    "test:portal": "node tools/portal-test.mjs",
-    "test:nether": "node tools/nether-test.mjs",
     "icon": "node tools/make-favicon.mjs"
   },
   "devDependencies": {
