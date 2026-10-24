@@ -142,16 +142,19 @@ export function placeBonusChest(world, x, y, z) {
   const startX = Math.floor(x);
   const startY = Math.floor(y);
   const startZ = Math.floor(z);
+  console.log('[BonusChest] Integer coords:', startX, startY, startZ);
   const chestId = Blocks.id('chest');
   if (chestId === undefined) {
     console.log('[BonusChest] No chest block id found');
     return false;
   }
+  console.log('[BonusChest] Chest block ID:', chestId);
   
   // Try to find a good spot: on top of a solid block, with air above
   let placeX = startX;
   let placeY = startY;
   let placeZ = startZ;
+  let foundSpot = false;
   
   // Search in a small radius for a good spot
   const radius = 3;
@@ -177,12 +180,18 @@ export function placeBonusChest(world, x, y, z) {
           placeX = cx;
           placeY = checkY;
           placeZ = cz;
+          foundSpot = true;
+          console.log('[BonusChest] Found valid spot at', placeX, placeY, placeZ, 'blocks:', { below: blockBelow, at: blockAt, above: blockAbove });
           dx = radius + 1; // break outer loops
           dz = radius + 1;
           break;
         }
       }
     }
+  }
+  
+  if (!foundSpot) {
+    console.log('[BonusChest] No valid spot found, using original coords');
   }
   
   // Place the chest
@@ -200,6 +209,8 @@ export function placeBonusChest(world, x, y, z) {
       chestEntity.items[i] = loot[i];
     }
     console.log('[BonusChest] Chest filled:', chestEntity.items);
+  } else {
+    console.log('[BonusChest] ERROR: No chest entity or no items array!');
   }
   
   return true;
