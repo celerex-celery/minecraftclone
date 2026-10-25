@@ -67,32 +67,32 @@ export const CONFIG = {
      big soft blobs, and the deep layer gets its own low frequency field so the
      bottom of the world is hollow rather than uniformly solid. */
    CAVES: {
-    TUNNEL_SCALE: 0.026,
-    TUNNEL_THRESHOLD: 0.04,
+    TUNNEL_SCALE: 0.028,
+    TUNNEL_THRESHOLD: 0.05,
     /** Caves thin out as they approach the surface, so the ground stays solid. */
-    SURFACE_GUARD: 4,
-    CHEESE_Y: 44,
-    CHEESE_SCALE: 0.017,
-    CHEESE_THRESHOLD: 0.85,
+    SURFACE_GUARD: 6,
+    CHEESE_Y: 30,
+    CHEESE_SCALE: 0.02,
+    CHEESE_THRESHOLD: 0.9,
     /** The deep cavern field: bigger, slower, and only below this height. */
     DEEP_Y: -48,
-    DEEP_SCALE: 0.0095,
-    DEEP_THRESHOLD: 0.92,
+    DEEP_SCALE: 0.012,
+    DEEP_THRESHOLD: 0.95,
     /* Spaghetti caves: thin winding tunnels. Uses a rarity quantization
        that produces isolated noodle-like strands. */
-    SPAGHETTI_2D_SCALE: 0.0045,
-    SPAGHETTI_2D_RARITY: 0.50,
-    SPAGHETTI_3D_SCALE: 0.018,
-    SPAGHETTI_3D_RARITY: 0.40,
+    SPAGHETTI_2D_SCALE: 0.005,
+    SPAGHETTI_2D_RARITY: 0.6,
+    SPAGHETTI_3D_SCALE: 0.02,
+    SPAGHETTI_3D_RARITY: 0.5,
     /* Noodle caves: horizontal winding tunnels, Y-limited */
-    NOODLE_SCALE: 0.007,
-    NOODLE_THICKNESS: 0.05,
-    NOODLE_Y_MIN: -64,
-    NOODLE_Y_MAX: 180,
+    NOODLE_SCALE: 0.008,
+    NOODLE_THICKNESS: 0.03,
+    NOODLE_Y_MIN: -48,
+    NOODLE_Y_MAX: 120,
     /* Cave entrances: surface-level openings into underground caves */
-    ENTRANCE_SCALE: 0.012,
-    ENTRANCE_THRESHOLD: 0.95,
-    ENTRANCE_SURFACE_GUARD: 2,
+    ENTRANCE_SCALE: 0.015,
+    ENTRANCE_THRESHOLD: 0.98,
+    ENTRANCE_SURFACE_GUARD: 3,
   },
 
   /* Cave pools. Lava lies in the deep, water lies in the middle depths, and the
