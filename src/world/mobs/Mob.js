@@ -205,7 +205,6 @@ export class Mob {
       this.vel.z += from.z * CONFIG.MOB.KNOCKBACK;
       this.vel.y = Math.max(this.vel.y, CONFIG.MOB.KNOCKBACK_UP);
     }
-    const { CATEGORY, PANIC_MIN, PANIC_MAX, TELEPORT_COOLDOWN } = require('./Variants.js');
     const isHostile = this.variant.spawn?.category === CATEGORY.monster;
     if (!isHostile) {
       this.panic = PANIC_MIN + Math.random() * (PANIC_MAX - PANIC_MIN);
