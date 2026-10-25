@@ -185,9 +185,9 @@ export class Particles {
 
       // Use a simple white/green particle (no texture atlas needed for simple color)
       // We'll use a blank UV rect and rely on vertex color
-      const r = idx * 4;
-      this.rect[r] = 0; this.rect[r + 1] = 0;
-      this.rect[r + 2] = 0; this.rect[r + 3] = 0;
+      const rectIdx = idx * 4;
+      this.rect[rectIdx] = 0; this.rect[rectIdx + 1] = 0;
+      this.rect[rectIdx + 2] = 0; this.rect[rectIdx + 3] = 0;
 
       const life = 0.6 + Math.random() * 0.4;
       this.life[idx] = life;
