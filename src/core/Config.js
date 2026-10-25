@@ -75,9 +75,9 @@ export const CONFIG = {
     CHEESE_SCALE: 0.017,
     CHEESE_THRESHOLD: 0.85,
     /** The deep cavern field: bigger, slower, and only below this height. */
-    DEEP_Y: -8,
+    DEEP_Y: -48,
     DEEP_SCALE: 0.0095,
-    DEEP_THRESHOLD: 0.85,
+    DEEP_THRESHOLD: 0.92,
     /* Spaghetti caves: thin winding tunnels. Uses a rarity quantization
        that produces isolated noodle-like strands. */
     SPAGHETTI_2D_SCALE: 0.0045,
