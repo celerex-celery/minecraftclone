@@ -296,13 +296,11 @@ export function prepareModel(gltf, variant) {
     map.needsUpdate = true;
   }
   
-  state.material = new THREE.MeshStandardMaterial({
+  state.material = new THREE.MeshLambertMaterial({
     map,
     vertexColors: true,
     transparent: false,
     alphaTest: 0.5,
-    roughness: 0.9,
-    metalness: 0.0,
   });
   
   const meshes = [];
