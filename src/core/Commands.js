@@ -12,7 +12,7 @@ import { t } from '../ui/Lang.js';
 import { Items, creativeEntries } from '../world/Items.js';
 import { Blocks } from '../world/Blocks.js';
 import { DIFFICULTIES } from '../ui/WorldScreens.js';
-import { resolveVariant, listVariants } from '../world/Mobs.js';
+import { resolveVariant, listVariants } from '../world/mobs/Variants.js';
 import { xpForLevel } from '../survival/Survival.js';
 
 /** Vanilla chat colours. */
