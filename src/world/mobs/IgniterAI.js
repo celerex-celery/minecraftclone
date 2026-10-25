@@ -71,8 +71,9 @@ export function updateIgniterAI(mob, dt, world, player, away, dx, dz, gain) {
                   const by = y + dy;
                   const bz = z + dz;
                   const block = w.getBlock(bx, by, bz);
-                  if (block === 0 || block === Blocks.id('air')) {
-                    w.setBlock(bx, by, bz, Blocks.id('fire'));
+                  const fireId = Blocks.id('fire');
+                  if ((block === 0 || block === Blocks.id('air')) && w.getBlock(bx, by + 1, bz) !== fireId) {
+                    w.setBlock(bx, by, bz, fireId);
                   }
                 }
               }
