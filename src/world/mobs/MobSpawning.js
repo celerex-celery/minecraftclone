@@ -54,7 +54,7 @@ export const SPAWN_TABLE = [
   },
   {
     biomes: ['nether_wastes', 'soul_sand_valley', 'crimson_forest', 'warped_forest', 'basalt_deltas'],
-    firecreeper: { min: 1, max: 2, weight: 8 },
+    igniter: { min: 1, max: 2, weight: 8 },
   },
 ];
 

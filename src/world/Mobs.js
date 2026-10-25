@@ -28,6 +28,7 @@ export { Mobs } from './mobs/Herd.js';
 export { updateCreatureAI, yawToward, playerIsTempting } from './mobs/MobAI.js';
 export { updateEndermanAI } from './mobs/EndermanAI.js';
 export { updateCreeperAI } from './mobs/CreeperAI.js';
+export { updateIgniterAI } from './mobs/IgniterAI.js';
 export { updateZombieAI } from './mobs/ZombieAI.js';
 
 // Re-export physics module

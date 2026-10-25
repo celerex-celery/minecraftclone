@@ -234,10 +234,10 @@ export const VARIANTS = {
     explosionPower: 2.5,
     fuseTime: 1.5,
   },
-  firecreeper: {
-    id: 'firecreeper',
-    species: 'firecreeper',
-    label: 'Fire Creeper',
+  igniter: {
+    id: 'igniter',
+    species: 'igniter',
+    label: 'Igniter',
     model: 'assets/models/firecreeper.glb',
     skin: 'assets/textures/entity/creeper/creeper.png',
     sheet: [64, 32],
@@ -285,8 +285,9 @@ export const VARIANT_ALIASES = {
   enderman: 'enderman',
   ender_man: 'enderman',
   creeper: 'creeper',
-  firecreeper: 'firecreeper',
-  fire_creeper: 'firecreeper',
+  igniter: 'igniter',
+  firecreeper: 'igniter',
+  fire_creeper: 'igniter',
 };
 
 export function resolveVariant(name) {

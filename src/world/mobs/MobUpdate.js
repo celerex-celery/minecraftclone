@@ -13,6 +13,7 @@ import { CATEGORY, PANIC_MIN, PANIC_MAX, PANIC_SPEED, EGG_MIN, EGG_MAX, EGG_ON, 
 import { updateCreatureAI, yawToward } from './MobAI.js';
 import { updateEndermanAI } from './EndermanAI.js';
 import { updateCreeperAI } from './CreeperAI.js';
+import { updateIgniterAI } from './IgniterAI.js';
 import { updateZombieAI } from './ZombieAI.js';
 import { waterSurface, swim, blockedAt, fleeJump, applyMovement, applyGravity, applyVelocity } from './MobPhysics.js';
 import { buildMobMesh, MODELS, getModelState } from './ModelLoader.js';
@@ -107,17 +108,8 @@ export function updateMob(mob, dt, world, player, drop, adults) {
   if (mob.variant.waterSensitive && inWater) {
     mob.hurt(1, null, 0);
   }
-          const burnChance = (br - 0.4) * 2 / 30;
-          if (Math.random() < burnChance) {
-            mob.fire = 8;
-            mob.fireTime = 0;
-          }
-        }
-      }
-    }
-  }
 
-  // Calculate hearing gain
+// Calculate hearing gain
   const ear = player.eyePosition ?? player.position;
   const gain = mob.hearingGain(ear, mob.variant.range);
 
@@ -143,6 +135,8 @@ export function updateMob(mob, dt, world, player, drop, adults) {
       speed = updateEndermanAI(mob, dt, world, player, solid, defAt, away, dx, dz, gain, inWater, mob.underwater);
     } else if (v.id === 'creeper') {
       speed = updateCreeperAI(mob, dt, world, player, away, dx, dz, gain);
+    } else if (v.id === 'igniter') {
+      speed = updateIgniterAI(mob, dt, world, player, away, dx, dz, gain);
     } else if (v.spawn?.category === CATEGORY.monster) {
       // Generic monster AI
       const creativePlayer = mob.game?.player?.creative || mob.game?.player?.spectator;
