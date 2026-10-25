@@ -63,6 +63,7 @@ export function updateIgniterAI(mob, dt, world, player, away, dx, dz, gain) {
           const x = Math.floor(mob.pos.x);
           const y = Math.floor(mob.pos.y);
           const z = Math.floor(mob.pos.z);
+          const fireId = Blocks.id('fire');
           for (let dx = -3; dx <= 3; dx++) {
             for (let dz = -3; dz <= 3; dz++) {
               for (let dy = -1; dy <= 2; dy++) {
@@ -71,8 +72,11 @@ export function updateIgniterAI(mob, dt, world, player, away, dx, dz, gain) {
                   const by = y + dy;
                   const bz = z + dz;
                   const block = w.getBlock(bx, by, bz);
-                  const fireId = Blocks.id('fire');
-                  if ((block === 0 || block === Blocks.id('air')) && w.getBlock(bx, by + 1, bz) !== fireId) {
+                  // Fire needs a solid block underneath (not air/liquid)
+                  const below = w.getBlock(bx, by - 1, bz);
+                  const belowDef = Blocks.get(below);
+                  const canAttach = belowDef.solid && !belowDef.liquid;
+                  if ((block === 0 || block === Blocks.id('air')) && canAttach && w.getBlock(bx, by + 1, bz) !== fireId) {
                     w.setBlock(bx, by, bz, fireId);
                   }
                 }
