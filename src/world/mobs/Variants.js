@@ -234,6 +234,39 @@ export const VARIANTS = {
     explosionPower: 2.5,
     fuseTime: 1.5,
   },
+  firecreeper: {
+    id: 'firecreeper',
+    species: 'firecreeper',
+    label: 'Fire Creeper',
+    model: 'assets/models/firecreeper.glb',
+    skin: 'assets/textures/entity/creeper/creeper.png',
+    sheet: [64, 32],
+    boxes: false,
+    width: 0.6,
+    height: 1.7,
+    health: 20,
+    speed: WALK * 0.9,
+    lays: false,
+    grows: false,
+    legs: [],
+    wings: [],
+    spawn: { category: 'monster' },
+    drops: (drop, pos) => {
+      drop('gunpowder', 1 + Math.floor(Math.random() * 2), pos);
+      drop('blaze_powder', 1, pos);
+    },
+    idle: (gain = 1) => audio.creeperIdle?.(gain),
+    hurt: (gain = 1) => audio.creeperHurt?.(gain),
+    death: (gain = 1) => audio.creeperDeath?.(gain),
+    step: (gain = 1) => audio.creeperStep?.(gain),
+    range: 16,
+    followRange: 16,
+    explodes: true,
+    explosionPower: 3.0,
+    fuseTime: 1.5,
+    fireImmune: true,
+    waterSensitive: true,
+  },
 };
 
 /**
@@ -252,6 +285,8 @@ export const VARIANT_ALIASES = {
   enderman: 'enderman',
   ender_man: 'enderman',
   creeper: 'creeper',
+  firecreeper: 'firecreeper',
+  fire_creeper: 'firecreeper',
 };
 
 export function resolveVariant(name) {

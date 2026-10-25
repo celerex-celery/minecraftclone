@@ -71,6 +71,28 @@ export function updateCreeperAI(mob, dt, world, player, away, dx, dz, gain) {
         mob.primedFlash = 0;
         mob.exploded = true;
         if (mob.game?.explode) mob.game.explode(mob.pos, v.explosionPower);
+        // Fire Creeper spawns fire on explosion
+        if (v.id === 'firecreeper' && mob.game?.world) {
+          const world = mob.game.world;
+          const x = Math.floor(mob.pos.x);
+          const y = Math.floor(mob.pos.y);
+          const z = Math.floor(mob.pos.z);
+          for (let dx = -3; dx <= 3; dx++) {
+            for (let dz = -3; dz <= 3; dz++) {
+              for (let dy = -1; dy <= 2; dy++) {
+                if (Math.random() < 0.3) {
+                  const bx = x + dx;
+                  const by = y + dy;
+                  const bz = z + dz;
+                  const block = world.getBlock(bx, by, bz);
+                  if (block === 0 || block === Blocks.id('air')) {
+                    world.setBlock(bx, by, bz, Blocks.id('fire'));
+                  }
+                }
+              }
+            }
+          }
+        }
         mob.kill();
         speed = 0;
       } else {

@@ -52,6 +52,10 @@ export const SPAWN_TABLE = [
     biomes: ['the_end'],
     enderman: { min: 2, max: 4, weight: 20 },
   },
+  {
+    biomes: ['nether_wastes', 'soul_sand_valley', 'crimson_forest', 'warped_forest', 'basalt_deltas'],
+    firecreeper: { min: 1, max: 2, weight: 8 },
+  },
 ];
 
 let biomeSpawns = null;

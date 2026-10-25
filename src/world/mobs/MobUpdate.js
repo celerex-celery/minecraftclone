@@ -76,7 +76,7 @@ export function updateMob(mob, dt, world, player, drop, adults) {
       mob.fireTime = 0;
       audio.zombieFire(1);
     }
-  } else if (mob.variant.flammable) {
+  } else if (mob.variant.flammable && !mob.variant.fireImmune) {
     const feet = defAt(Math.floor(mob.pos.x), Math.floor(mob.pos.y), Math.floor(mob.pos.z));
     if (feet.name === 'lava') {
       mob.fire = 3;
@@ -93,6 +93,20 @@ export function updateMob(mob, dt, world, player, drop, adults) {
         const lightLevel = Math.max(skyLight, blockLight);
         if (canSeeSky && lightLevel > 7) {
           const br = lightLevel / 15;
+          const burnChance = (br - 0.4) * 2 / 30;
+          if (Math.random() < burnChance) {
+            mob.fire = 8;
+            mob.fireTime = 0;
+          }
+        }
+      }
+    }
+  }
+
+  // Water damage for water-sensitive mobs
+  if (mob.variant.waterSensitive && inWater) {
+    mob.hurt(1, null, 0);
+  }
           const burnChance = (br - 0.4) * 2 / 30;
           if (Math.random() < burnChance) {
             mob.fire = 8;
