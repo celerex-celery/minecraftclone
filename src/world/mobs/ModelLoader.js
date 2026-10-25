@@ -128,15 +128,21 @@ export function loadMobModel(variant) {
   
   MODELS[variant.id] = { template: null, loading: true, failed: false, material: null };
   
-  try {
-    // GLTFLoader would be used here in the actual implementation
-    // For now, we use fallback
+  const loader = new GLTFLoader();
+  loader.load(variant.model, (gltf) => {
+    try {
+      const template = prepareModel(gltf, variant);
+      setModelTemplate(variant.id, template);
+    } catch (e) {
+      console.error('Failed to prepare model for', variant.id, e);
+      MODELS[variant.id].loading = false;
+      MODELS[variant.id].failed = true;
+    }
+  }, undefined, (error) => {
+    console.error('Failed to load model for', variant.id, error);
     MODELS[variant.id].loading = false;
     MODELS[variant.id].failed = true;
-  } catch {
-    MODELS[variant.id].loading = false;
-    MODELS[variant.id].failed = true;
-  }
+  });
 }
 
 export function getModelState(variantId) {
