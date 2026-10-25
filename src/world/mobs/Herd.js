@@ -12,6 +12,7 @@ import * as THREE from 'three';
 import { CONFIG } from '../../core/Config.js';
 import { Mob } from './Mob.js';
 import { VARIANTS, BABY_CHANCE, CATEGORY, swingCooldownFor } from './Variants.js';
+import { biomeSpawnsFor, babyOf, rayBox, SPAWNABLE_ON } from './MobSpawning.js';
 import { blockedAt } from './MobPhysics.js';
 
 export const MAX_MOBS = 128;
