@@ -15,7 +15,7 @@ import { updateEndermanAI } from './EndermanAI.js';
 import { updateCreeperAI } from './CreeperAI.js';
 import { updateZombieAI } from './ZombieAI.js';
 import { waterSurface, swim, blockedAt, fleeJump, applyMovement, applyGravity, applyVelocity } from './MobPhysics.js';
-import { buildMobMesh, MODELS } from './ModelLoader.js';
+import { buildMobMesh, MODELS, getModelState } from './ModelLoader.js';
 
 const GRAVITY = 16;
 const TURN = 1.1;
@@ -29,6 +29,20 @@ export function updateMob(mob, dt, world, player, drop, adults) {
   if (mob.dead) {
     if (mob.dying) updateDeath(mob, dt);
     return;
+  }
+
+  // Check if GLB model finished loading and swap from fallback
+  if (!mob.usingModel) {
+    const state = getModelState(mob.variant.id);
+    if (state.template) {
+      const parent = mob.mesh.group.parent;
+      if (parent) parent.remove(mob.mesh.group);
+      mob.mesh = buildMobMesh(mob.variant);
+      mob.usingModel = true;
+      mob.mesh.group.position.copy(mob.pos);
+      mob.mesh.group.rotation.y = mob.yaw;
+      if (parent) parent.add(mob.mesh.group);
+    }
   }
 
   mob.age += dt;
