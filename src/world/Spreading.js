@@ -263,7 +263,7 @@ export class Spreading {
     const by = Math.floor(near.y);
     const bz = Math.floor(near.z);
     const world = this.world;
-    const { grass, dirt } = this.id;
+    const { grass, dirt, air } = this.id;
 
     // Vanilla: each grass block random tick checks 4 positions within 3x5x3
     // We approximate by checking grass blocks in the scatter radius
