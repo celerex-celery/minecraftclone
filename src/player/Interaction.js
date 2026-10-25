@@ -1530,7 +1530,13 @@ export class Interaction {
    */
   generateGrassVegetation(cx, cy, cz) {
     const world = this.game.world;
-    const { short_grass, tall_grass, fern, poppy, dandelion, cornflower, oxeye_daisy } = Blocks.id;
+    const short_grass = Blocks.id('short_grass');
+    const tall_grass = Blocks.id('tall_grass');
+    const fern = Blocks.id('fern');
+    const poppy = Blocks.id('poppy');
+    const dandelion = Blocks.id('dandelion');
+    const cornflower = Blocks.id('cornflower');
+    const oxeye_daisy = Blocks.id('oxeye_daisy');
     
     const vegetation = [
       { id: short_grass, weight: 40 },
