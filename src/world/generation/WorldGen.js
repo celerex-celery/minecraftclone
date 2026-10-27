@@ -24,6 +24,7 @@ import { SX, SY, SZ, MIN_Y, MAX_Y, AREA, idx, inRange } from './Chunk.js';
 import { BIOME_ORDER } from './ChunkMesher.js';
 import { CaveCarver } from './CaveCarver.js';
 import { Aquifer } from './Aquifer.js';
+import { generateDesertWell } from '../structures/DesertWell.js';
 
 export const BIOME = {};
 BIOME_ORDER.forEach((n, i) => { BIOME[n] = i; });
@@ -1476,71 +1477,9 @@ let c = -1;
    * @param {Object} chunk chunk object
    */
   desertWell(wx, wz, h, local, x, z, chunk) {
-    // Only generate on sand/sandstone in desert biome
-    const ground = this.surfaceBlock(BIOME.desert, h, wx, wz);
-    if (ground !== this.B.sand && ground !== this.B.red_sand && ground !== this.B.sandstone) return false;
-
-    // Check if there's solid ground underneath (not air)
-    for (let ox = -2; ox <= 2; ox++) {
-      for (let oz = -2; oz <= 2; oz++) {
-        if (x + ox < 0 || x + ox >= SX || z + oz < 0 || z + oz >= SZ) return false;
-        const below1 = chunk.blocks[idx(x + ox, h - 1, z + oz)];
-        const below2 = chunk.blocks[idx(x + ox, h - 2, z + oz)];
-        if (below1 === 0 && below2 === 0) return false;
-      }
-    }
-
-    const B = this.B;
-    const origin = { x, y: h, z };
-
-    // Base: 5x5 sandstone at y-2 to y (overwrite existing terrain)
-    for (let oy = -2; oy <= 0; oy++) {
-      for (let ox = -2; ox <= 2; ox++) {
-        for (let oz = -2; oz <= 2; oz++) {
-          local(x + ox, h + oy, z + oz, B.sandstone, true);
-        }
-      }
-    }
-
-    // Water in center and 4 sides
-    local(x, h, z, B.water, true);
-    local(x + 1, h, z, B.water, true);
-    local(x - 1, h, z, B.water, true);
-    local(x, h, z + 1, B.water, true);
-    local(x, h, z - 1, B.water, true);
-
-    // Sand at bottom center and 4 sides
-    local(x, h - 1, z, B.sand, true);
-    local(x + 1, h - 1, z, B.sand, true);
-    local(x - 1, h - 1, z, B.sand, true);
-    local(x, h - 1, z + 1, B.sand, true);
-    local(x, h - 1, z - 1, B.sand, true);
-
-    // Sandstone ring at y+1 (corners)
-    for (let ox = -2; ox <= 2; ox++) {
-      for (let oz = -2; oz <= 2; oz++) {
-        if (ox === -2 || ox === 2 || oz === -2 || oz === 2) {
-          local(x + ox, h + 1, z + oz, B.sandstone, true);
-        }
-      }
-    }
-
-    // Sandstone slabs at middle of each side at y+1
-    local(x + 2, h + 1, z, B.sandstone_slab, true);
-    local(x - 2, h + 1, z, B.sandstone_slab, true);
-    local(x, h + 1, z + 2, B.sandstone_slab, true);
-    local(x, h + 1, z - 2, B.sandstone_slab, true);
-
-    // Top ring at y+4
-    for (let ox = -1; ox <= 1; ox++) {
-      for (let oz = -1; oz <= 1; oz++) {
-        if (ox === 0 && oz === 0) {
-          local(x + ox, h + 4, z + oz, B.sandstone, true);
-        } else {
-          local(x + ox, h + 4, z + oz, B.sandstone_slab, true);
-        }
-      }
-    }
+    // Use the new DesertWell module
+    return generateDesertWell(chunk.blocks, wx, wz, this.seed, h);
+  }
 
     // Pillars from y+1 to y+3 at corners
     for (let oy = 1; oy <= 3; oy++) {
