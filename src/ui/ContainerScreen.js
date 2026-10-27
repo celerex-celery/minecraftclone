@@ -20,7 +20,7 @@ import { craftingResult, consumeCraftingGrid, quickMoveToGrid } from '../surviva
 import { makeStack, canMerge, armourFits, ARMOUR_ORDER, HOTBAR_SIZE } from '../survival/Inventory.js';
 import { creativeTabs } from '../world/blocks/Items.js';
 import { SMELT_TIME } from '../survival/Recipes.js';
-import { CHEST_SLOTS } from '../world/Chests.js';
+import { CHEST_SLOTS } from '../world/structures/Chests.js';
 import { playerPreviewCanvas } from './PlayerPreview.js';
 import { RecipeBook } from './RecipeBook.js';
 import { t } from './Lang.js';

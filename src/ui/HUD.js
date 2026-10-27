@@ -9,10 +9,10 @@
 
 import { CONFIG } from '../core/Config.js';
 import { Items } from '../world/blocks/Items.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { iconCanvas } from './ItemIcons.js';
 import { advancementIcon, advancementDesc, advancementTitle } from './Advancements.js';
-import { seasonOf, seasonIcon, formatDate } from '../world/Seasons.js';
+import { seasonOf, seasonIcon, formatDate } from '../world/environment/Seasons.js';
 import { COLORS } from './PixelFont.js';
 import { t } from './Lang.js';
 

@@ -1481,17 +1481,6 @@ let c = -1;
     return generateDesertWell(chunk.blocks, wx, wz, this.seed, h);
   }
 
-    // Pillars from y+1 to y+3 at corners
-    for (let oy = 1; oy <= 3; oy++) {
-      local(x - 1, h + oy, z - 1, B.sandstone, true);
-      local(x - 1, h + oy, z + 1, B.sandstone, true);
-      local(x + 1, h + oy, z - 1, B.sandstone, true);
-      local(x + 1, h + oy, z + 1, B.sandstone, true);
-    }
-
-    return true;
-  }
-
   /**
    * Pumpkin patch - generates a cluster of pumpkins on grass blocks.
    * Based on vanilla's PATCH_PUMPKIN placement:

@@ -20,7 +20,7 @@ import { Weather } from './Weather.js';
 import { Chunk, SX, SY, SZ, MIN_Y, MAX_Y, VOLUME, inRange, idx } from '../generation/Chunk.js';
 import { WorldGen, BIOME } from '../generation/WorldGen.js';
 import { NetherGen } from '../generation/NetherGen.js';
-import { EndGen } from '../structures/EndGen.js';
+import { EndGen } from '../generation/EndGen.js';
 import { BIOME_ORDER } from '../generation/ChunkMesher.js';
 import { vertexBufferPool } from '../generation/ChunkMesher.js';
 import { LightEngine } from '../lighting/Lighting.js';

@@ -5,7 +5,7 @@
  * the font sheet stay as separate images so the DOM can draw them directly.
  */
 
-import { deriveShapeTextures, isDerivedTexture } from '../world/ShapeTextures.js';
+import { deriveShapeTextures, isDerivedTexture } from '../world/blocks/ShapeTextures.js';
 import { CONFIG } from './Config.js';
 import { createLogger } from './Logger.js';
 

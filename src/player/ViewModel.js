@@ -9,7 +9,7 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { buildHeldItemMesh } from './HeldItemMesh.js';
 
 const SWING_DURATION = 0.28;
