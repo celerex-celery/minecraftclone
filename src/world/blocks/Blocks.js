@@ -864,6 +864,21 @@ for (const [parent, label] of [
   ['stone_bricks', 'Stone Brick'],
   ['mossy_cobblestone', 'Mossy Cobblestone'],
   ['deepslate', 'Deepslate'],
+  ['cobbled_deepslate', 'Cobbled Deepslate'],
+  ['smooth_stone', 'Smooth Stone'],
+  ['cut_sandstone', 'Cut Sandstone'],
+  ['smooth_sandstone', 'Smooth Sandstone'],
+  ['polished_andesite', 'Polished Andesite'],
+  ['polished_diorite', 'Polished Diorite'],
+  ['polished_granite', 'Polished Granite'],
+  ['polished_basalt', 'Polished Basalt'],
+  ['end_stone_bricks', 'End Stone Bricks'],
+  ['purpur_block', 'Purpur Block'],
+  ['quartz_block', 'Quartz Block'],
+  ['red_nether_bricks', 'Red Nether Bricks'],
+  ['basalt', 'Basalt'],
+  ['polished_blackstone', 'Polished Blackstone'],
+  ['polished_blackstone_bricks', 'Polished Blackstone Bricks'],
 ]) {
   shapedFamily(parent, label);
 }
@@ -1099,6 +1114,11 @@ for (const [parent, label] of [
   ['nether_bricks', 'Nether Brick'],
   ['blackstone', 'Blackstone'],
   ['soul_sand', 'Soul Sand'],
+  ['warped_nylium', 'Warped Nylium'],
+  ['crimson_nylium', 'Crimson Nylium'],
+  ['polished_blackstone', 'Polished Blackstone'],
+  ['polished_blackstone_bricks', 'Polished Blackstone Bricks'],
+  ['chiseled_polished_blackstone', 'Chiseled Polished Blackstone'],
 ]) {
   shapedFamily(parent, label);
 }

@@ -591,8 +591,12 @@ export class ChunkMesher {
           if (handler === 8) { this.emitBox(x, y, z, px, py, pz, def, id, 0.125, 0, 0.125, 0.875, 1, 0.875, 0); continue; }
           if (handler === 9) { this.emitStairs(x, y, z, px, py, pz, def, id); continue; }
           if (handler === 10) { this.emitPost(x, y, z, px, py, pz, def, id); continue; }
-          if (handler === 11) { // layer
-            this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, def.layerHeight ?? 0.125, 1, 0);
+          if (handler === 11) { // layer (snow)
+            // Snow layers 1-7: only top face visible (bottom against block, sides hidden by block below)
+            // Layer 8 (full snow block): all faces visible
+            const isFullBlock = (def.layerHeight ?? 0.125) >= 1.0;
+            const mask = isFullBlock ? 0 : (FACE_PX | FACE_NX | FACE_NY | FACE_PZ | FACE_NZ);
+            this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, def.layerHeight ?? 0.125, 1, mask);
             continue;
           }
           this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 1, 1, 0);
