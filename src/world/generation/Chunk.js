@@ -14,8 +14,8 @@
  * cannot be negative is storage, so `heightMap` and `maxY` are signed here.
  */
 
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
 
 export const SX = CONFIG.CHUNK_SIZE;
 export const SY = CONFIG.WORLD_HEIGHT;

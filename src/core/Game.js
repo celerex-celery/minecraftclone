@@ -17,29 +17,26 @@ const GRAVITY_DIRECTIONS = [
   { name: 'EAST',  pull: new THREE.Vector3(1, 0, 0) },
   { name: 'WEST',  pull: new THREE.Vector3(-1, 0, 0) },
 ];
-import { Blocks, setBlockNameResolver } from '../world/Blocks.js';
-import { Items, setNameResolver } from '../world/Items.js';
-import { TextureAtlas } from '../world/TextureAtlas.js';
-import { ChunkMaterials, createSelectionBox, BreakOverlay, lightColor } from '../world/Materials.js';
-import { ChunkMesher } from '../world/ChunkMesher.js';
-import { World } from '../world/World.js';
-import { Sky } from '../world/Sky.js';
-import { Particles } from '../world/Particles.js';
-import { ItemDrops } from '../world/ItemDrops.js';
+import { Blocks, setBlockNameResolver } from '../world/blocks/Blocks.js';
+import { Items, setNameResolver } from '../world/blocks/Items.js';
+import { TextureAtlas } from '../world/blocks/TextureAtlas.js';
+import { ChunkMaterials, createSelectionBox, BreakOverlay, lightColor } from '../world/blocks/Materials.js';
+import { ChunkMesher } from '../world/generation/ChunkMesher.js';
+import { World } from '../world/environment/World.js';
+import { Sky } from '../world/lighting/Sky.js';
+import { Particles } from '../world/entities/Particles.js';
+import { ItemDrops } from '../world/entities/ItemDrops.js';
 import { EntityShadows } from '../world/EntityShadows.js';
-import { FallingBlocks } from '../world/FallingBlocks.js';
-import { EnderPearls } from '../world/EnderPearls.js';
-import { Spreading } from '../world/Spreading.js';
-import { Mobs } from '../world/Mobs.js';
-import { Boats } from '../world/Boat.js';
-import { Beds } from '../world/Beds.js';
-import { Chests, chestOwner } from '../world/Chests.js';
-import { placeBonusChest } from '../world/BonusChest.js';
-import {
-  findPortalNear, playerInPortal, buildArrivalPortal, findArrivalBase, buildReturnPortal,
-  portalNearby, findEndPortalFrame, activateEndPortal, playerInEndPortal, buildEndExitPortal,
-} from '../world/Portal.js';
-import { seedFromString } from '../world/Noise.js';
+import { FallingBlocks } from '../world/blocks/FallingBlocks.js';
+import { EnderPearls } from '../world/entities/EnderPearls.js';
+import { Spreading } from '../world/blocks/Spreading.js';
+import { Mobs } from '../world/entities/Mobs.js';
+import { Boats } from '../world/entities/Boat.js';
+import { Beds } from '../world/structures/Beds.js';
+import { Chests, chestOwner } from '../world/structures/Chests.js';
+import { placeBonusChest } from '../world/structures/BonusChest.js';
+import { createPortal, portalBlockAt, updatePortals } from '../world/structures/Portal.js';
+import { seedFromString } from '../world/generation/Noise.js';
 import { Player } from '../player/Player.js';
 import { ViewModel } from '../player/ViewModel.js';
 import { PlayerModel } from '../player/PlayerModel.js';

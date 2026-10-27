@@ -23,8 +23,8 @@
  * uses, so a vein here is a vein and not a noise threshold.
  */
 
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { PerlinNoise, hash2, hash3, mulberry32 } from './Noise.js';
 import { SX, SY, SZ, MIN_Y, idx, inRange } from './Chunk.js';
 import { WorldGen } from './WorldGen.js';

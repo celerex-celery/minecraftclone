@@ -38,7 +38,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Items } from './Items.js';
+import { Items } from '../blocks/Items.js';
 
 /**
  * The four horizontal directions, in the same order and with the same yaw as

@@ -7,7 +7,7 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from './Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 
 const MAX_PARTICLES = 900;
 

@@ -26,8 +26,8 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from './Blocks.js';
-import { iconImage, makePixelTexture } from '../ui/ItemIcons.js';
+import { Blocks } from '../blocks/Blocks.js';
+import { iconImage, makePixelTexture } from '../../ui/ItemIcons.js';
 
 /** Twenty ticks a second, because the physics figures are per tick. */
 const TICK = 1 / 20;

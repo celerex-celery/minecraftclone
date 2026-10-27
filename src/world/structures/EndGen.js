@@ -8,11 +8,11 @@
  * EndIslandFeature (circular end stone island tapering downward).
  */
 
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
-import { PerlinNoise, hash2, hash3 } from './Noise.js';
-import { SX, SY, SZ, MIN_Y, MAX_Y, idx, inRange } from './Chunk.js';
-import { BIOME_ORDER } from './ChunkMesher.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
+import { PerlinNoise, hash2, hash3 } from '../generation/Noise.js';
+import { SX, SY, SZ, MIN_Y, MAX_Y, idx, inRange } from '../generation/Chunk.js';
+import { BIOME_ORDER } from '../generation/ChunkMesher.js';
 
 const END_BIOME = BIOME_ORDER.indexOf('the_end');
 

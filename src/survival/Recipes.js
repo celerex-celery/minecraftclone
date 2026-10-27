@@ -6,7 +6,7 @@
  * real game. Shapeless recipes compare ingredient multisets.
  */
 
-import { Items } from '../world/Items.js';
+import { Items } from '../world/blocks/Items.js';
 
 export const RECIPES = [];
 

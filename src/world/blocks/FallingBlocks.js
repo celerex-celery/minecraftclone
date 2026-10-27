@@ -15,7 +15,7 @@
 
 import * as THREE from 'three';
 import { Blocks } from './Blocks.js';
-import { buildBlockGeometry } from './ChunkMesher.js';
+import { buildBlockGeometry } from '../generation/ChunkMesher.js';
 
 /** Downward acceleration, in blocks per second squared. */
 const GRAVITY = 28;

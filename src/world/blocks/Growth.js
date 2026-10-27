@@ -29,9 +29,9 @@
  * The Nether has no seasons and no saplings of its own, so nothing runs there.
  */
 
-import { CONFIG } from '../core/Config.js';
+import { CONFIG } from '../../core/Config.js';
 import { Blocks } from './Blocks.js';
-import { seasonOf } from './Seasons.js';
+import { seasonOf } from '../environment/Seasons.js';
 import { buildTree, treeHeight } from './TreeShapes.js';
 
 const SAP = CONFIG.SAPLING;

@@ -22,8 +22,8 @@
  * all, which is what a clear winter looks like in the real game.
  */
 
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { seasonOf } from './Seasons.js';
 import * as weatherModule from './Weather.js';
 

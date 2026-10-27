@@ -8,16 +8,16 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../core/Config.js';
-import { Blocks } from '../world/Blocks.js';
-import { Items } from '../world/Items.js';
+import { Blocks } from '../world/blocks/Blocks.js';
+import { Items } from '../world/blocks/Items.js';
 import { audio } from '../audio/SoundEngine.js';
 import { t } from '../ui/Lang.js';
 import { isPlaceable, makeStack } from '../survival/Inventory.js';
-import { lightPortal, checkPortalNeighbours, findFrame, ignitePortal, findEndPortalFrame, activateEndPortal } from '../world/Portal.js';
-import { facingStep, bedFacing } from '../world/Beds.js';
+import { lightPortal, checkPortalNeighbours, findFrame, ignitePortal, findEndPortalFrame, activateEndPortal } from '../world/structures/Portal.js';
+import { facingStep, bedFacing } from '../world/structures/Beds.js';
 import {
   makeChestState, chestOwner, chestPartnerOf, refreshChest, refreshChestAndPartner,
-} from '../world/Chests.js';
+} from '../world/structures/Chests.js';
 
 /** Item name -> the liquid it carries and the filled bucket it becomes. */
 const BUCKETS = {

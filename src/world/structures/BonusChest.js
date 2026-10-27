@@ -5,8 +5,8 @@
  * Uses a weighted loot table system for easy modification.
  */
 
-import { Blocks } from './Blocks.js';
-import { Items } from './Items.js';
+import { Blocks } from '../blocks/Blocks.js';
+import { Items } from '../blocks/Items.js';
 
 /**
  * Loot entry structure:

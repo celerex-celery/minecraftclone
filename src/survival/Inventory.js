@@ -6,8 +6,8 @@
  * serialised straight into the save file.
  */
 
-import { Items } from '../world/Items.js';
-import { Blocks } from '../world/Blocks.js';
+import { Items } from '../world/blocks/Items.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 
 export const HOTBAR_SIZE = 9;
 export const MAIN_SIZE = 27;

@@ -16,10 +16,10 @@
  * works in real world y; Chunk.idx does the shift into the arrays.
  */
 
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { PerlinNoise, hash2, hash3, mulberry32 } from './Noise.js';
-import { buildTree, treeHeight } from './TreeShapes.js';
+import { buildTree, treeHeight } from '../blocks/TreeShapes.js';
 import { SX, SY, SZ, MIN_Y, MAX_Y, AREA, idx, inRange } from './Chunk.js';
 import { BIOME_ORDER } from './ChunkMesher.js';
 import { CaveCarver } from './CaveCarver.js';

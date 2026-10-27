@@ -29,7 +29,7 @@
  */
 
 import * as THREE from 'three';
-import { Blocks, FACE, FRONT_FACE } from './Blocks.js';
+import { Blocks, FACE, FRONT_FACE } from '../blocks/Blocks.js';
 import { SX, SY, SZ, MIN_Y, MAX_Y } from './Chunk.js';
 
 /** Padded cache rows above and below the real range, one for each. */

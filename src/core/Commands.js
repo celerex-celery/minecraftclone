@@ -9,9 +9,8 @@
 
 import { CONFIG } from './Config.js';
 import { t } from '../ui/Lang.js';
-import { Items, creativeEntries } from '../world/Items.js';
-import { Blocks } from '../world/Blocks.js';
-import { DIFFICULTIES } from '../ui/WorldScreens.js';
+import { Items, creativeEntries } from '../world/blocks/Items.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { resolveVariant, listVariants } from '../world/mobs/Variants.js';
 import { xpForLevel } from '../survival/Survival.js';
 

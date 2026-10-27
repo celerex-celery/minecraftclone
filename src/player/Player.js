@@ -13,7 +13,7 @@
 
 import * as THREE from 'three';
 import { CONFIG } from '../core/Config.js';
-import { Blocks, collisionBoxes } from '../world/Blocks.js';
+import { Blocks, collisionBoxes } from '../world/blocks/Blocks.js';
 
 const HALF = CONFIG.PLAYER_WIDTH / 2;
 const EPS = 1e-3;

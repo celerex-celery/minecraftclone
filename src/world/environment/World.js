@@ -10,21 +10,21 @@
  */
 
 import * as THREE from 'three';
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
-import { audio } from '../audio/SoundEngine.js';
-import { FluidSim } from './FluidSim.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
+import { audio } from '../../audio/SoundEngine.js';
+import { FluidSim } from '../blocks/FluidSim.js';
 import { SnowSim } from './SnowSim.js';
-import { SaplingSim } from './Growth.js';
+import { SaplingSim } from '../blocks/Growth.js';
 import { Weather } from './Weather.js';
-import { Chunk, SX, SY, SZ, MIN_Y, MAX_Y, VOLUME, inRange, idx } from './Chunk.js';
-import { WorldGen, BIOME } from './WorldGen.js';
-import { NetherGen } from './NetherGen.js';
-import { EndGen } from './EndGen.js';
-import { BIOME_ORDER } from './ChunkMesher.js';
-import { vertexBufferPool } from './ChunkMesher.js';
-import { LightEngine } from './Lighting.js';
-import { makeChestState } from './Chests.js';
+import { Chunk, SX, SY, SZ, MIN_Y, MAX_Y, VOLUME, inRange, idx } from '../generation/Chunk.js';
+import { WorldGen, BIOME } from '../generation/WorldGen.js';
+import { NetherGen } from '../generation/NetherGen.js';
+import { EndGen } from '../structures/EndGen.js';
+import { BIOME_ORDER } from '../generation/ChunkMesher.js';
+import { vertexBufferPool } from '../generation/ChunkMesher.js';
+import { LightEngine } from '../lighting/Lighting.js';
+import { makeChestState } from '../structures/Chests.js';
 
 const CHUNK_KEY = (cx, cz) => `${cx},${cz}`;
 

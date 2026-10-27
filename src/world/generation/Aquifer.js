@@ -5,8 +5,8 @@
  * Based on vanilla's Aquifer system but simplified for our noise-based worldgen.
  */
 
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { hash3, mulberry32 } from './Noise.js';
 
 const SX = 16, SY = 384, SZ = 16;

@@ -10,10 +10,10 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from './Blocks.js';
-import { Items } from './Items.js';
-import { iconImage, isFlatItem, makePixelTexture } from '../ui/ItemIcons.js';
-import { lightColor } from './Materials.js';
+import { Blocks } from '../blocks/Blocks.js';
+import { Items } from '../blocks/Items.js';
+import { iconImage, isFlatItem, makePixelTexture } from '../../ui/ItemIcons.js';
+import { lightColor } from '../blocks/Materials.js';
 
 const PICKUP_DELAY = 0.6;      // seconds before a stack can be collected
 const PICKUP_RANGE = 1.4;

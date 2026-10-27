@@ -19,8 +19,8 @@
  * version cost 20ms per chunk.
  */
 
-import { Blocks } from './Blocks.js';
-import { SX, SY, SZ, MIN_Y, MAX_Y, VOLUME, inRange } from './Chunk.js';
+import { Blocks } from '../blocks/Blocks.js';
+import { SX, SY, SZ, MIN_Y, MAX_Y, VOLUME, inRange } from '../generation/Chunk.js';
 
 const SKY = 0;
 const BLK = 1;

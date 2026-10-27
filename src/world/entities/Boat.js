@@ -49,9 +49,9 @@
  */
 
 import * as THREE from 'three';
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
-import { audio } from '../audio/SoundEngine.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
+import { audio } from '../../audio/SoundEngine.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const B = CONFIG.BOAT;

@@ -9,7 +9,7 @@
  */
 
 import { CONFIG } from '../core/Config.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { t } from '../ui/Lang.js';
 
 export const EXHAUSTION_PER_LEVEL = 4;

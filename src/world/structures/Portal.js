@@ -26,8 +26,8 @@
  * in one of them builds a portal rotated ninety degrees.
  */
 
-import { CONFIG } from '../core/Config.js';
-import { Blocks } from './Blocks.js';
+import { CONFIG } from '../../core/Config.js';
+import { Blocks } from '../blocks/Blocks.js';
 
 /** A portal whose normal is X spans Z and Y. */
 export const AXIS_X = 'x';

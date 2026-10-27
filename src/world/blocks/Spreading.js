@@ -19,8 +19,8 @@
  */
 
 import { Blocks } from './Blocks.js';
-import { mulberry32 } from './Noise.js';
-import { CONFIG } from '../core/Config.js';
+import { mulberry32 } from '../generation/Noise.js';
+import { CONFIG } from '../../core/Config.js';
 
 /** How many scattered positions are examined per tick. */
 const ATTEMPTS = 8;  // Reduced from 12 to 8
