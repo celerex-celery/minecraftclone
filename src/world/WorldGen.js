@@ -22,6 +22,8 @@ import { PerlinNoise, hash2, hash3, mulberry32 } from './Noise.js';
 import { buildTree, treeHeight } from './TreeShapes.js';
 import { SX, SY, SZ, MIN_Y, MAX_Y, AREA, idx, inRange } from './Chunk.js';
 import { BIOME_ORDER } from './ChunkMesher.js';
+import { CaveCarver } from './CaveCarver.js';
+import { Aquifer } from './Aquifer.js';
 
 export const BIOME = {};
 BIOME_ORDER.forEach((n, i) => { BIOME[n] = i; });
@@ -230,6 +232,8 @@ export class WorldGen {
     this.nEntrance = new PerlinNoise(this.seed ^ 0x8fc4);
     this.nRavineYaw = new PerlinNoise(this.seed ^ 0x7f2e);
     this.nRavineGate = new PerlinNoise(this.seed ^ 0x6b81);
+    this.caveCarver = new CaveCarver(this.seed);
+    this.aquifer = new Aquifer(this.seed);
     this.nDeepslate = new PerlinNoise(this.seed ^ 0x9f10);
     this.nPool = new PerlinNoise(this.seed ^ 0x2d10);
     this.nMoss = new PerlinNoise(this.seed ^ 0x4c73);
@@ -973,6 +977,13 @@ let c = -1;
 
     // pools and moss, both decided on the cave floors this loop just carved
     this.caveFeatures(chunk, roughTop);
+
+    // Additional cave carving (carver-based) for more natural tunnels
+    this.caveCarver.carveChunk(chunk.blocks, chunk.cx, chunk.cz,
+      (x, y, z) => y < -60 || y > 300);
+
+    // Fluid pockets in caves (lava/water)
+    this.aquifer.generateFluids(chunk.blocks, chunk.cx, chunk.cz);
 
     // ores, placed as veins over this chunk and its neighbours so a vein that
     // straddles a border is the same vein on both sides
