@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 import { Blocks } from '../world/Blocks.js';
-import { Items } from '../world/Items.js';
+import { Items } from '../world/blocks/Items.js';
 import { BIOME_TINT, BIOME_ORDER } from '../world/ChunkMesher.js';
 
 const cache = new Map();

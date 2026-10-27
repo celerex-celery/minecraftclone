@@ -7,7 +7,7 @@
  */
 
 import { RECIPES } from './Recipes.js';
-import { Items } from '../world/Items.js';
+import { Items } from '../world/blocks/Items.js';
 import { makeStack } from './Inventory.js';
 
 /**

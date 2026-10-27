@@ -16,7 +16,7 @@ import {
   formatDay, formatDistance, formatDuration, withCommas,
 } from '../core/Statistics.js';
 import { Blocks } from '../world/Blocks.js';
-import { Items } from '../world/Items.js';
+import { Items } from '../world/blocks/Items.js';
 
 /** The tabs, in the real game's order. */
 const TABS = [

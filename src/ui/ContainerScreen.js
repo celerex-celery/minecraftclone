@@ -12,13 +12,13 @@
  */
 
 import { CONFIG } from '../core/Config.js';
-import { Items } from '../world/Items.js';
+import { Items } from '../world/blocks/Items.js';
 import { Blocks } from '../world/Blocks.js';
 import { iconCanvas } from './ItemIcons.js';
 import { COLORS } from './PixelFont.js';
 import { craftingResult, consumeCraftingGrid, quickMoveToGrid } from '../survival/Crafting.js';
 import { makeStack, canMerge, armourFits, ARMOUR_ORDER, HOTBAR_SIZE } from '../survival/Inventory.js';
-import { creativeTabs } from '../world/Items.js';
+import { creativeTabs } from '../world/blocks/Items.js';
 import { SMELT_TIME } from '../survival/Recipes.js';
 import { CHEST_SLOTS } from '../world/Chests.js';
 import { playerPreviewCanvas } from './PlayerPreview.js';

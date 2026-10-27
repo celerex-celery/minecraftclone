@@ -8,7 +8,7 @@
  */
 
 import { CONFIG } from '../core/Config.js';
-import { Items } from '../world/Items.js';
+import { Items } from '../world/blocks/Items.js';
 import { Blocks } from '../world/Blocks.js';
 import { iconCanvas } from './ItemIcons.js';
 import { advancementIcon, advancementDesc, advancementTitle } from './Advancements.js';
