@@ -26,7 +26,7 @@ import { World } from '../world/environment/World.js';
 import { Sky } from '../world/lighting/Sky.js';
 import { Particles } from '../world/entities/Particles.js';
 import { ItemDrops } from '../world/entities/ItemDrops.js';
-import { EntityShadows } from '../world/EntityShadows.js';
+import { EntityShadows } from '../world/entities/EntityShadows.js';
 import { FallingBlocks } from '../world/blocks/FallingBlocks.js';
 import { EnderPearls } from '../world/entities/EnderPearls.js';
 import { Spreading } from '../world/blocks/Spreading.js';

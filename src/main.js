@@ -14,8 +14,8 @@
 
 import { Game, STATE } from './core/Game.js';
 import { Assets, blockTextureManifest, itemTextureManifest } from './core/Assets.js';
-import { Blocks } from './world/Blocks.js';
-import { Items } from './world/Items.js';
+import { Blocks } from './world/blocks/Blocks.js';
+import { Items } from './world/blocks/Items.js';
 import { audio } from './audio/SoundEngine.js';
 import { randomSplash, SPLASHES } from './ui/Splashes.js';
 import { createLogger, recent } from './core/Logger.js';
