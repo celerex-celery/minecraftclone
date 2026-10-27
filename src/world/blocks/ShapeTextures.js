@@ -116,6 +116,22 @@ export function deriveShapeTextures(images) {
     out[`${key}_slab_side`] = src;
   }
 
+  /* ---- additional slab families not in slabFamilies but registered in Blocks.js ---- */
+  const extraSlabFamilies = [
+    'cut_sandstone', 'smooth_sandstone', 'smooth_stone', 'polished_andesite',
+    'polished_diorite', 'polished_granite', 'polished_diorite', 'polished_granite',
+    'polished_basalt', 'end_stone_bricks', 'purpur_block', 'quartz_block',
+    'red_nether_bricks', 'warped_nylium', 'crimson_nylium', 'basalt',
+    'polished_blackstone', 'polished_blackstone_bricks', 'chiseled_polished_blackstone',
+  ];
+
+  for (const key of extraSlabFamilies) {
+    const src = images[key];
+    if (!src) continue;
+    out[`${key}_slab_top`] = src;
+    out[`${key}_slab_side`] = src;
+  }
+
   /* ---- fences: nothing to derive ----
      Fences used to get `<wood>_fence_post` and `<wood>_fence_side` cut out of
      the planks sheet, but the mesher maps a whole tile onto every face and a
