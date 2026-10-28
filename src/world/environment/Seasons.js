@@ -8,8 +8,8 @@
  * and how many days in" without the answer being worked out twice.
  */
 
-import { CONFIG } from '../core/Config.js';
-import { t } from '../ui/Lang.js';
+import { CONFIG } from '../../core/Config.js';
+import { t } from '../../ui/Lang.js';
 
 export const SEASON_COUNT = 4;
 

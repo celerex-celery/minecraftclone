@@ -10,8 +10,6 @@ import { hash2, mulberry32 } from '../generation/Noise.js';
 
 const B = {
   sandstone: Blocks.id('sandstone'),
-  cut_sandstone: Blocks.id('cut_sandstone'),
-  smooth_sandstone: Blocks.id('smooth_sandstone'),
   water: Blocks.id('water'),
   sand: Blocks.id('sand'),
   air: Blocks.id('air'),
@@ -52,9 +50,9 @@ export function generateDesertWell(blocks, wx, wz, seed, surfaceY) {
         for (let y = 0; y <= WELL_DEPTH + 1; y++) {
           const wy = cy - y;
           if (y === 0) {
-            setBlock(blocks, cx + x, wy, cz + z, B.cut_sandstone);
+            setBlock(blocks, cx + x, wy, cz + z, B.sandstone);
           } else if (y === WELL_DEPTH + 1) {
-            setBlock(blocks, cx + x, wy, cz + z, B.smooth_sandstone);
+            setBlock(blocks, cx + x, wy, cz + z, B.sandstone);
           } else {
             setBlock(blocks, cx + x, wy, cz + z, B.sandstone);
           }

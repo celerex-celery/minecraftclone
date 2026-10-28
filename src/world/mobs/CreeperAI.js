@@ -7,7 +7,7 @@
  * - Explosion mechanics
  */
 
-import { Blocks } from '../Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { audio } from '../../audio/SoundEngine.js';
 
 /**

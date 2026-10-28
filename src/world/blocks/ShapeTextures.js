@@ -105,7 +105,7 @@ export function deriveShapeTextures(images) {
     'stone_bricks', 'mossy_cobblestone', 'deepslate', 'cobbled_deepslate',
     // Nether families. Every one of these is a single-tile block, which is what
     // lets the sheet simply be the block's own texture.
-    'netherrack', 'nether_bricks', 'blackstone', 'soul_sand',
+    'netherrack', 'nether_bricks', 'soul_sand',
   ];
 
   /* ---- slabs: reuse the block's own top and side sheets ---- */
@@ -118,11 +118,6 @@ export function deriveShapeTextures(images) {
 
   /* ---- additional slab families not in slabFamilies but registered in Blocks.js ---- */
   const extraSlabFamilies = [
-    'cut_sandstone', 'smooth_sandstone', 'smooth_stone', 'polished_andesite',
-    'polished_diorite', 'polished_granite', 'polished_diorite', 'polished_granite',
-    'polished_basalt', 'end_stone_bricks', 'purpur_block', 'quartz_block',
-    'red_nether_bricks', 'warped_nylium', 'crimson_nylium', 'basalt',
-    'polished_blackstone', 'polished_blackstone_bricks', 'chiseled_polished_blackstone',
   ];
 
   for (const key of extraSlabFamilies) {

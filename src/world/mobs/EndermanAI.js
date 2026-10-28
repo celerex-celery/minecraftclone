@@ -10,7 +10,7 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from '../Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { TELEPORT_COOLDOWN } from './Variants.js';
 
 /**

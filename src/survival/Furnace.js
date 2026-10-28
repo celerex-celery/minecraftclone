@@ -7,7 +7,7 @@
 
 import { SMELTING, FUELS, SMELT_TIME, fuelValue } from './Recipes.js';
 import { makeStack } from './Inventory.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 
 export function createFurnaceState() {
   return {

@@ -15,7 +15,7 @@ import { t } from './Lang.js';
 import {
   formatDay, formatDistance, formatDuration, withCommas,
 } from '../core/Statistics.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { Items } from '../world/blocks/Items.js';
 
 /** The tabs, in the real game's order. */

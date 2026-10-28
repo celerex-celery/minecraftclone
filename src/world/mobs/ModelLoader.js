@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Blocks } from '../Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 
 const UNIT = 1 / 16;
 const MAX_Y = 255;

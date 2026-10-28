@@ -8,9 +8,9 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { Items } from '../world/blocks/Items.js';
-import { BIOME_TINT, BIOME_ORDER } from '../world/ChunkMesher.js';
+import { BIOME_TINT, BIOME_ORDER } from '../world/generation/ChunkMesher.js';
 
 const cache = new Map();
 

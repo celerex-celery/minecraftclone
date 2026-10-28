@@ -8,9 +8,9 @@
 
 import { COLORS } from './PixelFont.js';
 import { t } from './Lang.js';
-import { randomSeed } from '../world/Noise.js';
+import { randomSeed } from '../world/generation/Noise.js';
 import { itemIcon } from './ItemIcons.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { Items } from '../world/blocks/Items.js';
 import { createLogger } from '../core/Logger.js';
 

@@ -4,7 +4,7 @@
  */
 
 import * as THREE from 'three';
-import { CONFIG } from '../core/Config.js';
+import { CONFIG } from '../../core/Config.js';
 
 const SKY_VERT = /* glsl */`
   varying vec3 vDir;
@@ -462,7 +462,7 @@ export class Sky {
       this.ambient = this.endAmbient;
       this.ambientTint = this.endAmbientTint;
     } else {
-this.ambient = 0.01;
+      this.ambient = 0.08;
       this.ambientTint.setRGB(1, 1, 1);
     }
   }
@@ -577,7 +577,8 @@ this.ambient = 0.01;
 
     this.fogColor.copy(horizon);
     // sky light contribution: never fully dark, torches matter at night
-    this.dayLight = (0.14 + day * 0.86) * this.dimming;
+    // Increased base light for better visibility
+    this.dayLight = (0.25 + day * 0.75) * this.dimming;
 
     this.stars.position.copy(p);
 

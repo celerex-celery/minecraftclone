@@ -19,7 +19,7 @@ app.setAppUserModelId('com.yourname.minecraftvoxel');
  *
  * One line shape for the whole app, the way Vanilla writes it:
  *
- *   [14:32:07] [main/INFO]: (Minecraft Voxel) serving at http://localhost:3066
+ *   [14:32:07] [main/INFO]: (Minecraft Voxel) serving at http://127.0.0.1:3066
  *   [14:32:07] [Render thread/WARN]: (TextureAtlas) no tile named "missing"
  *
  * The renderer side lives in src/core/Logger.js, which formats the line and
@@ -74,7 +74,7 @@ app.commandLine.appendSwitch(
 
 const ROOT = path.join(__dirname, '..');
 const PORT = 3066;
-const URL = `http://localhost:${PORT}/`;
+const URL = `http://127.0.0.1:${PORT}/`;
 
 /* ============================ saves on disk ============================
  *

@@ -352,8 +352,7 @@ export const CONFIG = {
        dimension read as somewhere rather than as a lava lake with a rim. */
     DELTA_SCALE: 0.014,
     DELTA_THRESHOLD: 0.30,
-    /** The delta floor is blackstone where it meets the lava, basalt above that,
-       and the bare smooth basalt in between. */
+    /** The delta floor is netherrack where it meets the lava. */
     DELTA_MAX_Y: 34,
   },
 

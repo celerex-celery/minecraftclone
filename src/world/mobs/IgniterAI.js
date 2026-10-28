@@ -5,7 +5,7 @@
  * takes damage in water, and spawns fire on explosion.
  */
 
-import { Blocks } from '../Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { audio } from '../../audio/SoundEngine.js';
 
 function yawToward(dx, dz) {

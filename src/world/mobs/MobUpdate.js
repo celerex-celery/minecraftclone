@@ -6,7 +6,7 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from '../Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { CONFIG } from '../../core/Config.js';
 import { audio } from '../../audio/SoundEngine.js';
 import { CATEGORY, PANIC_MIN, PANIC_MAX, PANIC_SPEED, EGG_MIN, EGG_MAX, EGG_ON, EGG_LIGHT, GROW_MIN, GROW_MAX, HEARING_RANGE, VARIANTS } from './Variants.js';

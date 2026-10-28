@@ -9,7 +9,7 @@
  */
 
 import { CONFIG } from '../../core/Config.js';
-import { Blocks } from '../Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 
 const GRAVITY = 16;
 const TURN = 1.1;

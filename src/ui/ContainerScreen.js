@@ -13,7 +13,7 @@
 
 import { CONFIG } from '../core/Config.js';
 import { Items } from '../world/blocks/Items.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { iconCanvas } from './ItemIcons.js';
 import { COLORS } from './PixelFont.js';
 import { craftingResult, consumeCraftingGrid, quickMoveToGrid } from '../survival/Crafting.js';

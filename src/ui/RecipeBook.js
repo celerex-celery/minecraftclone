@@ -7,7 +7,7 @@
 
 import { RECIPES } from '../survival/Recipes.js';
 import { Items } from '../world/blocks/Items.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { itemIcon } from './ItemIcons.js';
 import { t } from './Lang.js';
 

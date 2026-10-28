@@ -362,6 +362,7 @@ Blocks.add('bedrock', { label: 'Bedrock', hardness: -1, tool: 'pickaxe', explosi
 Blocks.add('deepslate', { tiles: 'deepslate', hardness: 3.0, tool: 'pickaxe', tier: 0, drops: [{ item: 'cobbled_deepslate' }], xp: 1 });
 Blocks.add('cobbled_deepslate', { tiles: 'cobbled_deepslate', hardness: 3.5, tool: 'pickaxe', tier: 0 });
 Blocks.add('obsidian', { tiles: 'obsidian', hardness: 50.0, tool: 'pickaxe', tier: 3, explosionResistance: Infinity });
+Blocks.add('smooth_stone', { tiles: 'smooth_stone', hardness: 2.0, tool: 'pickaxe', tier: 0 });
 
 /* ================================================================
    Soils
@@ -805,146 +806,6 @@ Blocks.add('sugar_cane', {
 });
 
 /* ================================================================
-   Multi-part shapes: slabs, stairs, fences, panes and walls
-   ================================================================ */
-
-/**
- * Register a family of shaped blocks that all share one parent block's look.
- * Vanilla has a bottom and a top variant for every slab.
- */
-function shapedFamily(parent, label, opts = {}) {
-  const parentDef = Blocks.get(Blocks.id(parent));
-  const base = {
-    hardness: parentDef.hardness,
-    tool: parentDef.tool,
-    tier: parentDef.tier,
-    flammable: parentDef.flammable,
-    igniteOdds: parentDef.igniteOdds,
-    burnOdds: parentDef.burnOdds,
-  };
-
-  // bottom slab
-  Blocks.add(`${parent}_slab`, {
-    label: `${label} Slab`,
-    tiles: { top: `${parent}_slab_top`, bottom: `${parent}_slab_top`, side: `${parent}_slab_side` },
-    shape: 'slab_bottom',
-    // a slab is a full collision box, unlike vanilla, so you can stand on it
-    opaque: false,
-    ...base,
-    ...opts,
-  });
-  // top slab
-  Blocks.add(`${parent}_slab_top`, {
-    label: `${label} Slab`,
-    tiles: { top: `${parent}_slab_top`, bottom: `${parent}_slab_top`, side: `${parent}_slab_side` },
-    shape: 'slab_top',
-    opaque: false,
-    ...base,
-    ...opts,
-  });
-  // stairs
-  Blocks.add(`${parent}_stairs`, {
-    label: `${label} Stairs`,
-    tiles: typeof parentDef.tiles === 'string'
-      ? parentDef.tiles
-      : { top: parentDef.tiles.top, bottom: parentDef.tiles.bottom ?? parentDef.tiles.side, side: parentDef.tiles.side },
-    shape: 'stairs',
-    opaque: false,
-    ...base,
-    ...opts,
-  });
-}
-
-for (const [parent, label] of [
-  ['oak_planks', 'Oak'],
-  ['stone', 'Stone'],
-  ['cobblestone', 'Cobblestone'],
-  ['sandstone', 'Sandstone'],
-  ['bricks', 'Brick'],
-  ['stone_bricks', 'Stone Brick'],
-  ['mossy_cobblestone', 'Mossy Cobblestone'],
-  ['deepslate', 'Deepslate'],
-  ['cobbled_deepslate', 'Cobbled Deepslate'],
-  ['smooth_stone', 'Smooth Stone'],
-  ['cut_sandstone', 'Cut Sandstone'],
-  ['smooth_sandstone', 'Smooth Sandstone'],
-  ['polished_andesite', 'Polished Andesite'],
-  ['polished_diorite', 'Polished Diorite'],
-  ['polished_granite', 'Polished Granite'],
-  ['polished_basalt', 'Polished Basalt'],
-  ['end_stone_bricks', 'End Stone Bricks'],
-  ['purpur_block', 'Purpur Block'],
-  ['quartz_block', 'Quartz Block'],
-  ['red_nether_bricks', 'Red Nether Bricks'],
-  ['basalt', 'Basalt'],
-  ['polished_blackstone', 'Polished Blackstone'],
-  ['polished_blackstone_bricks', 'Polished Blackstone Bricks'],
-]) {
-  shapedFamily(parent, label);
-}
-
-/* ---- fences: posts with arms that connect to neighbours ----
-   The fence uses the plain planks sheet on every face. A derived, cropped
-   fence texture cannot work here: the mesher maps a whole tile onto each face,
-   but a post's side face is only 4 pixels wide, so a 16-pixel texture with a
-   4-pixel post cut into it gets squashed onto that face and reads as a grey
-   smear. The post is 4 pixels wide because the geometry says so, so the texture
-   has nothing left to do. */
-for (const [key, label] of woodVariants) {
-  Blocks.add(`${key}_fence`, {
-    label: `${label} Fence`,
-    tiles: `${key}_planks`,
-    shape: 'post',
-    cutout: true,
-    opaque: false,
-    connect: true,
-    postThickness: 0.25,
-    armLow: 0.375,
-    armHigh: 0.625,
-    hardness: 2.0,
-    tool: 'axe',
-    flammable: true, igniteOdds: 5, burnOdds: 20,
-  });
-}
-
-/* ---- glass panes ---- */
-Blocks.add('glass_pane', {
-  label: 'Glass Pane',
-  tiles: { top: 'glass_pane_top', bottom: 'glass_pane_top', side: 'glass_pane_top' },
-  shape: 'post',
-  cutout: true,
-  opaque: false,
-  connect: true,
-  postThickness: 0.0625,
-  armLow: 0.0,
-  armHigh: 1.0,
-  hardness: 0.3,
-  drops: [],
-});
-
-/* ---- thin walls ---- */
-for (const [parent, label] of [
-  ['cobblestone', 'Cobblestone'],
-  ['stone_bricks', 'Stone Brick'],
-  ['bricks', 'Brick'],
-]) {
-  Blocks.add(`${parent}_wall`, {
-    label: `${label} Wall`,
-    tiles: parent,
-    shape: 'post',
-    cutout: true,
-    opaque: false,
-    connect: true,
-    postThickness: 0.125,
-    armLow: 0.0,
-    armHigh: 1.0,
-    hardness: 2.0,
-    tool: 'pickaxe',
-    tier: 0,
-  });
-}
-
-/* ================================================================
    Liquids
    ================================================================ */
 Blocks.add('water', {
@@ -1033,9 +894,6 @@ Blocks.add('chiseled_nether_bricks', {
 Blocks.add('cracked_nether_bricks', {
   tiles: 'cracked_nether_bricks', hardness: 2.0, tool: 'pickaxe', tier: 0,
 });
-Blocks.add('red_nether_bricks', {
-  tiles: 'red_nether_bricks', hardness: 2.0, tool: 'pickaxe', tier: 0,
-});
 Blocks.add('soul_sand', {
   tiles: 'soul_sand', hardness: 0.5, tool: 'shovel', gravity: true,
 });
@@ -1048,20 +906,6 @@ Blocks.add('magma_block', {
 Blocks.add('shroomlight', {
   tiles: 'shroomlight', hardness: 1.0, tool: 'pickaxe', tier: 0, light: 15,
 });
-Blocks.add('quartz_block', {
-  tiles: { top: 'quartz_block_top', bottom: 'quartz_block_bottom', side: 'quartz_block_side' },
-  hardness: 0.8, tool: 'pickaxe', tier: 0,
-});
-Blocks.add('basalt', {
-  tiles: { top: 'basalt_top', bottom: 'basalt_top', side: 'basalt_side' },
-  hardness: 1.25, tool: 'pickaxe', tier: 0,
-});
-Blocks.add('polished_basalt', {
-  tiles: { top: 'polished_basalt_top', bottom: 'polished_basalt_top', side: 'polished_basalt_side' },
-  hardness: 1.25, tool: 'pickaxe', tier: 0,
-});
-Blocks.add('smooth_basalt', { tiles: 'smooth_basalt', hardness: 0.5, tool: 'pickaxe', tier: 0 });
-Blocks.add('blackstone', { tiles: 'blackstone', hardness: 1.5, tool: 'pickaxe', tier: 0 });
 
 /* ---- Nether ores ----
    Ancient debris is the reason to come down here. Vanilla gates it behind a
@@ -1106,22 +950,6 @@ Blocks.add('nether_portal', {
   hardness: -1, light: 11, solid: false, opaque: false, opacity: NONE,
   cutout: true, placeable: false, damage: 0,
 });
-
-/* Nether slabs and stairs, built from the same family helper as the overworld
-   ones so they pick up the parent's hardness and tool. */
-for (const [parent, label] of [
-  ['netherrack', 'Netherrack'],
-  ['nether_bricks', 'Nether Brick'],
-  ['blackstone', 'Blackstone'],
-  ['soul_sand', 'Soul Sand'],
-  ['warped_nylium', 'Warped Nylium'],
-  ['crimson_nylium', 'Crimson Nylium'],
-  ['polished_blackstone', 'Polished Blackstone'],
-  ['polished_blackstone_bricks', 'Polished Blackstone Bricks'],
-  ['chiseled_polished_blackstone', 'Chiseled Polished Blackstone'],
-]) {
-  shapedFamily(parent, label);
-}
 
 /* ---- the Nether's own cactus ----
    The cactus texture recolored purple - `tools/copy-assets.ps1` writes

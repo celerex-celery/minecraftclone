@@ -38,7 +38,7 @@
  *    other are collapsed, so a mob walks the corners and not the steps.
  */
 
-import { CONFIG } from '../core/Config.js';
+import { CONFIG } from '../../core/Config.js';
 
 /** Straight move cost. Diagonals are this times the square root of two. */
 const STRAIGHT = 1;

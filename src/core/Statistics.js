@@ -17,7 +17,7 @@
  */
 
 import { CONFIG } from './Config.js';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { t } from '../ui/Lang.js';
 
 const TICKS_PER_SECOND = 20;

@@ -142,7 +142,6 @@ export class NetherGen extends WorldGen {
       'netherrack', 'nether_portal', 'obsidian', 'lava', 'bedrock',
       'nether_gold_ore', 'nether_quartz_ore', 'ancient_debris',
       'soul_sand', 'magma_block', 'glowstone',
-      'basalt', 'smooth_basalt', 'polished_basalt', 'blackstone',
       'warped_cactus',
     ]) this.B[n] = Blocks.id(n);
   }
@@ -485,8 +484,7 @@ export class NetherGen extends WorldGen {
                rather than netherrack, and the top of it is polished, because
                that is what the real one is. */
             if (delta) {
-              id = y === surface ? B.polished_basalt
-                : y === surface - 1 ? B.basalt : B.smooth_basalt;
+              id = B.netherrack;
             } else {
               id = B.netherrack;
             }

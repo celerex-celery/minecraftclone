@@ -16,7 +16,7 @@
  */
 
 import * as THREE from 'three';
-import { Blocks } from '../world/Blocks.js';
+import { Blocks } from '../world/blocks/Blocks.js';
 import { iconImage, isFlatItem, makePixelTexture } from '../ui/ItemIcons.js';
 
 /**

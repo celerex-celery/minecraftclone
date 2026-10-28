@@ -19,7 +19,7 @@
  */
 
 import * as THREE from 'three';
-import { createLogger } from '../core/Logger.js';
+import { createLogger } from '../../core/Logger.js';
 
 const log = createLogger('TextureAtlas');
 

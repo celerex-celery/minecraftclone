@@ -115,41 +115,9 @@ for (const [mat, ing] of Object.entries(ARMOUR_MATS)) {
 }
 
 /* ---------------- shaped blocks ---------------- */
-// 3 of a block make 6 slabs, and 2 slabs stack back into a block (vanilla rule).
-// [parent block, crafting ingredient] - they differ for bricks, which is crafted
-// from clay but whose block is called "bricks".
-for (const [parent, ing] of [
-  ['oak_planks', 'oak_planks'],
-  ['stone', 'stone'],
-  ['cobblestone', 'cobblestone'],
-  ['sandstone', 'sandstone'],
-  ['bricks', 'brick'],
-  ['stone_bricks', 'stone_bricks'],
-  ['mossy_cobblestone', 'mossy_cobblestone'],
-  ['deepslate', 'cobbled_deepslate'],
-  // the Nether families. Their slabs are shaped from the block itself, and
-  // quartz is worth compressing back into a block the way the other minerals
-  // are.
-  ['netherrack', 'netherrack'],
-  ['nether_bricks', 'nether_bricks'],
-  ['blackstone', 'blackstone'],
-  ['soul_sand', 'soul_sand'],
-]) {
-  shaped(`${parent}_slab`, 6, ['XXX'], { X: ing });
-  shapeless(`${parent}_slab_top`, 6, [`${parent}_slab`]);
-  shaped(`${parent}_slab_top`, 6, ['XXX'], { X: ing });
-  shaped(`${parent}_stairs`, 4, ['X  ', 'XX ', 'XXX'], { X: ing });
-  shapeless(parent, 1, [`${parent}_slab`, `${parent}_slab`]);
-}
-for (const key of ['oak', 'birch', 'spruce']) {
-  shapeless(`${key}_planks`, 1, [`${key}_fence`]);
-  shaped(`${key}_fence`, 3, ['SSS', 'SPS', 'SSS'], { S: `${key}_planks`, P: `${key}_log` });
-  shaped('glass_pane', 16, ['GGG', 'GGG'], { G: 'glass' });
-  shapeless('glass', 1, ['glass_pane', 'glass_pane']);
-}
-shaped('cobblestone_wall', 6, ['XXX', 'XXX'], { X: 'cobblestone' });
-shaped('stone_bricks_wall', 6, ['XXX', 'XXX'], { X: 'stone_bricks' });
-shaped('bricks_wall', 6, ['XXX', 'XXX'], { X: 'brick' });
+  // 3 of a block make 6 slabs, and 2 slabs stack back into a block (vanilla rule).
+  // [parent block, crafting ingredient] - they differ for bricks, which is crafted
+  // from clay but whose block is called "bricks".
 
 /* ---------------- the Nether ----------------
 
@@ -187,10 +155,6 @@ shaped('bricks', 1, ['XX', 'XX'], { X: 'brick' });
 shaped('sandstone', 1, ['XX', 'XX'], { X: 'sand' });
 shaped('glowstone', 1, ['XX', 'XX'], { X: 'glowstone_dust' });
 
-/* Quartz compresses into a block and back again, the same as every other
-   mineral here, even though the block it makes belongs to the Nether. */
-shaped('quartz_block', 1, ['XXX', 'XXX', 'XXX'], { X: 'quartz' });
-shapeless('quartz', 9, ['quartz_block']);
 /* Ancient debris has no crafting recipe at all in the real game and none here.
    It is mined, it is smelted, and that is the whole of its story. */
 

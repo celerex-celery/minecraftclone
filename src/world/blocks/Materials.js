@@ -11,7 +11,7 @@
 
 import * as THREE from 'three';
 import { selectionBoxes } from './Blocks.js';
-import { createLogger } from '../core/Logger.js';
+import { createLogger } from '../../core/Logger.js';
 
 const log = createLogger('Materials');
 
@@ -331,18 +331,35 @@ export class ChunkMaterials {
   }
 
   update(time, dayLight, brightness, underwater, ambient, ambientTint) {
-    sharedUniforms.uTime.value = time;
-    sharedUniforms.uDayLight.value = dayLight;
-    sharedUniforms.uBrightness.value = brightness;
-    sharedUniforms.uUnderwater.value = underwater;
-    if (ambient !== undefined) sharedUniforms.uAmbient.value = ambient;
-    if (ambientTint) sharedUniforms.uAmbientTint.value.copy(ambientTint);
+    // Only update uniforms if values have changed significantly
+    const eps = 0.001;
+    if (Math.abs(sharedUniforms.uTime.value - time) > eps) {
+      sharedUniforms.uTime.value = time;
+    }
+    if (Math.abs(sharedUniforms.uDayLight.value - dayLight) > eps) {
+      sharedUniforms.uDayLight.value = dayLight;
+    }
+    if (Math.abs(sharedUniforms.uBrightness.value - brightness) > eps) {
+      sharedUniforms.uBrightness.value = brightness;
+    }
+    if (Math.abs(sharedUniforms.uUnderwater.value - underwater) > eps) {
+      sharedUniforms.uUnderwater.value = underwater;
+    }
+    if (ambient !== undefined && Math.abs(sharedUniforms.uAmbient.value - ambient) > eps) {
+      sharedUniforms.uAmbient.value = ambient;
+    }
+    if (ambientTint) {
+      sharedUniforms.uAmbientTint.value.copy(ambientTint);
+    }
     // The torch flicker: a random walk that is nudged by up to a tenth each
     // tick and then decays, which is what vanilla's lightmap does to the
     // block light channel.
     this._flicker += (Math.random() - Math.random()) * Math.random() * 0.1;
     this._flicker *= 0.9;
-    sharedUniforms.uFlicker.value = 1 + this._flicker;
+    const newFlicker = 1 + this._flicker;
+    if (Math.abs(sharedUniforms.uFlicker.value - newFlicker) > eps) {
+      sharedUniforms.uFlicker.value = newFlicker;
+    }
     // Water and lava play their animation strips: vanilla's `.mcmeta` gives
     // them two ticks a frame, which at twenty ticks a second is ten frames a
     // second. Thirty-two frames of water is a cycle of just over three

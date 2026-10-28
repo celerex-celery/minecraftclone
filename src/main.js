@@ -89,7 +89,7 @@ async function boot() {
         Minecraft Voxel is designed for the <strong>Electron desktop app</strong> to save worlds and settings.
       </p>
       <p style="font-size: 16px; color: #aaa; margin-bottom: 32px;">
-        Running in a browser (localhost) uses <strong>session-only storage</strong> — your world will be <strong>lost when you close the tab</strong>.
+        Running in a browser uses <strong>session-only storage</strong> — your world will be <strong>lost when you close the tab</strong>.
         <br>Use <code style="background:#333;padding:2px 6px;">start-electron.bat</code> or <code style="background:#333;padding:2px 6px;">npm run electron</code> for persistent saves.
       </p>
       <div style="display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;">
@@ -124,7 +124,7 @@ async function boot() {
       game.screens.title.show();
       game.start();
       game.applySettings();
-      log.info('Reached the title screen (localhost mode, no saves)');
+      log.info('Reached the title screen (browser mode, no saves)');
       
       // resume audio on first interaction (browser autoplay policy)
       const resume = () => {

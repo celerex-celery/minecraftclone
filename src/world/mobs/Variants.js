@@ -7,7 +7,7 @@
  * and only the values change.
  */
 
-import { Blocks } from '../Blocks.js';
+import { Blocks } from '../blocks/Blocks.js';
 import { audio } from '../../audio/SoundEngine.js';
 import { CONFIG } from '../../core/Config.js';
 

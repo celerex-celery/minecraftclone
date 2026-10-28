@@ -1226,6 +1226,12 @@ export class World {
       m.matrixAutoUpdate = false;
       m.updateMatrix();
       m.frustumCulled = true;
+      // Optimize bounding sphere for better frustum culling
+      m.geometry.computeBoundingSphere();
+      m.geometry.boundingSphere.radius = Math.max(m.geometry.boundingSphere.radius, 8);
+      // Store chunk coordinate for LOD checks
+      m.userData.chunkCx = chunk.cx;
+      m.userData.chunkCz = chunk.cz;
       this.scene.add(m);
       meshes[renderOrder] = m;
     };

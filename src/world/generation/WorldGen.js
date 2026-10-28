@@ -260,7 +260,7 @@ export class WorldGen {
     for (const n of [
       'air', 'bedrock', 'stone', 'deepslate', 'water', 'grass_block', 'snow_block',
       'sand', 'red_sand', 'gravel', 'clay', 'dirt', 'coarse_dirt', 'podzol',
-      'sandstone', 'sandstone_slab', 'lava', 'moss_block', 'rooted_dirt', 'seagrass',
+      'sandstone', 'lava', 'moss_block', 'rooted_dirt', 'seagrass',
     ]) this.B[n] = Blocks.id(n);
     for (const o of ORES) {
       this.B[o.name] = Blocks.id(o.name);

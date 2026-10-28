@@ -27,7 +27,7 @@
  */
 
 import * as THREE from 'three';
-import { CONFIG } from '../core/Config.js';
+import { CONFIG } from '../../core/Config.js';
 import { seasonOf } from './Seasons.js';
 
 /** The winterlies, by index into `CONFIG.SEASON.NAMES`. */

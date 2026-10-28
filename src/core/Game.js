@@ -35,7 +35,7 @@ import { Boats } from '../world/entities/Boat.js';
 import { Beds } from '../world/structures/Beds.js';
 import { Chests, chestOwner } from '../world/structures/Chests.js';
 import { placeBonusChest } from '../world/structures/BonusChest.js';
-import { createPortal, portalBlockAt, updatePortals } from '../world/structures/Portal.js';
+import { lightPortal, checkPortalNeighbours, findFrame, ignitePortal, findEndPortalFrame, activateEndPortal, playerInPortal, playerInEndPortal, portalNearby } from '../world/structures/Portal.js';
 import { seedFromString } from '../world/generation/Noise.js';
 import { Player } from '../player/Player.js';
 import { ViewModel } from '../player/ViewModel.js';
@@ -206,6 +206,8 @@ export class Game {
       stencil: false,
       // Sort objects by material to reduce shader switches
       sortObjects: true,
+      // Enable better GPU optimization
+      preserveDrawingBuffer: false,
     });
     // Whole device pixels per CSS pixel - see crispPixelRatio(). The blocky 16px
     // textures are crisp anyway, so anything fractional only costs fill rate
@@ -214,8 +216,8 @@ export class Game {
     this.renderer.setPixelRatio(this._basePixelRatio);
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.NoToneMapping;
-    // Manual clear for optimization - we'll clear depth+color only when needed
-    this.renderer.autoClear = false;
+    // Auto clear for simplicity and correctness
+    this.renderer.autoClear = true;
     // Enable frustum culling (default true, but explicit)
     this.renderer.localClippingEnabled = false;
 
@@ -224,8 +226,8 @@ export class Game {
     // Enable frustum culling on scene (default true)
     this.scene.frustumCulled = true;
     this.camera = new THREE.PerspectiveCamera(this.settings.fov, 1, 0.08, 600);
-    // Minimal ambient for mobs (MeshStandardMaterial) - terrain uses voxel light engine.
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.08);
+    // Increased ambient for better visibility - terrain uses voxel light engine but needs base illumination
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
     this.scene.add(this.ambientLight);
     // The flat contact shadows under mobs and dropped items - vanilla has no
     // real shadow maps, only a soft quad on the ground.
@@ -627,6 +629,12 @@ this._bedsByDimension = {};
     this.camera.far = far;
     this.camera.updateProjectionMatrix();
     this.sky.setRadius(far);
+    // Set fog to match render distance for better culling and visual fade
+    if (this.world) {
+      const range = this.sky.fogRange(this.settings.renderDistance);
+      this.world.scene.fog.near = range.near;
+      this.world.scene.fog.far = range.far;
+    }
   }
 
   /**
