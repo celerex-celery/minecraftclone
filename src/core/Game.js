@@ -829,7 +829,6 @@ this._bedsByDimension = {};
     // spectator is command-only, so a save that somehow carries it still works
     this.player.spectator = gameMode === 'spectator';
     // hardcore: no creative, no spectator, no flying, one heart
-    const hardcore = gameMode === 'hardcore';
     if (hardcore) {
       this.player.creative = false;
       this.player.spectator = false;
@@ -1980,8 +1979,8 @@ const payload = {
     this.gameMode = mode;
     const creative = mode === 'creative';
     const spectator = mode === 'spectator';
-    // hardcore never becomes creative or spectator
-    if (this.hardcore && (creative || spectator)) return;
+    // hardcore can never become creative, but can spectate after death
+    if (this.hardcore && creative) return;
     if (this.player) {
       this.player.creative = creative;
       this.player.spectator = spectator;
@@ -2240,7 +2239,7 @@ const payload = {
     if (this.state !== STATE.PLAYING || this.screen || this.screens.steps?.isOpen) return;
 
     if (input.pressed('inventory')) this.openScreen('inventory', null);
-    if (input.pressed('creativeInventory')) this.openScreen('creative', null);
+    if (input.pressed('creativeInventory') && this.gameMode === 'creative') this.openScreen('creative', null);
 
     // T opens chat, / opens chat with the command slash already typed
     if (input.pressed('chat')) this.chat.open('');

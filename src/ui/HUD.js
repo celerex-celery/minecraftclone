@@ -273,7 +273,8 @@ export class HUD {
    * survival resumes.
    */
   _applyGameMode() {
-    const creative = this.game.gameMode !== 'survival';
+    // only true creative hides the survival bars; hardcore keeps them
+    const creative = this.game.gameMode === 'creative';
     if (creative === this._creative) return;
     this._creative = creative;
     this.el.hud.classList.toggle('creative', creative);
