@@ -1338,6 +1338,22 @@ input[type="range"]::-moz-range-thumb {
   line-height: 0;
 }
 
+.wc-more {
+  flex: 0 0 auto;
+}
+
+.wc-worldtype-popup {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.7); z-index: 2000;
+  display: none; align-items: center; justify-content: center;
+}
+
+.wc-worldtype-panel {
+  background: #2a2a2a; border: 3px solid #a0a0a0;
+  padding: 20px; display: flex; flex-direction: column;
+  gap: 10px; min-width: 220px;
+}
+
 .wc-actions {
   display: flex;
   gap: 10px;

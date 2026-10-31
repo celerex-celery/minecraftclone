@@ -85,6 +85,11 @@ function findFreeY(world, x, y, z) {
  * @returns {boolean} true when the line was a command that ran
  */
 export function runCommand(game, line, chat) {
+  // hardcore: cheats are disabled
+  if (game.hardcore) {
+    chat.print(t('cmd.hardcoreCheatsDisabled'), CHAT_COLORS.error);
+    return true;
+  }
   const body = line.slice(1).trim();
   if (!body) {
     chat.print(t('cmd.usage', 'help'), CHAT_COLORS.error);

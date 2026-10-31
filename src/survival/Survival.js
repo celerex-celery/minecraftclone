@@ -53,6 +53,7 @@ export class Survival {
 
     this.health = CONFIG.MAX_HEALTH;
     this.maxHealth = CONFIG.MAX_HEALTH;
+    this.hardcore = false;
     this.hunger = CONFIG.MAX_HUNGER;
     this.saturation = 5;
     this.exhaustion = 0;

@@ -32,6 +32,32 @@
   <div id="vignette"></div>
 </div>
 
+<!-- ============================ LOADING ============================ -->
+<!-- Covers asset boot and world joins so the player never sees a half-built
+     world or a blank canvas while chunks are still generating. -->
+<div id="loading-screen" class="screen hidden">
+  <div class="load-box">
+    <div class="load-logo">
+      <div class="logo-row">
+        <div class="logo-line">
+          <div class="logo-shadow"></div>
+          <div class="logo-face" id="load-logo-text"></div>
+        </div>
+        <div class="logo-line logo-sub">
+          <div class="logo-shadow"></div>
+          <div class="logo-face" id="load-logo-sub"></div>
+        </div>
+      </div>
+    </div>
+    <div class="load-splash" id="load-splash"></div>
+    <div class="load-progress">
+      <div class="load-progress-fill" id="load-progress-fill"></div>
+    </div>
+    <div class="load-status" id="load-status"></div>
+    <div class="load-tip" id="load-tip"></div>
+  </div>
+</div>
+
 <!-- ============================ CRASH ============================ -->
 <!-- Sits above every other screen. Vanilla answers a fatal error with a crash
      screen and a report code; this is the same, and it is built by main.js. -->
@@ -235,6 +261,7 @@
     <h2 class="mc-heading red" id="death-title" data-i18n="death.title">You Died!</h2>
     <div class="death-sub" id="death-sub"></div>
     <button class="mc-btn wide" data-action="respawn" data-i18n="death.respawn">Respawn</button>
+    <button class="mc-btn wide hidden" data-action="spectate" data-i18n="death.spectateWorld">Spectate World</button>
     <button class="mc-btn wide" data-action="quit" data-i18n="menu.titleScreen">Title Screen</button>
   </div>
 </div>

@@ -57,6 +57,8 @@ export const GUI = {
   heartFull: 'heart_full',
   heartHalf: 'heart_half',
   heartEmpty: 'heart_empty',
+  hardcoreFull: 'hardcore_full',
+  hardcoreHalf: 'hardcore_half',
 };
 
 export class Assets {

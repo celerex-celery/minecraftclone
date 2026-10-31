@@ -197,6 +197,7 @@ export class Game {
     this.saveGame = SaveGame;
     this.worldId = null;
     this.gameMode = 'survival';
+    this.hardcore = false;
 
     /* ---------------- renderer ---------------- */
     this.renderer = new THREE.WebGLRenderer({
@@ -676,6 +677,7 @@ this._bedsByDimension = {};
       worldType: opts.worldType ?? 'default',
       difficulty: opts.difficulty ?? 'normal',
       bonusChest: opts.bonusChest === 'on',
+      hardcore: opts.gameMode === 'hardcore',
       created: Date.now(),
       lastPlayed: Date.now(),
       payload: null,
@@ -698,7 +700,7 @@ this._bedsByDimension = {};
       // The record came from the backup, so this world is one save behind.
       this.hud.toast(t('menu.worldRecovered'), 'bad');
     }
-    this.enterWorld(record);
+    await this.enterWorld(record);
   }
 
   async renameWorld(id, name, seedText) {
@@ -716,9 +718,12 @@ this._bedsByDimension = {};
     await this.saveGame.remove(id);
   }
 
-  enterWorld(record) {
+  async enterWorld(record) {
     log.info('Loading world "%s" (%s, %s)', record.name, record.gameMode, record.worldType);
-    this.createWorld({
+    this.screens.loading.show();
+    this.screens.loading.setProgress(0);
+    this.screens.loading.setStatus(t('menu.loadingWorld'));
+    await this.createWorld({
       seed: record.seed,
       saveData: record.payload,
       name: record.name,
@@ -726,6 +731,7 @@ this._bedsByDimension = {};
       worldType: record.worldType ?? 'default',
       difficulty: record.difficulty ?? 'normal',
       bonusChest: record.bonusChest,
+      hardcore: record.hardcore,
       worldId: record.id,
     });
     // Write straight away. A world that has only just been created would
@@ -745,9 +751,9 @@ this._bedsByDimension = {};
   }
 
   /** Legacy entry: jump straight into a world with the given seed text. */
-  startWorld(seedText) {
+  async startWorld(seedText) {
     log.info('Starting a new world');
-    this.createWorld({ seed: seedFromString(seedText) });
+    await this.createWorld({ seed: seedFromString(seedText) });
     this.state = STATE.PLAYING;
     this.screens.title.hide();
     this.hud.show();
@@ -764,7 +770,7 @@ this._bedsByDimension = {};
     });
   }
 
-  createWorld(opts = {}) {
+  async createWorld(opts = {}) {
     const {
       seed = seedFromString(null),
       saveData = null,
@@ -773,10 +779,15 @@ this._bedsByDimension = {};
       difficulty = 'normal',
       worldId = null,
       bonusChest = false,
+      hardcore = false,
     } = opts;
 
     this.bonusChest = bonusChest;
-    this._finishCreateWorld(opts);
+    this.hardcore = hardcore;
+    this.screens.loading.show();
+    this.screens.loading.setProgress(0);
+    this.screens.loading.setStatus(t('menu.buildingWorld'));
+    await this._finishCreateWorld(opts);
   }
 
   async _finishCreateWorld(opts = {}) {
@@ -787,11 +798,13 @@ this._bedsByDimension = {};
       worldType = 'default',
       difficulty = 'normal',
       worldId = null,
+      hardcore = false,
     } = opts;
 
     this.teardownWorld();
     this.worldId = worldId;
     this.gameMode = gameMode;
+    this.hardcore = hardcore;
 
     this._seed = seed >>> 0;
     this._worldType = worldType;
@@ -807,16 +820,29 @@ this._bedsByDimension = {};
     this.updateCameraRanges();
     log.info('World ready (seed %d, %s%s)', this._seed, worldType, saveData ? ', resumed from save' : ', new');
 
+    this.screens.loading.setProgress(0.5);
+    this.screens.loading.setStatus(t('menu.generatingChunks'));
+
     this.player = new Player(this.world);
     this.player.inventory = this.inventory;
     this.player.creative = gameMode === 'creative';
     // spectator is command-only, so a save that somehow carries it still works
     this.player.spectator = gameMode === 'spectator';
+    // hardcore: no creative, no spectator, no flying, one heart
+    const hardcore = gameMode === 'hardcore';
+    if (hardcore) {
+      this.player.creative = false;
+      this.player.spectator = false;
+    }
     // a new creative or spectator world opens with the player already in the
-    // air; a loaded world keeps whatever was saved
-    this.player.flying = this.player.canFly && !saveData;
+    // air; a loaded world keeps whatever was saved; hardcore never flies
+    this.player.flying = (this.player.creative || this.player.spectator) && !saveData;
     this.survival = new Survival(this.world, this.player);
     this.survival.difficulty = difficulty;
+    if (hardcore) {
+      this.survival.maxHealth = 2;
+      this.survival.hardcore = true;
+    }
     // spectator is creative in every way that matters to the survival rules:
     // no hunger, no damage, no drowning, and bars that stay full
     this.survival.creative = this.player.creative || this.player.spectator;
@@ -869,6 +895,9 @@ this._bedsByDimension = {};
     this.player.velocity.set(0, 0, 0);
     this.player.fallDistance = 0;
 
+    this.screens.loading.setProgress(0.9);
+    this.screens.loading.setStatus(t('menu.finishingUp'));
+
     // Place bonus chest if enabled (only for new worlds, not loaded ones)
     if (this.bonusChest && !saveData) {
       console.log('[BonusChest] Conditions met - placing chest');
@@ -885,6 +914,8 @@ this._bedsByDimension = {};
     if (this._worldType === 'cursed') {
       this.hud.toast(`GRAVITY: ${this._gravityDir}`, 'warn');
     }
+
+    this.screens.loading.hide();
   }
 
   /**
@@ -1161,6 +1192,10 @@ this._bedsByDimension = {};
     this._rememberPosition(from, this.player.position);
     this._transition = P.TRANSITION_SECONDS;
 
+    this.screens.loading.show();
+    this.screens.loading.setProgress(0);
+    this.screens.loading.setStatus(t('menu.traveling'));
+
     // the veil goes up first, and the dimension swap happens under it
     this._setVeil(0.9);
     await wait(P.TRANSITION_SECONDS * 0.5);
@@ -1305,6 +1340,8 @@ this._bedsByDimension = {};
       // Force unstick after screen in case delay expired
       this._unstickFromPortal(this.world);
     }
+
+    this.screens.loading.hide();
   }
 
   /**
@@ -1760,7 +1797,12 @@ const payload = {
     this._wasBuried = null;
     // survival stakes: everything you are carrying hits the ground
     this.dropAllOnDeath();
-    this.screens.death.show(cause);
+    if (this.hardcore) {
+      // hardcore: game over, no respawn
+      this.screens.death.showHardcore(cause);
+    } else {
+      this.screens.death.show(cause);
+    }
   }
 
   respawn() {
@@ -1938,6 +1980,8 @@ const payload = {
     this.gameMode = mode;
     const creative = mode === 'creative';
     const spectator = mode === 'spectator';
+    // hardcore never becomes creative or spectator
+    if (this.hardcore && (creative || spectator)) return;
     if (this.player) {
       this.player.creative = creative;
       this.player.spectator = spectator;
@@ -2143,8 +2187,10 @@ const payload = {
    */
   get chunkBudget() {
     const target = 1 / 60;
-    const scale = target / Math.max(target, this._frameAvg);
-    return Math.max(4, Math.min(26, Math.round(12 * scale)));
+    // Only slow chunk streaming on slow machines; never let it speed up past
+    // the default or it will eat the whole frame at high refresh rates.
+    const scale = Math.min(1, target / Math.max(target, this._frameAvg));
+    return Math.max(4, Math.min(10, Math.round(10 * scale)));
   }
 
   handleHotkeys() {

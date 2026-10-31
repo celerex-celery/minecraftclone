@@ -12,8 +12,9 @@ import { COLORS } from './PixelFont.js';
 import { randomSplash, SPLASHES } from './Splashes.js';
 import { lang, t } from './Lang.js';
 import { LanguageScreen } from './LanguageScreen.js';
-import { WorldListScreen, CreateWorldScreen } from './WorldScreens.js';
+import { WorldListScreen, CreateWorldScreen, WorldTypeScreen } from './WorldScreens.js';
 import { EndScreen } from './EndScreen.js';
+import { LoadingScreen } from './LoadingScreen.js';
 import { playerPreviewCanvas } from './PlayerPreview.js';
 
 /* ================================================================
@@ -268,6 +269,12 @@ export class DeathScreen {
       if (!btn) return;
       this.game.audio.click();
       if (btn.dataset.action === 'respawn') this.game.respawn();
+      else if (btn.dataset.action === 'spectate') {
+        this.game.setGameMode('spectator');
+        this.game.state = STATE.PLAYING;
+        this.screens.death.hide();
+        this.game.input.requestLock();
+      }
       else if (btn.dataset.action === 'quit') this.game.quitToTitle();
     });
   }
@@ -282,6 +289,30 @@ export class DeathScreen {
     this.game.font.set(this.sub, text, { scale: 3, color: '#ffd7d7' });
     this.isOpen = true;
     this.root.classList.remove('hidden');
+    this._showButtons('normal');
+  }
+
+  showHardcore(cause) {
+    const text = t(`death.cause.${cause}`) === t(`death.cause.${cause}`, { fallback: cause }) ? cause : t(`death.cause.${cause}`);
+    this.game.font.set(this.title, t('death.title.hardcore'), { scale: 5, color: COLORS.red });
+    this.game.font.set(this.sub, text, { scale: 3, color: '#ffd7d7' });
+    this.isOpen = true;
+    this.root.classList.remove('hidden');
+    this._showButtons('hardcore');
+  }
+
+  _showButtons(kind) {
+    const respawn = this.root.querySelector('[data-action="respawn"]');
+    const spectate = this.root.querySelector('[data-action="spectate"]');
+    const quit = this.root.querySelector('[data-action="quit"]');
+    if (kind === 'hardcore') {
+      if (respawn) respawn.classList.add('hidden');
+      if (spectate) spectate.classList.remove('hidden');
+    } else {
+      if (respawn) respawn.classList.remove('hidden');
+      if (spectate) spectate.classList.add('hidden');
+    }
+    if (quit) quit.classList.remove('hidden');
   }
 
   hide() {
@@ -657,7 +688,9 @@ export class ScreenManager {
     this.languages = new LanguageScreen(game);
     this.worlds = new WorldListScreen(game);
     this.create = new CreateWorldScreen(game);
+    this.worldType = new WorldTypeScreen(game);
     this.endScreen = new EndScreen(game);
+    this.loading = new LoadingScreen(game);
   }
 
   openOptions(onClose) {

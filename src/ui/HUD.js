@@ -346,17 +346,18 @@ export class HUD {
   _renderStatus() {
     const s = this.game.survival;
 
-    // hearts: 10 icons, each worth 2 half-hearts
-    const hearts = Math.ceil(CONFIG.MAX_HEALTH / 2);
+    // hearts: one icon per 2 health, hardcore gets a single hardcore heart
+    const hearts = Math.ceil(s.maxHealth / 2);
     const hurt = s.health;
-    const heartSig = `${hearts}|${Math.ceil(hurt)}`;
+    const heartSig = `${hearts}|${Math.ceil(hurt)}|${s.hardcore ? 1 : 0}`;
     if (this.el.hearts.__sig !== heartSig) {
       this.el.hearts.__sig = heartSig;
       const gui = this.game.assets.gui;
       this.el.hearts.textContent = '';
-      this.el.hearts.append(...buildStatusRow('heart',
-        (kind) => (kind === 'full' ? gui.heartFull : kind === 'half' ? gui.heartHalf : gui.heartEmpty),
-        s.health));
+      const sprite = s.hardcore
+        ? (kind) => (kind === 'full' ? gui.hardcoreFull : kind === 'half' ? gui.hardcoreHalf : gui.heartEmpty)
+        : (kind) => (kind === 'full' ? gui.heartFull : kind === 'half' ? gui.heartHalf : gui.heartEmpty);
+      this.el.hearts.append(...buildStatusRow('heart', sprite, s.health));
     }
 
     // Hunger: 10 drumsticks from the sprite sheet.

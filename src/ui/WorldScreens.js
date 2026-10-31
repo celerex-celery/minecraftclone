@@ -19,6 +19,7 @@ const log = createLogger('WorldScreens');
 export const GAME_MODES = [
   { id: 'survival', icon: '' },
   { id: 'creative', icon: '' },
+  { id: 'hardcore', icon: '' },
 ];
 
 export const WORLD_TYPES = [
@@ -69,6 +70,7 @@ function el(tag, cls, text) {
 const ICONS = {
   survival: 'diamond_axe',
   creative: 'command_block',
+  hardcore: 'hardcore_full',
   default: 'grass_block',
   flat: 'oak_planks',
   amplified: 'deepslate',
@@ -378,9 +380,25 @@ export class CreateWorldScreen {
 
     /* ---- the option grids ---- */
     this.body.appendChild(optionRow(game, t('create.gameMode'), GAME_MODES, this.opts.gameMode,
-      (id) => { this.opts.gameMode = id; }));
-    this.body.appendChild(optionRow(game, t('create.worldType'), WORLD_TYPES, this.opts.worldType,
-      (id) => { this.opts.worldType = id; }));
+      (id) => { this.opts.gameMode = id; updateCreateButton(); }));
+    const worldTypeRow = optionRow(game, t('create.worldType'), WORLD_TYPES, this.opts.worldType,
+      (id) => { this.opts.worldType = id; });
+    const wtMore = el('button', 'mc-btn small');
+    wtMore.textContent = t('create.more');
+    wtMore.style.marginLeft = '6px';
+    wtMore.addEventListener('click', (e) => {
+      e.stopPropagation();
+      game.audio.click();
+      this.game.screens.worldType.show((id) => {
+        this.opts.worldType = id;
+        // re-highlight the main row to match the popup pick
+        for (const b of worldTypeRow.querySelectorAll('.wc-option')) {
+          b.classList.toggle('selected', b.dataset.id === id);
+        }
+      });
+    });
+    worldTypeRow.appendChild(wtMore);
+    this.body.appendChild(worldTypeRow);
     this.body.appendChild(optionRow(game, t('create.difficulty'), DIFFICULTIES, this.opts.difficulty,
       (id) => { this.opts.difficulty = id; }));
     this.body.appendChild(optionRow(game, t('create.bonusChest'), BONUS_CHEST_OPTIONS, this.opts.bonusChest,
@@ -393,6 +411,18 @@ export class CreateWorldScreen {
     const cancel = el('button', 'mc-btn');
     cancel.dataset.action = 'cancel';
     game.font.set(cancel, t('menu.cancel'), { scale: 2, color: COLORS.white });
+    const updateCreateButton = () => {
+      if (this.opts.gameMode === 'hardcore') {
+        create.style.outline = '3px solid #ff0000';
+        create.style.outlineOffset = '2px';
+      } else {
+        create.style.outline = '';
+        create.style.outlineOffset = '';
+      }
+    };
+    updateCreateButton();
+    // wire the game mode picker to re-apply the red outline
+    const gameModePicker = this.body.querySelector('[data-id="gameMode"]');
     actions.appendChild(create);
     actions.appendChild(cancel);
     this.body.appendChild(actions);
@@ -414,4 +444,82 @@ function formatWhen(ts) {
   if (!ts) return '-';
   const d = new Date(ts);
   return d.toLocaleDateString();
+}
+
+/* ================================================================
+   world type more (popup over Create World)
+   ================================================================ */
+
+/** Popup that lets the player pick a world type from all existing options. */
+export class WorldTypeScreen {
+  constructor(game) {
+    this.game = game;
+    this.isOpen = false;
+    this.root = document.createElement('div');
+    this.root.className = 'wc-worldtype-popup';
+    this.root.style.cssText = `
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.7); z-index: 2000;
+      display: none; align-items: center; justify-content: center;
+    `;
+    document.body.appendChild(this.root);
+
+    this.panel = document.createElement('div');
+    this.panel.className = 'wc-worldtype-panel';
+    this.panel.style.cssText = `
+      background: #2a2a2a; border: 3px solid #a0a0a0;
+      padding: 20px; display: flex; flex-direction: column;
+      gap: 10px; min-width: 220px;
+    `;
+    this.root.appendChild(this.panel);
+
+    this.title = document.createElement('div');
+    this.game.font.set(this.title, t('create.worldType'), { scale: 2, color: COLORS.white });
+    this.panel.appendChild(this.title);
+
+    this.grid = document.createElement('div');
+    this.grid.style.cssText = 'display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;';
+    this.panel.appendChild(this.grid);
+
+    this.root.addEventListener('click', (e) => {
+      if (e.target === this.root) this.hide();
+    });
+
+    this._onPick = null;
+
+    this._onKeyDown = (e) => {
+      if (e.key === 'Escape') this.hide();
+    };
+    document.addEventListener('keydown', this._onKeyDown);
+  }
+
+  show(onPick) {
+    this._onPick = onPick;
+    this.grid.textContent = '';
+    for (const opt of WORLD_TYPES) {
+      const b = el('button', 'wc-option');
+      b.dataset.id = opt.id;
+      b.appendChild(iconCanvas(this.game, opt.id));
+      const cap = el('span', 'wc-option-caption');
+      this.game.font.set(cap, t(`create.${opt.id}`), { scale: 2, color: COLORS.white });
+      b.appendChild(cap);
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        this.game.audio.click();
+        const pick = this._onPick;
+        this.hide();
+        if (pick) pick(opt.id);
+      });
+      this.grid.appendChild(b);
+    }
+    this.isOpen = true;
+    this.root.style.display = 'flex';
+  }
+
+  hide() {
+    document.removeEventListener('keydown', this._onKeyDown);
+    this.isOpen = false;
+    this.root.style.display = 'none';
+    this._onPick = null;
+  }
 }
