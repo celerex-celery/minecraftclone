@@ -1258,15 +1258,9 @@ export class World {
         const old = chunk.meshes[key];
         this.scene.remove(old);
         // Release geometry back to pool instead of disposing
-        // Determine type from renderOrder
-        let type = 'opaque';
-        if (key === 1) type = 'cutout';
-        else if (key === 2) type = 'water';
-        else if (key === 3) type = 'lava';
-        else if (key === 4) type = 'portal';
-        else if (key === 5) type = 'fire';
-        else if (key === 6) type = 'animated';
-        geometryPool.release(type, old.geometry);
+        // key is the draw group name (opaque, cutout, water, ...), which matches
+        // a GeometryPool type exactly.
+        geometryPool.release(key, old.geometry);
       }
     }
     chunk.meshes = meshes;

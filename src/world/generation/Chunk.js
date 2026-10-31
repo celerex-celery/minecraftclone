@@ -151,14 +151,9 @@ export class Chunk {
       if (!m) continue;
       scene.remove(m);
       // Release geometry back to pool
-      let type = 'opaque';
-      if (key === '1') type = 'cutout';
-      else if (key === '2') type = 'water';
-      else if (key === '3') type = 'lava';
-      else if (key === '4') type = 'portal';
-      else if (key === '5') type = 'fire';
-      else if (key === '6') type = 'animated';
-      geometryPool.release(type, m.geometry);
+      // key is the draw group name (opaque, cutout, water, ...), which matches
+      // a GeometryPool type exactly.
+      geometryPool.release(key, m.geometry);
     }
     this.meshes = null;
     this.meshed = false;
