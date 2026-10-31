@@ -11,7 +11,7 @@
  *  formats the line; this only carries it across the process boundary.
  */
 
-import { contextBridge, ipcRenderer } from 'electron';
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronSaves', {
   list: () => ipcRenderer.invoke('saves:list'),
