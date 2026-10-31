@@ -16,4 +16,5 @@ Thumbs.db
 
 # The Minecraft client asset pack is the upstream source the extracted
 # assets/ were pulled from. It is large and it is not this project's code.
+# This project is Minexel (formerly Minecraft Voxel).
 minecraft-assets-*/

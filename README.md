@@ -1,13 +1,13 @@
-# Minecraft Voxel
+# Minexel
 
-![Minecraft Voxel title screen](assets/images/Main.png)
+![Minexel title screen](assets/images/Main.png)
 
 **Asset notice:** All original Minecraft textures, sounds, music, models and
 other assets belong to Mojang/Microsoft and are extracted from the Minecraft
 client asset pack (`minecraft-assets-26.3/`). They are used strictly for
 non-commercial, educational purposes. See LICENSE.md.
 
-A Minecraft-style voxel **survival** game running in the browser, built with
+A Minexel voxel **survival** game running in the browser, built with
 three.js and the real Minecraft asset pack (textures, GUI sprites, bitmap font,
 sound effects and music). Packaged as an Electron desktop app; three.js is
 vendored so it works fully offline.
@@ -170,7 +170,7 @@ A real two-channel voxel light engine:
 
 ## Saves
 
-Worlds are plain JSON files in `%APPDATA%\Minecraft Voxel\worlds`, one per
+Worlds are plain JSON files in `%APPDATA%\Minexel\worlds`, one per
 world, so they can be inspected, backed up or moved like any other folder.
 
 - **Writes are atomic.** A save goes to a temporary file, is flushed to disk,

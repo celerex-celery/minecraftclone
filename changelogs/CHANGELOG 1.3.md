@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Minecraft Voxel, newest first.
+All notable changes to Minexel, newest first.
 
 ## 1.3 — The Nether
 

@@ -44,7 +44,7 @@ function notFoundPage(urlPath) {
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>404 - Minecraft Voxel</title>
+<title>404 - Minexel</title>
 <style>
   html, body { height: 100%; margin: 0; }
   body {
@@ -184,7 +184,7 @@ server.on('error', (err) => {
 
 server.listen(PORT, () => {
   console.log(
-    `\n  Minecraft Voxel\n`
+    `\n  Minexel\n`
     + `  ----------------\n`
     + `  running at  http://127.0.0.1:${PORT}/\n\n`
     + `  stop with Ctrl+C\n`,

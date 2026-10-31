@@ -1,5 +1,5 @@
 /**
- * Save storage, backed by plain JSON files in %APPDATA%\Minecraft Voxel:
+ * Save storage, backed by plain JSON files in %APPDATA%\Minexel:
  *
  *   worlds\<id>.json   one file per world
  *   settings.json      settings

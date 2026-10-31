@@ -1,7 +1,7 @@
 /**
  * Save files on disk.
  *
- * Worlds live as plain JSON files in %APPDATA%\Minecraft Voxel\worlds, one
+ * Worlds live as plain JSON files in %APPDATA%\Minexel\worlds, one
  * file per world, so they can be inspected and backed up without digging
  * through the Electron profile's IndexedDB.
  *

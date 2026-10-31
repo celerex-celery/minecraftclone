@@ -1,11 +1,10 @@
 {
-  "name": "minecraft-voxel",
+  "name": "minexel",
   "version": "1.11",
   "private": true,
-  "type": "module",
   "main": "electron/main.cjs",
-  "description": "A Minecraft-style voxel survival game built with three.js and the real Minecraft asset pack.",
-  "productName": "Minecraft Voxel",
+  "description": "A Minexel voxel survival game built with three.js and the real Minecraft asset pack.",
+  "productName": "Minexel",
   "author": "celerex",
   "scripts": {
     "start": "node tools/serve.js 3066",
@@ -23,9 +22,9 @@
     "fs-extra": "^11.2.0"
   },
   "build": {
-    "appId": "com.yourname.minecraftvoxel",
-    "productName": "Minecraft Voxel",
-    "executableName": "Minecraft Voxel",
+    "appId": "com.yourname.minexel",
+    "productName": "Minexel",
+    "executableName": "Minexel",
     "directories": {
       "output": "installer"
     },

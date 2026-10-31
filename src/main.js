@@ -23,7 +23,7 @@ import { createLogger, recent } from './core/Logger.js';
 // The source Vanilla prints for its own boot lines is `(Minecraft)`; ours is the
 // game's name, which says the same thing at a glance in a terminal mixed with
 // other processes.
-const log = createLogger('Minecraft Voxel');
+const log = createLogger('Minexel');
 
 const crashEl = document.getElementById('crash-screen');
 const crashTitleEl = document.getElementById('crash-title');
@@ -36,7 +36,7 @@ const crashDismissEl = document.getElementById('crash-dismiss');
 async function boot() {
   const canvas = document.getElementById('game-canvas');
 
-  log.info('Starting Minecraft Voxel');
+  log.info('Starting Minexel');
 
   const assets = new Assets();
   await assets.load({
@@ -86,7 +86,7 @@ async function boot() {
         Warning: Running on Localhost
       </h1>
       <p style="font-size: 18px; max-width: 500px; margin-bottom: 16px; line-height: 1.5;">
-        Minecraft Voxel is designed for the <strong>Electron desktop app</strong> to save worlds and settings.
+        Minexel is designed for the <strong>Electron desktop app</strong> to save worlds and settings.
       </p>
       <p style="font-size: 16px; color: #aaa; margin-bottom: 32px;">
         Running in a browser uses <strong>session-only storage</strong> — your world will be <strong>lost when you close the tab</strong>.
@@ -221,7 +221,7 @@ function reportCode() {
 function buildReport(err, where) {
   const lines = [];
   const version = window.game?.version;
-  lines.push(`Minecraft Voxel${version ? ` ${version}` : ' (dev)'}`);
+  lines.push(`Minexel${version ? ` ${version}` : ' (dev)'}`);
   lines.push(`When: ${new Date().toISOString()}`);
   lines.push(`Stage: ${where}`);
   lines.push(`Browser: ${navigator.userAgent}`);
@@ -265,7 +265,7 @@ function showCrash(err, where, opts = {}) {
   }
   crashShown = true;
 
-  crashTitleEl.textContent = opts.title ?? 'Minecraft Voxel has crashed!';
+  crashTitleEl.textContent = opts.title ?? 'Minexel has crashed!';
   crashSubEl.textContent = opts.sub ?? 'Sorry :(';
   crashCodeEl.textContent = reportCode();
   lastReport = buildReport(err, where);
@@ -314,14 +314,14 @@ if (crashEl) {
 function installCrashHandling() {
   window.addEventListener('error', (ev) => {
     showCrash(ev.error ?? ev.message, 'runtime', {
-      title: 'Minecraft Voxel has crashed!',
+      title: 'Minexel has crashed!',
       sub: 'Sorry :(',
       hint: 'If the game still looks playable underneath, Dismiss returns to it.',
     });
   });
   window.addEventListener('unhandledrejection', (ev) => {
     showCrash(ev.reason, 'async', {
-      title: 'Minecraft Voxel has crashed!',
+      title: 'Minexel has crashed!',
       sub: 'Sorry :(',
       hint: 'If the game still looks playable underneath, Dismiss returns to it.',
     });
@@ -412,10 +412,10 @@ function watchForStaleCode() {
       if (!res.ok) return;
       const theirs = Number(await res.text());
       if (!theirs || theirs <= mine) {
-        document.title = 'Minecraft Voxel';
+        document.title = 'Minexel';
         return;
       }
-      document.title = 'Minecraft Voxel - RELOAD';
+      document.title = 'Minexel - RELOAD';
       log.warn('This tab is running code older than the files on disk. Nothing you changed will appear until you reload.');
     } catch {
       // the stamp is a convenience; a server that will not answer it is fine
@@ -430,7 +430,7 @@ installCrashHandling();
 
 boot().catch((err) => {
   showCrash(err, 'startup', {
-    title: 'Minecraft Voxel could not start',
+    title: 'Minexel could not start',
     sub: 'The report below says where it stopped.',
     dismissible: false,
   });
