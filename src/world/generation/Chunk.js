@@ -16,6 +16,7 @@
 
 import { CONFIG } from '../../core/Config.js';
 import { Blocks } from '../blocks/Blocks.js';
+import { geometryPool } from './GeometryPool.js';
 
 export const SX = CONFIG.CHUNK_SIZE;
 export const SY = CONFIG.WORLD_HEIGHT;
@@ -146,10 +147,18 @@ export class Chunk {
 
   dispose(scene) {
     if (!this.meshes) return;
-    for (const m of Object.values(this.meshes)) {
+    for (const [key, m] of Object.entries(this.meshes)) {
       if (!m) continue;
       scene.remove(m);
-      m.geometry.dispose();
+      // Release geometry back to pool
+      let type = 'opaque';
+      if (key === '1') type = 'cutout';
+      else if (key === '2') type = 'water';
+      else if (key === '3') type = 'lava';
+      else if (key === '4') type = 'portal';
+      else if (key === '5') type = 'fire';
+      else if (key === '6') type = 'animated';
+      geometryPool.release(type, m.geometry);
     }
     this.meshes = null;
     this.meshed = false;

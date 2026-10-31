@@ -23,6 +23,7 @@ import { NetherGen } from '../generation/NetherGen.js';
 import { EndGen } from '../generation/EndGen.js';
 import { BIOME_ORDER } from '../generation/ChunkMesher.js';
 import { vertexBufferPool } from '../generation/ChunkMesher.js';
+import { geometryPool } from '../generation/GeometryPool.js';
 import { LightEngine } from '../lighting/Lighting.js';
 import { makeChestState } from '../structures/Chests.js';
 
@@ -1256,7 +1257,16 @@ export class World {
       for (const key in chunk.meshes) {
         const old = chunk.meshes[key];
         this.scene.remove(old);
-        old.geometry.dispose();
+        // Release geometry back to pool instead of disposing
+        // Determine type from renderOrder
+        let type = 'opaque';
+        if (key === 1) type = 'cutout';
+        else if (key === 2) type = 'water';
+        else if (key === 3) type = 'lava';
+        else if (key === 4) type = 'portal';
+        else if (key === 5) type = 'fire';
+        else if (key === 6) type = 'animated';
+        geometryPool.release(type, old.geometry);
       }
     }
     chunk.meshes = meshes;
@@ -1681,6 +1691,7 @@ export class World {
     this.fire.clear();
     this.mesher?.releaseBuffers();
     vertexBufferPool.releaseAll();
+    geometryPool.dispose();
     // the precipitation cloud is scene furniture rather than a chunk, so nothing
     // above removes it - without this it would survive the world it belonged to
     // and rain into the next one

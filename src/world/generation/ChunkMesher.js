@@ -31,6 +31,7 @@
 import * as THREE from 'three';
 import { Blocks, FACE, FRONT_FACE } from '../blocks/Blocks.js';
 import { SX, SY, SZ, MIN_Y, MAX_Y } from './Chunk.js';
+import { geometryPool } from './GeometryPool.js';
 
 /** Padded cache rows above and below the real range, one for each. */
 const PY = SY + 2;
@@ -274,17 +275,10 @@ class Builder {
     this.count = base + 4;
   }
 
-  toGeometry() {
+  toGeometry(type) {
     if (this.indexCount === 0) return null;
-    const g = new THREE.BufferGeometry();
-    const n = this.count;
-    g.setAttribute('position', new THREE.BufferAttribute(gather(this.data, n, 0, 3), 3));
-    g.setAttribute('uv', new THREE.BufferAttribute(gather(this.data, n, 3, 2), 2));
-    g.setAttribute('alight', new THREE.BufferAttribute(gather(this.data, n, 5, 2), 2));
-    g.setAttribute('color', new THREE.BufferAttribute(gather(this.data, n, 7, 3), 3));
-    g.setIndex(new THREE.BufferAttribute(this.indices.slice(0, this.indexCount), 1));
-    g.computeBoundingSphere();
-    return g;
+    const geo = acquirePooledGeometry(type, this.count, this.indexCount);
+    return updatePooledGeometry(geo, this.data, this.count, this.indexCount, this.indices);
   }
 }
 
@@ -297,6 +291,41 @@ function gather(src, count, offset, size) {
     for (let k = 0; k < size; k++) out[d + k] = src[s + k];
   }
   return out;
+}
+
+function acquirePooledGeometry(type, count, indexCount) {
+  const geo = geometryPool.acquire(type);
+  return geo;
+}
+
+function updatePooledGeometry(geo, data, count, indexCount, indices) {
+  if (!data || count === 0) return;
+  const posAttr = geo.getAttribute('position');
+  const uvAttr = geo.getAttribute('uv');
+  const alightAttr = geo.getAttribute('alight');
+  const colorAttr = geo.getAttribute('color');
+  const indexAttr = geo.getIndex();
+
+  const posSrc = gather(data, count, 0, 3);
+  const uvSrc = gather(data, count, 3, 2);
+  const alightSrc = gather(data, count, 5, 2);
+  const colorSrc = gather(data, count, 7, 3);
+
+  posAttr.array.set(posSrc);
+  uvAttr.array.set(uvSrc);
+  alightAttr.array.set(alightSrc);
+  colorAttr.array.set(colorSrc);
+  indexAttr.array.set(indices.subarray(0, indexCount));
+
+  posAttr.needsUpdate = true;
+  uvAttr.needsUpdate = true;
+  alightAttr.needsUpdate = true;
+  colorAttr.needsUpdate = true;
+  indexAttr.needsUpdate = true;
+
+  geo.drawRange.count = indexCount;
+  geo.computeBoundingSphere();
+  return geo;
 }
 
 /* ================================================================
@@ -612,13 +641,13 @@ export class ChunkMesher {
     this.buildChunk = null;
     void chunk;
     return {
-      opaque: this.opaque.toGeometry(),
-      cutout: this.cutout.toGeometry(),
-      water: this.water.toGeometry(),
-      lava: this.lava.toGeometry(),
-      portal: this.portal.toGeometry(),
-      fire: this.fire.toGeometry(),
-      animated: this.animated.toGeometry(),
+      opaque: this.opaque.toGeometry('opaque'),
+      cutout: this.cutout.toGeometry('cutout'),
+      water: this.water.toGeometry('water'),
+      lava: this.lava.toGeometry('lava'),
+      portal: this.portal.toGeometry('portal'),
+      fire: this.fire.toGeometry('fire'),
+      animated: this.animated.toGeometry('animated'),
     };
   }
 
