@@ -541,6 +541,20 @@ export class World {
     // turned up - in the Nether, next to a portal, which is the only sensible
     // place to come back to
     if (this.spawnPoint) return this.spawnPoint.clone();
+    if (this.gen.worldType === 'islands') {
+      // islands are sparse - search a wide radius for any land above water
+      for (let r = 0; r < 800; r++) {
+        for (let a = 0; a < 16; a++) {
+          const ang = (a / 16) * Math.PI * 2;
+          const x = Math.round(Math.cos(ang) * r * 2);
+          const z = Math.round(Math.sin(ang) * r * 2);
+          const h = this.gen.heightAt(x, z);
+          if (h > CONFIG.SEA_LEVEL && h < MAX_Y - 12) {
+            return new THREE.Vector3(x + 0.5, h + 2.2, z + 0.5);
+          }
+        }
+      }
+    }
     for (let r = 0; r < 400; r++) {
       for (let a = 0; a < 12; a++) {
         const ang = (a / 12) * Math.PI * 2;
@@ -590,9 +604,6 @@ export class World {
           const below = Blocks.get(this.getBlock(x, y - 1, z));
           if (here.liquid || above.liquid) continue;
           if (here.solid || above.solid) continue;
-          // require open sky above, so we never spawn inside a cave or ravine
-          const sky = Blocks.get(this.getBlock(x, y + 2, z));
-          if (sky.solid || sky.liquid) continue;
           if (!below.solid || below.liquid) continue;
           pos.set(x + 0.5, y, z + 0.5);
           return true;
