@@ -285,11 +285,10 @@ export class WorldGen {
    */
   continentAt(wx, wz) {
     if (this.worldType === 'flat') return 1;
-    // islands: an infinite ocean with scattered small land patches
+    // islands: an infinite ocean with tiny scattered land patches
     if (this.worldType === 'islands') {
-      // small islands scattered across the ocean
-      const c = this.nContinent.fbm2(wx * 0.004, wz * 0.004, 3, 2, 0.5);
-      return c - 0.55;   // mostly ocean, small islands here and there
+      const c = this.nContinent.fbm2(wx * 0.006, wz * 0.006, 3, 2, 0.5);
+      return c - 0.6;   // mostly ocean, tiny islands far apart
     }
     const c = this.nContinent.fbm2(wx * 0.0011, wz * 0.0011, 4, 2, 0.5);
 
@@ -1015,7 +1014,7 @@ let c = -1;
     // islands: grass on top of the dirt island, sand on the ocean floor
     if (this.worldType === 'islands') {
       if (h <= CONFIG.SEA_LEVEL) return Blocks.id('sand');
-      return Blocks.id('grass_block');
+      return Blocks.id('dirt');
     }
     if (h < CONFIG.SEA_LEVEL) {
       // sea floor
