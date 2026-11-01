@@ -397,10 +397,10 @@ export class Boat {
       pivot.rotation.x = Math.sin(phase) * B.STROKE_ARC * (0.35 + 0.65 * rate);
     }
 
-    const bob = Math.sin(this.stroke * 0.5) * (B.IDLE_ROCK + B.ROLL * 0.35) * (0.4 + rate);
-    const pitch = -Math.sin(this.stroke) * B.ROLL * rate * 0.5;
+    const bob = Math.sin(this.stroke * 0.3) * B.IDLE_ROCK * (0.7 + 0.4 * rate);
+    const pitch = -Math.sin(this.stroke) * B.ROLL * rate * 0.4;
     const roll = -this.lean * B.ROLL
-      + Math.sin(this.stroke * 0.5 + 1.1) * B.ROLL * 0.4 * rate
+      + Math.sin(this.stroke * 0.3 + 1.1) * B.ROLL * 0.3 * rate
 
       + this.damageTilt();
 
