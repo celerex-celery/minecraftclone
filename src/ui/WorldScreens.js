@@ -161,6 +161,7 @@ export class WorldListScreen {
         this.hide();
         const w = await this.game.saveGame.list().then((l) => l.find((x) => x.id === this._selectedId));
         this.game.screens.create.show(async (opts) => {
+          if (!opts) { await this.show(); return; }
           await this.game.renameWorld(this._selectedId, opts.name, opts.seed);
           this.show();
         }, w);
