@@ -168,6 +168,7 @@ export const CONFIG = {
   },
 
   RENDER_DISTANCE: 10,
+  PREGEN_EXTRA: 2,
   FOV: 70,
   MAX_FRAMETIME_MS: 1000 / 30,
 
