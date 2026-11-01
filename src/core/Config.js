@@ -167,7 +167,7 @@ export const CONFIG = {
     DELTA_MAX_Y: 34,
   },
 
-  RENDER_DISTANCE: 12,
+  RENDER_DISTANCE: 10,
   FOV: 70,
   MAX_FRAMETIME_MS: 1000 / 30,
 
