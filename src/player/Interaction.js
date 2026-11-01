@@ -743,6 +743,14 @@ export class Interaction {
   }
 
   canPlaceCross(target, hitDef) {
+    const held = this.game.inventory.held;
+    const heldDef = held ? Blocks.get(Blocks.id(held.name)) : null;
+    const isTorch = heldDef && (heldDef.name === 'torch' || heldDef.name === 'wall_torch');
+
+    if (isTorch) {
+      return hitDef.opaque || hitDef.solid;
+    }
+
     if (target.face !== 2) return false;
 
     if (hitDef.supportsPlants === false) return false;
@@ -753,7 +761,7 @@ export class Interaction {
     ]);
 
     if (hitDef.name === 'cactus') {
-      return this.game.inventory.held?.name === 'cactus_flower';
+      return held?.name === 'cactus_flower';
     }
     return plantableOn.has(hitDef.name) || hitDef.replaceable;
   }
