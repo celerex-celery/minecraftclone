@@ -16,7 +16,7 @@ function lineOfSight(mob, target, world) {
   const dist = Math.hypot(dx, dy, dz);
   if (dist < 1e-6) return true;
 
-  const steps = Math.ceil(dist * 4);
+  const steps = Math.ceil(dist * 2);
   for (let i = 1; i <= steps; i++) {
     const t = i / steps;
     const x = mob.pos.x + dx * t;
