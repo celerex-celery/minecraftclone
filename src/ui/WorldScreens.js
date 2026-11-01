@@ -407,6 +407,8 @@ export class CreateWorldScreen {
     this._seedInput.maxLength = 24;
     this._seedInput.value = this.opts.seedText;
     this._seedInput.placeholder = t('create.seedPlaceholder');
+    this._seedInput.disabled = true;
+    this._seedInput.className = 'mc-input readonly';
     this._seedInput.addEventListener('keydown', (e) => e.stopPropagation());
     const dice = el('button', 'mc-btn small');
     game.font.set(dice, t('create.randomSeed'), { scale: 2, color: COLORS.white });
@@ -421,8 +423,23 @@ export class CreateWorldScreen {
 
     /* ---- the option grids ---- */
     const editing = existing !== null;
-    this.body.appendChild(optionRow(game, t('create.gameMode'), GAME_MODES, this.opts.gameMode,
-      (id) => { this.opts.gameMode = id; updateCreateButton(); }));
+    const hardcore = this.opts.gameMode === 'hardcore';
+    if (hardcore) this.opts.difficulty = 'hard';
+    const gameModeRow = optionRow(game, t('create.gameMode'), GAME_MODES, this.opts.gameMode,
+      (id) => {
+        this.opts.gameMode = id;
+        const nowHardcore = id === 'hardcore';
+        if (nowHardcore) this.opts.difficulty = 'hard';
+        const diffRow = this.body.querySelector('[data-row="difficulty"]');
+        if (diffRow) {
+          for (const b of diffRow.querySelectorAll('.wc-option')) {
+            b.classList.toggle('readonly', nowHardcore);
+            b.classList.toggle('selected', b.dataset.id === this.opts.difficulty);
+          }
+        }
+        updateCreateButton();
+      });
+    this.body.appendChild(gameModeRow);
     const worldTypeRow = optionRow(game, t('create.worldType'), WORLD_TYPES, this.opts.worldType,
       (id) => { this.opts.worldType = id; }, editing);
     if (!editing) {
@@ -443,10 +460,15 @@ export class CreateWorldScreen {
       worldTypeRow.appendChild(wtMore);
     }
     this.body.appendChild(worldTypeRow);
-    this.body.appendChild(optionRow(game, t('create.difficulty'), DIFFICULTIES, this.opts.difficulty,
-      (id) => { this.opts.difficulty = id; }));
-    this.body.appendChild(optionRow(game, t('create.bonusChest'), BONUS_CHEST_OPTIONS, this.opts.bonusChest,
-      (id) => { this.opts.bonusChest = id; }, editing));
+    const diffRow = optionRow(game, t('create.difficulty'), DIFFICULTIES, this.opts.difficulty,
+      (id) => { if (!hardcore) this.opts.difficulty = id; });
+    diffRow.dataset.row = 'difficulty';
+    if (hardcore) {
+      for (const b of diffRow.querySelectorAll('.wc-option')) {
+        b.classList.toggle('readonly', b.dataset.id !== 'hard');
+      }
+    }
+    this.body.appendChild(diffRow);
 
     const actions = el('div', 'wc-actions');
     const create = el('button', 'mc-btn primary');

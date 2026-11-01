@@ -261,6 +261,13 @@ canvas.mc-text,
   border-color: #ffffff;
 }
 
+.mc-input.readonly {
+  background: #1a1a1a;
+  border-color: #404040;
+  color: #808080;
+  cursor: not-allowed;
+}
+
 /* =============================================================
    Loading screen
    ============================================================= */
