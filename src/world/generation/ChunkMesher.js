@@ -788,10 +788,16 @@ export class ChunkMesher {
     };
 
     if (faceFacing >= 0 && faceFacing < 6 && faceFacing !== 2) {
-      // Wall torch: render a single flat quad on the attached face
+      // Wall torch: render a single flat quad on the attached face, offset
+      // outward from the wall so it sticks out instead of looking embedded.
       const f = FACE_DEFS[faceFacing];
       const axis = FACE_AXIS[faceFacing];
       const shade = this.shades[faceFacing] * 0.9;
+
+      const offset = 0.125;
+      const nx = f.n[0] * offset;
+      const ny = f.n[1] * offset;
+      const nz = f.n[2] * offset;
 
       faceCorners(faceFacing, 0, 0, 0, 1, h, 1, CORNER);
 
@@ -802,9 +808,9 @@ export class ChunkMesher {
       for (let c = 0; c < 4; c++) {
         const a = V[c];
         const o = CORNER[c];
-        a[0] = x + o[0];
-        a[1] = y + o[1];
-        a[2] = z + o[2];
+        a[0] = x + o[0] + nx;
+        a[1] = y + o[1] + ny;
+        a[2] = z + o[2] + nz;
         if (axis === 1) { a[3] = a[0] / 16; a[4] = a[2] / 16; }
         else if (axis === 0) { a[3] = a[2] / 16; a[4] = a[1] / 16; }
         else { a[3] = a[0] / 16; a[4] = a[1] / 16; }
