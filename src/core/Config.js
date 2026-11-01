@@ -310,7 +310,7 @@ export const CONFIG = {
 
     PARTICLE_ALPHA: 0.75,
 
-    DROPS: 3000,
+    DROPS: 1600,
 
     FOG_CUT: 0.45,
 
