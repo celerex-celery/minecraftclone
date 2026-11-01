@@ -744,6 +744,14 @@ export class ChunkMesher {
     const atlas = this.atlas;
     const isFire = def.name === 'fire';
     const isAnimated = !!def.animated;
+
+    // Read facing from block entity for oriented placement (wall torches)
+    let faceFacing = -1;
+    if (def.faces && this.world) {
+      const entity = this.world.getBlockEntity(this.buildOx + x, y, this.buildOz + z);
+      faceFacing = entity?.facing ?? -1;
+    }
+
     const uvr = (isFire || isAnimated) ? null : atlas.get(Blocks.tile(def, FACE.PY));
     const l = this.padLight[pIdx(px, py, pz)];
     const sky = l >> 4, blk = l & 15;
@@ -772,10 +780,49 @@ export class ChunkMesher {
         a[3] = uvr[0] + (corner === 1 || corner === 2 ? du : 0);
         a[4] = uvr[1] + (corner === 0 || corner === 1 ? dv : 0);
       } else {
-
         a[3] = corner === 1 || corner === 2 ? 1 : 0;
         a[4] = corner === 0 || corner === 1 ? 0 : 1;
       }
+      a[5] = sky; a[6] = blk;
+      a[7] = col[0]; a[8] = col[1]; a[9] = col[2];
+    };
+
+    if (faceFacing >= 0 && faceFacing < 6) {
+      // Wall torch: render a single flat quad on the attached face
+      const f = FACE_DEFS[faceFacing];
+      const axis = FACE_AXIS[faceFacing];
+      const shade = this.shades[faceFacing] * 0.9;
+
+      faceCorners(faceFacing, 0, 0, 0, 1, h, 1, CORNER);
+
+      const fl = this.padLight[pIdx(px + f.n[0], py + f.n[1], pz + f.n[2])];
+      const fs = fl >> 4;
+      const fb = fl & 15;
+
+      for (let c = 0; c < 4; c++) {
+        const a = V[c];
+        const o = CORNER[c];
+        a[0] = x + o[0];
+        a[1] = y + o[1];
+        a[2] = z + o[2];
+        if (axis === 1) { a[3] = a[0] / 16; a[4] = a[2] / 16; }
+        else if (axis === 0) { a[3] = a[2] / 16; a[4] = a[1] / 16; }
+        else { a[3] = a[0] / 16; a[4] = a[1] / 16; }
+        a[5] = fs; a[6] = fb;
+        a[7] = shade; a[8] = shade; a[9] = shade;
+      }
+      builder.pushQuad();
+    } else {
+      // Default cross rendering (two crossed quads)
+      set(0, a0, 0, b0, 0); set(1, a1, 0, b1, 1);
+      set(2, a1, h, b1, 2); set(3, a0, h, b0, 3);
+      builder.pushQuad();
+
+      set(0, a1, 0, b0, 0); set(1, a0, 0, b1, 1);
+      set(2, a0, h, b1, 2); set(3, a1, h, b0, 3);
+      builder.pushQuad();
+    }
+  }
       a[5] = sky; a[6] = blk;
       a[7] = col[0]; a[8] = col[1]; a[9] = col[2];
     };

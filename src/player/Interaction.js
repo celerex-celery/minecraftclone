@@ -691,7 +691,8 @@ export class Interaction {
         const facing = (this.facingFromYaw(player.yaw ?? 0) + 2) & 3;
         world.setBlockEntity(px, py, pz, { type: 'end_portal_frame', eye: false, facing });
       } else {
-        world.setBlockEntity(px, py, pz, { type: 'front', facing });
+        const torchFacing = (bdef.name === 'torch' || bdef.name === 'wall_torch') ? t.face : facing;
+        world.setBlockEntity(px, py, pz, { type: 'front', facing: torchFacing });
       }
     }
     this.game.advancements?.recordPlaced(stack.name);
