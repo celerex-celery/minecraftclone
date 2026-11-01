@@ -1,11 +1,3 @@
-/**
- * World list and world creation screens.
- *
- * Mirrors the real flow: Singleplayer -> world list (Play / Edit / Delete)
- * -> Create New World, which collects a name, seed, game mode, world type and
- * difficulty before the game generates anything.
- */
-
 import { COLORS } from './PixelFont.js';
 import { t } from './Lang.js';
 import { randomSeed } from '../world/generation/Noise.js';
@@ -29,18 +21,10 @@ export const WORLD_TYPES = [
   { id: 'cursed', icon: '' },
 ];
 
-/** Biomes that can be the single biome of an Islands world. */
 export const ISLAND_BIOMES = [
   { id: 'plains', label: 'Plains', icon: 'grass_block' },
 ];
 
-/**
- * The difficulties a world can be created with.
- *
- * The multipliers behind each one live in survival/Survival.js, which is the
- * only place that applies them. They used to be duplicated here as well, with
- * values that had drifted apart from the real ones, and nothing read the copy.
- */
 export const DIFFICULTIES = [
   { id: 'peaceful', icon: '' },
   { id: 'easy', icon: '' },
@@ -60,18 +44,6 @@ function el(tag, cls, text) {
   return e;
 }
 
-/**
- * Icons for the world setup buttons, in the spirit of the real game's: a
- * diamond axe for survival, a furnace for creative, and a material per world
- * type and difficulty.
- */
-/**
- * The world setup buttons show real objects, not coloured squares.
- *
- * Blocks are drawn as the same shaded isometric cube the inventory uses, so
- * grass, planks, deepslate and the command block all look like the block they
- * are. Items are cutout sprites, exactly as they appear in Minecraft.
- */
 const ICONS = {
   survival: 'wooden_sword',
   creative: 'blaze_rod',
@@ -92,7 +64,7 @@ const ICONS = {
 function iconCanvas(game, optionId, size = 30) {
   const id = ICONS[optionId] ?? optionId;
   if (Blocks.has(id)) {
-    // a real block, drawn as a 3D cube
+
     const img = itemIcon(id, size * 2, game.assets);
     const cv = document.createElement('canvas');
     cv.width = size;
@@ -100,12 +72,11 @@ function iconCanvas(game, optionId, size = 30) {
     cv.className = 'wc-icon-canvas';
     const ctx = cv.getContext('2d');
     ctx.imageSmoothingEnabled = false;
-    // itemIcon renders a 2x canvas so the cube has room; scale it back down
+
     ctx.drawImage(img, 0, 0, img.width, img.height, 0, 0, size, size);
     return cv;
   }
 
-  // an item: its own sprite, which is transparent outside the shape
   const def = Items.get(id);
   const img = game.assets.itemImages?.[def?.texture ?? id];
   const cv = document.createElement('canvas');
@@ -124,12 +95,6 @@ function iconCanvas(game, optionId, size = 30) {
   return cv;
 }
 
-/**
- * One row of a world setup form.
- *
- * Laid out the way the real game does it: a fixed label cell on the left, then
- * the option buttons, with the selected one drawn inset and highlighted.
- */
 function optionRow(game, label, options, selected, onPick, readOnly = false) {
   const row = el('div', 'wc-option-row');
   const lab = el('div', 'wc-option-label');
@@ -155,10 +120,6 @@ function optionRow(game, label, options, selected, onPick, readOnly = false) {
   }
   return row;
 }
-
-/* ================================================================
-   world list
-   ================================================================ */
 
 export class WorldListScreen {
   constructor(game) {
@@ -187,7 +148,7 @@ export class WorldListScreen {
         this.game.screens.title.show();
       } else if (action === 'create') {
         this.hide();
-        // the options the form returns are what actually build the world
+
         this.game.screens.create.show(async (opts) => {
           if (!opts) { await this.show(); return; }
           const newId = await this.game.createWorldRecord(opts);
@@ -259,7 +220,6 @@ export class WorldListScreen {
       const entry = el('div', 'worldlist-entry');
       entry.dataset.world = w.id;
 
-      // a flat swatch stands in for the screenshot preview
       const preview = el('div', 'worldlist-preview');
       preview.style.background = w.previewColor || '#3b6ea5';
       entry.appendChild(preview);
@@ -281,14 +241,10 @@ export class WorldListScreen {
       this.game.font.set(difficulty, `${t('create.difficulty')}: ${t(`create.${w.difficulty ?? 'normal'}`)}`, { scale: 2, color: '#b8b8b8' });
       info.appendChild(difficulty);
 
-      // Storage size of the world's save file (KB/MB/GB).
       const size = el('div', 'worldlist-size');
       this.game.font.set(size, formatSize(w.size), { scale: 2, color: '#909090' });
       info.appendChild(size);
 
-      // A world whose file was damaged says so here rather than looking like
-      // any other world. `recovered` means it was read back from the backup,
-      // so it plays but is one save behind.
       if (w.damaged) {
         const note = el('div', 'worldlist-note');
         this.game.font.set(note,
@@ -307,7 +263,7 @@ export class WorldListScreen {
   async   show() {
     await this.refresh();
     this.isOpen = true;
-    // never let the pause menu peek out from behind this screen
+
     this.game.screens.pause.hide();
     this.root.classList.remove('hidden');
   }
@@ -317,10 +273,6 @@ export class WorldListScreen {
     this.root.classList.add('hidden');
   }
 }
-
-/* ================================================================
-   create / edit world
-   ================================================================ */
 
 export class CreateWorldScreen {
   constructor(game) {
@@ -367,7 +319,6 @@ export class CreateWorldScreen {
     });
   }
 
-  /** @param {(opts:object|null)=>Promise<void>} onDone */
   show(onDone, existing = null) {
     this._onDone = onDone;
     this.body.textContent = '';
@@ -388,7 +339,6 @@ export class CreateWorldScreen {
       { scale: 3, color: COLORS.white },
     );
 
-    /* ---- name ---- */
     const nameRow = el('div', 'wc-field');
     const nameLabel = el('label', 'wc-option-label');
     game.font.set(nameLabel, t('create.name'), { scale: 2, color: COLORS.white });
@@ -402,7 +352,6 @@ export class CreateWorldScreen {
     nameRow.appendChild(this._nameInput);
     this.body.appendChild(nameRow);
 
-    /* ---- seed, with a dice button ---- */
     const editing = existing !== null;
     const seedRow = el('div', 'wc-field');
     const seedLabel = el('label', 'wc-option-label');
@@ -430,7 +379,6 @@ export class CreateWorldScreen {
     seedRow.appendChild(seedBox);
     this.body.appendChild(seedRow);
 
-    /* ---- the option grids ---- */
     const hardcore = this.opts.gameMode === 'hardcore';
     if (hardcore) this.opts.difficulty = 'hard';
     const gameModeRow = optionRow(game, t('create.gameMode'), GAME_MODES, this.opts.gameMode,
@@ -469,7 +417,7 @@ export class CreateWorldScreen {
             this.opts.worldType = result;
             delete this.opts.islandBiome;
           }
-          // re-highlight the main row to match the popup pick
+
           for (const b of worldTypeRow.querySelectorAll('.wc-option')) {
             b.classList.toggle('selected', b.dataset.id === this.opts.worldType);
           }
@@ -505,14 +453,14 @@ export class CreateWorldScreen {
       }
     };
     updateCreateButton();
-    // wire the game mode picker to re-apply the red outline
+
     const gameModePicker = this.body.querySelector('[data-id="gameMode"]');
     actions.appendChild(create);
     actions.appendChild(cancel);
     this.body.appendChild(actions);
 
     this.isOpen = true;
-    // never let the pause menu peek out from behind this screen
+
     this.game.screens.pause.hide();
     this.root.classList.remove('hidden');
     this._nameInput.focus();
@@ -530,7 +478,6 @@ function formatWhen(ts) {
   return d.toLocaleString();
 }
 
-/** Format bytes as KB/MB/GB, e.g. `12.4 MB` or `--` when unknown. */
 function formatSize(bytes) {
   if (!bytes && bytes !== 0) return '--';
   const units = ['B', 'KB', 'MB', 'GB', 'TB'];
@@ -543,11 +490,6 @@ function formatSize(bytes) {
   return u === 0 ? `${size} ${units[u]}` : `${size.toFixed(1)} ${units[u]}`;
 }
 
-/* ================================================================
-   world type more (popup over Create World)
-   ================================================================ */
-
-/** Popup that lets the player pick a world type from all existing options. */
 export class WorldTypeScreen {
   constructor(game) {
     this.game = game;
@@ -618,7 +560,6 @@ export class WorldTypeScreen {
     this.root.style.display = 'flex';
   }
 
-  /** Show the "Customize Islands?" popup listing every biome to pick from. */
   showIslandsCustomize() {
     this.game.font.set(this.title, t('create.customizeIslands'), { scale: 2, color: COLORS.white });
     this.grid.textContent = '';

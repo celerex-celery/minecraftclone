@@ -1,10 +1,3 @@
-/**
- * Furnace tile entity: burns fuel, smelts one item at a time.
- *
- * The block stores its state on the chunk (`Chunk.blockEntities`); ticking all
- * furnaces is a single pass over the loaded chunks each frame.
- */
-
 import { SMELTING, FUELS, SMELT_TIME, fuelValue } from './Recipes.js';
 import { makeStack } from './Inventory.js';
 import { Blocks } from '../world/blocks/Blocks.js';
@@ -50,7 +43,6 @@ export function tickFurnace(state, dt) {
     }
   }
 
-  // light a new piece of fuel
   if (state.burn <= 0 && state.fuel) {
     const value = fuelValue(state.fuel.name);
     if (value > 0) {
@@ -80,7 +72,6 @@ export function tickFurnace(state, dt) {
 
 export { SMELTING, FUELS, SMELT_TIME, fuelValue };
 
-/** The furnace block id to show for the current state. */
 export function furnaceBlockId(burning) {
   return burning ? Blocks.id('furnace_lit') : Blocks.id('furnace');
 }

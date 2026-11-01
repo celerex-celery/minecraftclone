@@ -1,13 +1,3 @@
-/**
- * Mob Physics
- *
- * Handles physics-related methods for mobs:
- * - Swimming and buoyancy
- * - Jumping and fleeing
- * - Collision detection
- * - Gravity and movement
- */
-
 import { CONFIG } from '../../core/Config.js';
 import { Blocks } from '../blocks/Blocks.js';
 
@@ -15,9 +5,6 @@ const GRAVITY = 16;
 const TURN = 1.1;
 const CORNERS = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
 
-/**
- * The height of the water's top surface in this column, or null if there is no water.
- */
 export function waterSurface(mob, defAt) {
   const x = Math.floor(mob.pos.x);
   const z = Math.floor(mob.pos.z);
@@ -34,9 +21,6 @@ export function waterSurface(mob, defAt) {
   return null;
 }
 
-/**
- * Float, paddle, and stay at the waterline.
- */
 export function swim(mob, dt) {
   const surface = mob._surfaceY;
   const rest = surface === null ? mob.pos.y : surface - 0.1;
@@ -62,17 +46,11 @@ export function swim(mob, dt) {
   mob.fallDistance = 0;
 }
 
-/**
- * Is the mob standing on something solid, at its own feet?
- */
 function solidUnder(mob) {
   const w = mob._world;
   return !!w && w.isSolid(Math.floor(mob.pos.x), Math.floor(mob.pos.y - 0.05), Math.floor(mob.pos.z));
 }
 
-/**
- * Would the mob's body be inside a block at this spot?
- */
 export function blockedAt(mob, x, z, solid) {
   const r = mob.variant.width * 0.5;
   const y = mob.pos.y;
@@ -88,9 +66,6 @@ export function blockedAt(mob, x, z, solid) {
   return false;
 }
 
-/**
- * Leap whatever is in the way, but only when there is a reason to.
- */
 export function fleeJump(mob, dt) {
   const isChasing = (mob.variant.id === 'zombie' || mob.variant.id === 'enderman') && !mob.resting;
   if (mob.panic <= 0 && !isChasing) return;
@@ -103,9 +78,6 @@ export function fleeJump(mob, dt) {
   mob._jumpCooldown = CONFIG.MOB.FLEE_JUMP_COOLDOWN;
 }
 
-/**
- * Apply movement with step-up ability for obstacles.
- */
 export function applyMovement(mob, dt, stepX, stepZ, solid, world) {
   const isChasing = (mob.variant.id === 'zombie' || mob.variant.id === 'enderman');
   const stepHeight = mob.variant.id === 'enderman' ? 1.0 : 0.6;
@@ -160,9 +132,6 @@ export function applyMovement(mob, dt, stepX, stepZ, solid, world) {
   if (Math.abs(mob.vel.z) < 0.01) mob.vel.z = 0;
 }
 
-/**
- * Apply gravity and vertical movement.
- */
 export function applyGravity(mob, dt, solid, inWater) {
   if (inWater) {
     swim(mob, dt);
@@ -187,9 +156,6 @@ export function applyGravity(mob, dt, solid, inWater) {
   }
 }
 
-/**
- * Apply velocity-based movement with friction.
- */
 export function applyVelocity(mob, dt, speed) {
   const ticks = dt * CONFIG.TICKS_PER_SECOND;
   const friction = mob.onGround ? CONFIG.GROUND_FRICTION : CONFIG.AIR_COAST_DRAG;

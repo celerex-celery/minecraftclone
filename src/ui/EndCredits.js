@@ -1,8 +1,3 @@
-/**
- * End credits text parser and renderer.
- * Parses the vanilla end.txt format with § color codes.
- */
-
 const END_RAW = `§3I see the player you mean.
 
 §2PLAYERNAME?
@@ -155,7 +150,6 @@ const END_RAW = `§3I see the player you mean.
 
 §2Wake up.`;
 
-// Minecraft § color codes to CSS colors
 const SECTION_COLORS = {
   '0': '#000000', '1': '#0000AA', '2': '#00AA00', '3': '#00AAAA',
   '4': '#AA0000', '5': '#AA00AA', '6': '#FFAA00', '7': '#AAAAAA',
@@ -166,27 +160,27 @@ const SECTION_COLORS = {
 };
 
 function parseEndText(text, playerName = 'Steve') {
-  // Replace PLAYERNAME placeholder
+
   text = text.replace(/PLAYERNAME/g, playerName);
-  
+
   const lines = text.split('\n');
   const segments = [];
-  
+
   for (const line of lines) {
     if (line.trim() === '') {
       segments.push({ type: 'break' });
       continue;
     }
-    
+
     let currentColor = '#FFFFFF';
     let currentStyle = {};
     let buffer = '';
     let i = 0;
-    
+
     while (i < line.length) {
       const char = line[i];
       if (char === '§' && i + 1 < line.length) {
-        // Flush buffer
+
         if (buffer) {
           segments.push({ type: 'text', text: buffer, color: currentColor, style: { ...currentStyle } });
           buffer = '';
@@ -217,13 +211,13 @@ function parseEndText(text, playerName = 'Steve') {
         i++;
       }
     }
-    
+
     if (buffer) {
       segments.push({ type: 'text', text: buffer, color: currentColor, style: { ...currentStyle } });
     }
     segments.push({ type: 'break' });
   }
-  
+
   return segments;
 }
 

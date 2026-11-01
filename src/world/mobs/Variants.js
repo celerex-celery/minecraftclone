@@ -1,17 +1,7 @@
-/**
- * Mob Variants Registry
- *
- * Every mob, and everything that differs between them.
- * A table rather than a subclass per animal, because the behaviour is almost
- * entirely shared - wander, panic, tempt, fall, swim, get hit, die, drop things -
- * and only the values change.
- */
-
 import { Blocks } from '../blocks/Blocks.js';
 import { audio } from '../../audio/SoundEngine.js';
 import { CONFIG } from '../../core/Config.js';
 
-// Categories - per vanilla
 export const CATEGORY = {
   monster: 'monster',
   creature: 'creature',
@@ -19,7 +9,6 @@ export const CATEGORY = {
   water_ambient: 'water_ambient',
 };
 
-// Spawn configuration
 export const BABY_CHANCE = 0.05;
 export const HEARING_RANGE = 16;
 export const PANIC_MIN = 1.0;
@@ -37,9 +26,8 @@ export const GROW_MIN = 1200;
 export const GROW_MAX = 1200;
 export const WALK = 0.05;
 
-// Tool-specific hit cooldown, matching MCP-Reborn / vanilla attack speeds
 export const SWING_COOLDOWN_BY_TOOL = {
-  sword: 0.625,   // attack speed 1.6
+  sword: 0.625,
   axe:   1.000,
   pickaxe: 0.900,
   shovel: 0.800,
@@ -50,14 +38,12 @@ export function swingCooldownFor(toolType) {
   return SWING_COOLDOWN_BY_TOOL[toolType] ?? SWING_COOLDOWN;
 }
 
-// Tempt items
 export const CHICKEN_TEMPT = new Set([
   'wheat_seeds', 'beetroot_seeds', 'melon_seeds', 'pumpkin_seeds',
 ]);
 
 export const PIG_TEMPT = new Set(['carrot', 'potato', 'beetroot']);
 
-// Skin paths
 export const SKIN = 'assets/textures/entity/chicken/chicken_temperate.png';
 export const CHICK_SKIN = 'assets/textures/entity/chicken/chicken_temperate_baby.png';
 export const PIG_SKIN = 'assets/textures/entity/pig/pig_temperate.png';
@@ -65,10 +51,6 @@ export const PIG_BABY_SKIN = 'assets/textures/entity/pig/pig_temperate_baby.png'
 export const ENDERMAN_SKIN = 'assets/textures/entity/enderman/enderman.png';
 export const CREEPER_SKIN = 'assets/textures/entity/creeper/creeper.png';
 
-/**
- * Mob variant definitions
- * A table rather than a subclass per animal - behaviour is shared, only values differ
- */
 export const VARIANTS = {
   chicken: {
     id: 'chicken',
@@ -269,9 +251,6 @@ export const VARIANTS = {
   },
 };
 
-/**
- * Aliases for /summon command
- */
 export const VARIANT_ALIASES = {
   chicken: 'chicken',
   chick: 'chick',

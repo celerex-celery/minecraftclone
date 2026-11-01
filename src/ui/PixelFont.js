@@ -1,19 +1,6 @@
-/**
- * The real Minecraft bitmap font.
- *
- * `assets/font/ascii.png` is a 16x16 grid of 8x8 glyphs. Glyph rows 0-1 are
- * blank, the printable ASCII range starts at row 2 (space) exactly as the
- * vanilla font provider lists it. Character advance widths are measured from
- * the actual pixels, which reproduces the proportional look of the original.
- *
- * Text is rendered into <canvas> elements which the UI drops into the DOM.
- * Everything is cached by (text, scale, colour) so redrawing the debug overlay
- * every frame costs nothing after the first pass.
- */
-
 const GRID = 16;
 const CELL = 8;
-const FIRST_ROW = 2;          // row where char code 0x20 lives
+const FIRST_ROW = 2;
 const SPACE_ADVANCE = 4;
 
 export const COLORS = {
@@ -29,7 +16,7 @@ export const COLORS = {
 };
 
 export class PixelFont {
-  /** @param {HTMLImageElement} sheet */
+
   constructor(sheet) {
     this.sheet = sheet;
     this.tinted = new Map();
@@ -72,7 +59,6 @@ export class PixelFont {
     return w;
   }
 
-  /** Colour-shifted copy of the whole glyph sheet. */
   tintedSheet(color, shade = 1) {
     const key = `${color}|${shade}`;
     let c = this.tinted.get(key);
@@ -96,10 +82,6 @@ export class PixelFont {
     return c;
   }
 
-  /**
-   * Rasterise a string.
-   * @returns {HTMLCanvasElement}
-   */
   render(text, opts = {}) {
     const scale = opts.scale ?? 3;
     const color = opts.color ?? COLORS.white;
@@ -159,20 +141,6 @@ export class PixelFont {
     return cv;
   }
 
-  /**
-   * A private copy of a cached canvas.
-   *
-   * The cache hands out one node per string, and a DOM node can only be in one
-   * place: `appendChild` on a node that already has a parent *moves* it. So every
-   * label that wanted the same string took the canvas off whichever element had
-   * it, and left that element blank. That is not a rare edge case - it is every
-   * pair of buttons that say the same word, which is every row of on/off toggles
-   * in the options screen and any two buttons that both say "Play".
-   *
-   * The cache is kept because rasterising the same string twice is real work;
-   * what cannot be shared is the element. Copying a canvas this size is a
-   * drawImage, which is nothing.
-   */
   _copy(src) {
     const cv = document.createElement('canvas');
     cv.width = src.width;
@@ -184,10 +152,6 @@ export class PixelFont {
     return cv;
   }
 
-  /**
-   * Replace the contents of an element with rendered text.
-   * @param {HTMLElement} el
-   */
   set(el, text, opts) {
     const signature = JSON.stringify(opts ?? {});
     if (el.__mcText === text && el.__mcOpts === signature) return;
@@ -197,7 +161,6 @@ export class PixelFont {
     el.appendChild(this._copy(this.render(text, opts)));
   }
 
-  /** Convenience: build a standalone element containing rendered text. */
   element(text, opts) {
     return this._copy(this.render(text, opts));
   }

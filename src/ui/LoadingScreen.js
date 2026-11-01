@@ -1,12 +1,3 @@
-/**
- * Loading screen shown while assets load and while a world is being built.
- *
- * The canvas keeps rendering behind it (the frame loop never stops), so the
- * player sees a stable overlay instead of a half-built world or a blank screen.
- * Progress and status text are updated from the outside by whatever is
- * loading - asset boot in main.js, world creation in Game.js.
- */
-
 import { COLORS } from './PixelFont.js';
 import { lang, t } from './Lang.js';
 
@@ -68,29 +59,24 @@ export class LoadingScreen {
     this.font.set(this.tip, text, { scale: 2, color: '#e6d91a', shadow: false });
   }
 
-  /** Show the overlay. */
   show() {
     this.root.classList.remove('hidden');
     this._rotateTip();
   }
 
-  /** Hide the overlay. */
   hide() {
     this.root.classList.add('hidden');
   }
 
-  /** Set progress from 0 to 1. */
   setProgress(p) {
     const pct = Math.round(Math.max(0, Math.min(1, p)) * 100);
     this.progressFill.style.width = pct + '%';
   }
 
-  /** Set the status line under the progress bar. */
   setStatus(text) {
     this.font.set(this.status, text, { scale: 2, color: '#b9c6d0', shadow: false });
   }
 
-  /** Set the tip line at the bottom. */
   setTip(text) {
     this.font.set(this.tip, text, { scale: 2, color: '#e6d91a', shadow: false });
   }

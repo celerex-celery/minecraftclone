@@ -1,58 +1,36 @@
-/**
- * General Mob AI Behaviors
- *
- * Contains shared AI behaviors used by multiple mob types:
- * - Wander (random movement)
- * - Panic (fleeing when hurt)
- * - Tempt (following player with food)
- * - Follow parent (for baby mobs)
- */
-
 import { CATEGORY, PANIC_MIN, PANIC_MAX, PANIC_SPEED, FOLLOW_STOP, FOLLOW_RANGE, CHICKEN_TEMPT } from './Variants.js';
 
 const TURN = 1.1;
 
-/**
- * The yaw that sends a bird toward `(dx, dz)`.
- */
 export function yawToward(dx, dz) {
   return Math.atan2(-dx, -dz);
 }
 
-/**
- * Check if the player is holding something that would make this mob follow.
- */
 export function playerIsTempting(mob, player) {
   const held = player.inventory?.held;
   if (!held) return false;
   return (mob.variant.tempts ?? CHICKEN_TEMPT).has(held.name);
 }
 
-/**
- * General AI update for passive mobs (creatures).
- * Handles panic, tempt, wandering, and following parents.
- */
 export function updateCreatureAI(mob, dt, world, player, adults, solid, defAt, away, dx, dz) {
   const v = mob.variant;
   let speed = 0;
   let facing = null;
 
-  // Panic behavior (priority 1)
   mob.panic = Math.max(0, mob.panic - dt);
   if (mob.panic > 0) {
     speed = v.speed * PANIC_SPEED;
-    facing = yawToward(-dx, -dz); // straight away
+    facing = yawToward(-dx, -dz);
   } else if (playerIsTempting(mob, player) && away < FOLLOW_RANGE) {
-    // Tempt behavior (priority 4)
-    facing = yawToward(dx, dz); // toward player
+
+    facing = yawToward(dx, dz);
     if (away > FOLLOW_STOP) speed = v.speed;
     else mob.resting = true;
   } else {
-    // Wander behavior (fallback)
+
     speed = updateWanderAI(mob, dt, world, solid, defAt);
   }
 
-  // Baby follows parent (priority 5)
   if (v.grows) {
     const parent = nearestAdult(mob, adults);
     if (parent) {
@@ -75,14 +53,10 @@ export function updateCreatureAI(mob, dt, world, player, adults, solid, defAt, a
   return speed;
 }
 
-/**
- * Wander AI - matches vanilla WaterAvoidingRandomStrollGoal.
- */
 function updateWanderAI(mob, dt, world, solid, defAt) {
   const v = mob.variant;
   let speed = 0;
 
-  // Initialize wander state if needed
   if (mob.wanderTarget === undefined) {
     mob.wanderTarget = null;
     mob.wanderState = 'idle';
@@ -93,7 +67,6 @@ function updateWanderAI(mob, dt, world, solid, defAt) {
   mob.wanderCooldown -= dt;
   mob.lookTimer -= dt;
 
-  // Random look around while idle
   if (mob.wanderState === 'idle' && mob.lookTimer <= 0) {
     mob.lookTimer = 2 + Math.random() * 6;
     if (Math.random() < 0.5) {
@@ -101,7 +74,6 @@ function updateWanderAI(mob, dt, world, solid, defAt) {
     }
   }
 
-  // Try to start a new wander
   if (mob.wanderState === 'idle' && mob.wanderCooldown <= 0) {
     const wanderChance = 1 / 6;
     if (Math.random() < wanderChance * dt * 20) {
@@ -142,7 +114,6 @@ function updateWanderAI(mob, dt, world, solid, defAt) {
     }
   }
 
-  // Walking toward target
   if (mob.wanderState === 'walking' && mob.wanderTarget) {
     const wdx = mob.wanderTarget.x - mob.pos.x;
     const wdz = mob.wanderTarget.z - mob.pos.z;
@@ -171,9 +142,6 @@ function updateWanderAI(mob, dt, world, solid, defAt) {
   return speed;
 }
 
-/**
- * Find the nearest adult of this species, for a baby to follow.
- */
 function nearestAdult(mob, adults) {
   const flock = adults.get(mob.variant.species);
   if (!flock) return null;

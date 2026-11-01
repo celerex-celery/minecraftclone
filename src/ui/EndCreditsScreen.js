@@ -1,8 +1,3 @@
-/**
- * End credits screen - matches vanilla WinScreen behavior.
- * Frame-based scrolling with speedup on space/ctrl, vignette background.
- */
-
 import { END_RAW, parseEndText } from './EndCredits.js';
 
 export class EndCreditsScreen {
@@ -15,15 +10,14 @@ export class EndCreditsScreen {
     this._skipBtn = null;
     this._animFrame = null;
 
-    // Vanilla settings
-    this.unmodifiedScrollSpeed = 0.5; // lines per frame (vanilla: 0.5F)
+    this.unmodifiedScrollSpeed = 0.5;
     this.scrollSpeed = this.unmodifiedScrollSpeed;
     this.direction = 1;
     this.speedupActive = false;
     this.speedupModifiers = new Set();
     this.SPEEDUP_FACTOR = 5;
     this.SPEEDUP_FACTOR_FAST = 15;
-    this.lineHeight = 12 * 1.6; // 12px * line-height 1.6 = ~19.2px
+    this.lineHeight = 12 * 1.6;
     this.scroll = 0;
     this.totalScrollLength = 0;
     this.lines = [];
@@ -35,7 +29,6 @@ export class EndCreditsScreen {
       }
     });
 
-    // Keyboard handling for speedup
     this._handleKeyDown = (e) => {
       if (!this.isOpen) return;
       if (e.code === 'Space') {
@@ -89,13 +82,12 @@ export class EndCreditsScreen {
     this.root.classList.remove('hidden');
     this.scroll = 0;
 
-    // Parse and render the end credits text
     const segments = parseEndText(END_RAW, playerName);
     this.content.innerHTML = '';
-    
+
     const container = document.createElement('div');
     container.className = 'end-credits-container';
-    
+
     for (const seg of segments) {
       if (seg.type === 'break') {
         container.appendChild(document.createElement('br'));
@@ -111,24 +103,20 @@ export class EndCreditsScreen {
         container.appendChild(span);
       }
     }
-    
+
     this.content.appendChild(container);
 
-    // Add 8 empty lines at the end (vanilla)
     for (let i = 0; i < 8; i++) {
       container.appendChild(document.createElement('br'));
     }
 
-    // Force reflow to ensure content is laid out before measuring
     this.root.offsetHeight;
-    
-    // Calculate total scroll length
+
     this.totalScrollLength = container.offsetHeight + window.innerHeight + window.innerHeight + 24;
     this.content.style.top = `${window.innerHeight}px`;
 
     this._lastFrameTime = performance.now();
 
-    // Add skip button after a delay
     setTimeout(() => {
       if (this.isOpen) {
         this._skipBtn = document.createElement('button');
@@ -143,33 +131,30 @@ export class EndCreditsScreen {
       }
     }, 5000);
 
-    // Start credits music
     this.game.audio.playMusic('endcredits', true);
 
-    // Start animation loop
     this._animate();
   }
 
   _animate() {
     if (!this.isOpen) return;
-    
+
     const now = performance.now();
-    const dt = (now - this._lastFrameTime) / 1000; // seconds
+    const dt = (now - this._lastFrameTime) / 1000;
     this._lastFrameTime = now;
-    
-    // Vanilla runs at 20 ticks/second, scrollSpeed is lines per tick
+
     const ticks = dt * 20;
     this.scroll += ticks * this.scrollSpeed * this.lineHeight;
-    
+
     const maxScroll = this.totalScrollLength;
-    
+
     if (this.scroll > maxScroll) {
       this._finish();
       return;
     }
 
     this.content.style.top = `${window.innerHeight - this.scroll}px`;
-    
+
     this._animFrame = requestAnimationFrame(() => this._animate());
   }
 

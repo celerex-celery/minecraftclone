@@ -1,27 +1,10 @@
-/**
- * Zombie-specific AI
- *
- * Handles zombie behavior including:
- * - Target acquisition and following
- * - Melee attacks
- * - Door breaking
- * - Sunlight burning
- * - Water conversion to drowned
- */
-
 import { Blocks } from '../blocks/Blocks.js';
 import { audio } from '../../audio/SoundEngine.js';
 
-/**
- * The yaw that sends a bird toward `(dx, dz)`.
- */
 function yawToward(dx, dz) {
   return Math.atan2(-dx, -dz);
 }
 
-/**
- * Check if this mob can see an entity (line of sight + light level check).
- */
 function canSeeEntity(mob, target, world) {
   if (!target) return false;
   const tp = target.pos || target.position;
@@ -41,9 +24,6 @@ function canSeeEntity(mob, target, world) {
   return lightLevel > 0.5;
 }
 
-/**
- * Raycast from mob's eye position to target's eye position.
- */
 function lineOfSight(mob, target, world) {
   if (!target) return false;
   const tp = target.pos || target.position;
@@ -70,14 +50,10 @@ function lineOfSight(mob, target, world) {
   return true;
 }
 
-/**
- * Main zombie AI update.
- */
 export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, dz, gain, inWater, underwater) {
   const v = mob.variant;
   let speed = 0;
 
-  // Target acquisition
   let target = null;
   let targetDist = v.followRange;
 
@@ -86,7 +62,6 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     targetDist = away;
   }
 
-  // Attack behavior
   mob.attackCooldown = (mob.attackCooldown ?? 0) - dt;
   mob.pathRecalcTimer = (mob.pathRecalcTimer ?? 0) - dt;
 
@@ -126,7 +101,7 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
       mob.resting = false;
     }
   } else {
-    // Wander behavior
+
     mob.wander -= dt;
     if (mob.wander <= 0) {
       mob.wander = 4 + Math.random() * 8;
@@ -150,7 +125,6 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     }
   }
 
-  // Door breaking
   if (v.canBreakDoors && speed > 0) {
     mob.doorBreakTimer = (mob.doorBreakTimer ?? 0) - dt;
     if (mob.doorBreakTimer <= 0) {
@@ -173,7 +147,6 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     }
   }
 
-  // Look at player
   if (away < 8.0) {
     if (!target) {
       mob.yaw = yawToward(dx, dz);
@@ -188,7 +161,6 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     }
   }
 
-  // Sunlight burning
   if (mob.fire > 0) {
     mob.fire -= dt;
     mob.fireTime += dt;
@@ -218,7 +190,6 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     }
   }
 
-  // Water conversion to drowned
   if (inWater && !mob.convertingToDrowned) {
     mob.inWaterTime = (mob.inWaterTime ?? 0) + dt;
     if (mob.inWaterTime >= 30) {
@@ -237,7 +208,6 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     }
   }
 
-  // Idle sound
   mob.zombieSoundTimer = (mob.zombieSoundTimer ?? 0) - dt;
   if (mob.zombieSoundTimer <= 0) {
     mob.zombieSoundTimer = 5 + Math.random() * 15;

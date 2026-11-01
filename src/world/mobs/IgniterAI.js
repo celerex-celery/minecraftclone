@@ -1,10 +1,3 @@
-/**
- * Igniter-specific AI
- *
- * Fire creeper variant that spawns in the Nether, is immune to fire/lava,
- * takes damage in water, and spawns fire on explosion.
- */
-
 import { Blocks } from '../blocks/Blocks.js';
 import { audio } from '../../audio/SoundEngine.js';
 
@@ -72,7 +65,7 @@ export function updateIgniterAI(mob, dt, world, player, away, dx, dz, gain) {
                   const by = y + dy;
                   const bz = z + dz;
                   const block = w.getBlock(bx, by, bz);
-                  // Fire needs a solid block underneath (not air/liquid)
+
                   const below = w.getBlock(bx, by - 1, bz);
                   const belowDef = Blocks.get(below);
                   const canAttach = belowDef.solid && !belowDef.liquid;

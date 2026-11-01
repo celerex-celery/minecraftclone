@@ -1,15 +1,3 @@
-/**
- * The Statistics screen: General / Blocks / Items / Game Stats, the four tabs
- * the real game has that this build has anything to show for.
- *
- * Mob Stats is deliberately absent. There are no mobs, so it would be four
- * empty columns, and an empty statistics page is worse than a missing one.
- *
- * Every row is a value in a named slot rather than a label with a number glued
- * on, so the label can be translated and the value formatted separately - which
- * is how the real game does it, and why its numbers always line up.
- */
-
 import { COLORS } from './PixelFont.js';
 import { t } from './Lang.js';
 import {
@@ -18,7 +6,6 @@ import {
 import { Blocks } from '../world/blocks/Blocks.js';
 import { Items } from '../world/blocks/Items.js';
 
-/** The tabs, in the real game's order. */
 const TABS = [
   { id: 'general', label: 'stat.general' },
   { id: 'blocks', label: 'stat.blocks' },
@@ -26,7 +13,6 @@ const TABS = [
   { id: 'game', label: 'stat.game' },
 ];
 
-/** Sorted biggest first, the way the real game orders these lists. */
 function byCount(a, b) {
   return b[1] - a[1] || a[0].localeCompare(b[0]);
 }
@@ -40,9 +26,9 @@ export class StatisticsScreen {
     this.body = document.getElementById('stat-body');
     this.isOpen = false;
     this.tab = 'general';
-    /** The text typed into the search box, kept across a tab switch. */
+
     this.query = '';
-    /** Where the list contents go, so a search can rebuild without the box. */
+
     this._listHost = null;
 
     this.root.addEventListener('click', (e) => {
@@ -67,8 +53,6 @@ export class StatisticsScreen {
     this.isOpen = false;
     this.root.classList.add('hidden');
   }
-
-  /* -------------------------------------------------- the rows */
 
   _generalRows(s) {
     return [
@@ -100,14 +84,11 @@ export class StatisticsScreen {
     ];
   }
 
-  /* -------------------------------------------------- build */
-
   _build() {
     const game = this.game;
     const s = game.statistics;
     game.font.set(this.title, t('stat.title'), { scale: 4, color: COLORS.white });
 
-    /* ---- tabs ---- */
     this.tabs.textContent = '';
     for (const tab of TABS) {
       const btn = document.createElement('button');
@@ -118,15 +99,9 @@ export class StatisticsScreen {
       this.tabs.appendChild(btn);
     }
 
-    /* ---- body ---- */
-    // the scroll lives on this element, so a long mined list scrolls inside the
-    // panel instead of running off the bottom of the window
     this.body.textContent = '';
     this.body.className = 'stat-body';
 
-    // A search box over the list, the way the creative inventory has one. A
-    // player with a few thousand blocks mined does not want to scroll for the
-    // one they are looking for.
     const search = document.createElement('input');
     search.type = 'text';
     search.className = 'stat-search mc-input';
@@ -134,8 +109,7 @@ export class StatisticsScreen {
     search.autocomplete = 'off';
     search.spellcheck = false;
     search.value = this.query;
-    // the game binds keys off the global handler, so the box needs to keep its
-    // own keystrokes or typing a filter would walk the player around
+
     search.addEventListener('keydown', (e) => {
       e.stopPropagation();
       if (e.code === 'Escape') {
@@ -157,7 +131,6 @@ export class StatisticsScreen {
 
   }
 
-  /** The list contents, rebuilt on a search without losing focus on the box. */
   _buildBody() {
     const game = this.game;
     const s = game.statistics;
@@ -166,7 +139,7 @@ export class StatisticsScreen {
     host.textContent = '';
 
     const q = this.query.trim().toLowerCase();
-    /** Does a label match what has been typed? Empty query matches everything. */
+
     const match = (name, label) => !q || label.toLowerCase().includes(q) || name.toLowerCase().includes(q);
 
     if (this.tab === 'blocks') {
@@ -177,21 +150,13 @@ export class StatisticsScreen {
       this._countList(host, s.data.itemsCrafted, (n) => Items.label(n), 'stat.crafted', match);
       this._countList(host, s.data.itemsBroken, (n) => Items.label(n), 'stat.broken', match);
     } else {
-      // the scalar tabs have nothing to search, so the box is not shown
+
       this.body.querySelector('.stat-search')?.classList.add('hidden');
       const rows = this.tab === 'general' ? this._generalRows(s) : this._gameRows(s);
       for (const [key, value] of rows) this._row(host, t(key), value);
     }
   }
 
-  /**
-   * One "name ......... value" line.
-   *
-   * The two halves are laid out with flex rather than a two-column grid on
-   * purpose: the value keeps its own width, so a column of counts lines up by
-   * its right edge no matter how long the names are, and neither half can end
-   * up wrapped under the other.
-   */
   _row(parent, label, value) {
     const row = document.createElement('div');
     row.className = 'stat-row';
@@ -207,13 +172,6 @@ export class StatisticsScreen {
     return row;
   }
 
-  /**
-   * A titled list of counts, sorted biggest first so the thing you did most is
-   * at the top, which is how the real game orders these.
-   *
-   * @param {(name:string)=>string} label
-   * @param {(name:string, label:string)=>boolean} match search filter
-   */
   _countList(parent, bag, label, headingKey, match = () => true) {
     const all = Object.entries(bag).sort(byCount);
     const entries = all
@@ -232,8 +190,7 @@ export class StatisticsScreen {
     if (entries.length === 0) {
       const none = document.createElement('div');
       none.className = 'stat-empty';
-      // a search that found nothing is a different message from never having
-      // done anything, and conflating the two is confusing
+
       this.game.font.set(none, t(all.length === 0 ? 'stat.none' : 'stat.noMatches'), {
         scale: 2, color: '#7a7a7a',
       });

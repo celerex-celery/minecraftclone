@@ -1,10 +1,3 @@
-/**
- * Individual Mob Instance
- *
- * A single mob (chicken, pig, enderman, creeper, etc.) with its own position,
- * state, and behavior. This is the core entity class for all mobs.
- */
-
 import * as THREE from 'three';
 import { Blocks } from '../blocks/Blocks.js';
 import { CONFIG } from '../../core/Config.js';
@@ -22,13 +15,7 @@ let nextId = 1;
 const EMPTY_ADULTS = new Map();
 
 export class Mob {
-  /**
-   * @param {number} x
-   * @param {number} y
-   * @param {number} z
-   * @param {object} [variant] which bird this is; an adult chicken by default
-   * @param {object} [game] the game instance, for accessing survival system
-   */
+
   constructor(x, y, z, variant, game = null) {
     variant = variant || VARIANTS.chicken;
 
@@ -63,7 +50,6 @@ export class Mob {
     this.mesh.group.position.copy(this.pos);
     this.interacted = false;
 
-    // Enderman-specific
     if (variant.id === 'enderman') {
       let base = null;
       this.mesh.group.traverse((o) => { if (o.isMesh && !base) base = o.material; });
@@ -78,9 +64,6 @@ export class Mob {
   get y() { return this.pos.y; }
   get z() { return this.pos.z; }
 
-  /**
-   * This mob's hitbox as a world-space AABB, `[x0, y0, z0, x1, y1, z1]`.
-   */
   bounds() {
     const r = this.variant.width * 0.5;
     const h = this.variant.height;
@@ -90,9 +73,6 @@ export class Mob {
     ];
   }
 
-  /**
-   * How much of this mob's voice actually reaches the player, 0 to 1.
-   */
   hearingGain(listener, range = this.variant.range ?? HEARING_RANGE) {
     if (range <= 0) return 0;
     const d = Math.hypot(
@@ -104,9 +84,6 @@ export class Mob {
     return 1 - d / range;
   }
 
-  /**
-   * Serialize this mob for saving.
-   */
   serialize() {
     return {
       id: this.id,
@@ -125,9 +102,6 @@ export class Mob {
     };
   }
 
-  /**
-   * Deserialize a mob from saved data.
-   */
   static deserialize(data, variant, game) {
     const mob = new Mob(data.pos[0], data.pos[1], data.pos[2], variant, game);
     mob.id = data.id;
@@ -146,9 +120,6 @@ export class Mob {
     return mob;
   }
 
-  /**
-   * Called when the player interacts with this mob (e.g., feeds it).
-   */
   interact(player) {
     const held = player.inventory?.held;
     if (!held) return false;
@@ -161,25 +132,16 @@ export class Mob {
     return false;
   }
 
-  /**
-   * Remove the model from the scene.
-   */
   dispose(scene) {
     this.mesh.group.parent?.remove(this.mesh.group);
     this._flashMat?.dispose();
     this._flashMat = null;
   }
 
-  /**
-   * Main update method - delegates to MobUpdate module.
-   */
   update(dt, world, player, drop, adults = EMPTY_ADULTS) {
     updateMob(this, dt, world, player, drop, adults);
   }
 
-  /**
-   * Upgrade mesh when model file lands.
-   */
   upgradeMesh() {
     const state = MODELS[this.variant.id];
     if (this.usingModel || !state.template || this.dead) return;
@@ -192,9 +154,6 @@ export class Mob {
     if (parent) parent.add(this.mesh.group);
   }
 
-  /**
-   * Apply a hit: flash, knockback, and panic.
-   */
   hurt(amount, from, gain = 1) {
     if (this.dead) return false;
     this.health -= amount;
@@ -218,14 +177,14 @@ export class Mob {
           if (Math.random() < 0.9 && (this.teleportCooldown ?? 0) <= 0) {
             if (gain > 0) this.variant.endermanTeleport?.(gain);
             this.teleportCooldown = TELEPORT_COOLDOWN;
-            // Would call teleport here
+
           }
         }
       } else {
         if (Math.random() < 0.9 && (this.teleportCooldown ?? 0) <= 0) {
           if (gain > 0) this.variant.endermanTeleport?.(gain);
           this.teleportCooldown = TELEPORT_COOLDOWN;
-          // Would call teleport here
+
         }
       }
     }
@@ -238,9 +197,6 @@ export class Mob {
     return false;
   }
 
-  /**
-   * Die: tip over, redden, and fade out.
-   */
   kill() {
     this.dead = true;
     this.dying = true;
@@ -249,9 +205,6 @@ export class Mob {
     if (this.variant.death) this.variant.death(1);
   }
 
-  /**
-   * Count down to being removed, for a mob nobody is near.
-   */
   _tickDespawn(dt, player) {
     const S = CONFIG.SPAWN;
     const distance = this.variant.spawn?.despawn ?? S.DESPAWN_DISTANCE;

@@ -1,13 +1,3 @@
-/**
- * Mob Herd Management
- *
- * Handles the collection of mobs in a dimension:
- * - Spawning and despawning
- * - Updating all mobs
- * - Player interaction (hitting, pushing)
- * - Serialization/deserialization
- */
-
 import * as THREE from 'three';
 import { CONFIG } from '../../core/Config.js';
 import { Mob } from './Mob.js';
@@ -21,15 +11,8 @@ export const PUSH_SPEED = 4.5;
 
 const EMPTY_ADULTS = new Map();
 
-/**
- * The mob herd.
- */
 export class Mobs {
-  /**
-   * @param {THREE.Scene} scene
-   * @param {import('../World.js').World} world
-   * @param {{survival?:{difficulty?:string}}} [game] the game, for the difficulty
-   */
+
   constructor(scene, world, game = null) {
     this.scene = scene;
     this.root = new THREE.Group();
@@ -51,9 +34,6 @@ export class Mobs {
     return MAX_MOBS;
   }
 
-  /**
-   * The natural spawn cap for one category, per player.
-   */
   spawnLimit(category) {
     if (category === CATEGORY.monster) {
       const d = this.difficulty;
@@ -63,18 +43,12 @@ export class Mobs {
     return CONFIG.SPAWN.LIMIT;
   }
 
-  /**
-   * Which difficulty the world is running at.
-   */
   get difficulty() {
     if (this.game?.survival?.difficulty) return this.game.survival.difficulty;
     if (this.world?.dimension === 'nether') return 'peaceful';
     return 'normal';
   }
 
-  /**
-   * How many mobs of a category are alive right now.
-   */
   countCategory(category) {
     let n = 0;
     for (const c of this.list) {
@@ -84,17 +58,11 @@ export class Mobs {
     return n;
   }
 
-  /**
-   * Whether a spot is dark enough, bright enough, or hopeless.
-   */
   lightAllows(light, min = CONFIG.SPAWN.LIGHT_LEVEL) {
     if (light >= min) return true;
     return light >= CONFIG.SPAWN.LIGHT_FLOOR && Math.random() < CONFIG.SPAWN.LIGHT_CHANCE;
   }
 
-  /**
-   * The top of a column, and whether the column is even worth asking about.
-   */
   _column(x, z) {
     const w = this.world;
     const chunk = w.chunkAtBlock?.(x, z);
@@ -102,9 +70,6 @@ export class Mobs {
     return { ok: true, top: w.topSolidY(x, z) };
   }
 
-  /**
-   * One place in a column a mob could stand.
-   */
   spotAllows(x, y, z, variant) {
     const w = this.world;
     const MIN = w.constants.MIN_Y;
@@ -133,9 +98,6 @@ export class Mobs {
     return true;
   }
 
-  /**
-   * A place a mob could stand, somewhere in a column.
-   */
   spotInColumn(x, z, variant) {
     const w = this.world;
     const MIN = w.constants.MIN_Y;
@@ -148,9 +110,6 @@ export class Mobs {
     return null;
   }
 
-  /**
-   * The grown-up mobs, grouped by species, for chicks to pick a mother from.
-   */
   _buildSpeciesIndex() {
     const bySpecies = new Map();
     for (const c of this.list) {
@@ -164,9 +123,6 @@ export class Mobs {
     return bySpecies;
   }
 
-  /**
-   * One spawn cycle.
-   */
   spawnTick(dt, player) {
     this._spawn -= dt;
     if (this._spawn > 0) return;
@@ -176,9 +132,6 @@ export class Mobs {
     for (let i = 0; i < CONFIG.SPAWN.ATTEMPTS; i++) this._spawnAttempt(player);
   }
 
-  /**
-   * One candidate spot: is it legal, and if so, what lives there.
-   */
   _spawnAttempt(player) {
     const w = this.world;
     const S = CONFIG.SPAWN;
@@ -215,9 +168,6 @@ export class Mobs {
     return made > 0;
   }
 
-  /**
-   * A weighted pick from a biome's spawn table.
-   */
   _rollEntry(options) {
     let total = 0;
     for (const o of options) total += o.weight;
@@ -229,9 +179,6 @@ export class Mobs {
     return options[options.length - 1];
   }
 
-  /**
-   * Put one animal down at a spot, if that spot will take it.
-   */
   _placeGroupMember(x, z, entry) {
     const baby = babyOf(entry.variant);
     const variant = baby && Math.random() < BABY_CHANCE ? baby : entry.variant;
@@ -243,9 +190,6 @@ export class Mobs {
     return true;
   }
 
-  /**
-   * Put a bird at a place, for /summon.
-   */
   spawnAt(x, y, z, variant = VARIANTS.chicken) {
     if (this.list.length >= this.cap) return null;
     const MIN = this.world.constants.MIN_Y;
@@ -264,9 +208,6 @@ export class Mobs {
     return c;
   }
 
-  /**
-   * The mob the player is looking at, and how far away it is.
-   */
   pick(eye, dir, reach = REACH) {
     let best = null;
     let bestDist = reach;
@@ -285,9 +226,6 @@ export class Mobs {
     return best ? { mob: best, dist: bestDist } : null;
   }
 
-  /**
-   * Main update loop for the herd.
-   */
   update(dt, player, attacking, drop, onSwing, weapon) {
     this.spawnTick(dt, player);
     const eye = player.eyePosition ?? player.position;
@@ -352,9 +290,6 @@ export class Mobs {
     }
   }
 
-  /**
-   * Shove mobs out of the player, and out of each other.
-   */
   _pushApart(player, dt) {
     const world = this.world;
     const list = this.list;
@@ -426,9 +361,6 @@ export class Mobs {
     }
   }
 
-  /**
-   * What a bird leaves behind.
-   */
   _onDeath(bird, drop) {
     if (bird.exploded) return;
     bird.variant.drops(drop, bird.pos);
@@ -484,9 +416,6 @@ export class Mobs {
   }
 }
 
-/**
- * Tick interval based on distance to player.
- */
 function tickInterval(d2) {
   const TICK_FULL = 24;
   const TICK_NEAR = 48;

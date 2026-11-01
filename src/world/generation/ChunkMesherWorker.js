@@ -1,20 +1,6 @@
-/**
- * Chunk Mesher Worker.
- *
- * Runs the heavy meshing computation in a WebWorker. The main thread sends
- * chunk block data and receives back vertex attribute arrays. No Three.js
- * objects cross the thread boundary - only raw Float32Array/Uint16Array data.
- *
- * Protocol:
- *   Main -> Worker: { type: 'mesh', chunkId, blocks, light, biome, heightMap, maxY, cx, cz, atlasData }
- *   Worker -> Main: { type: 'meshed', chunkId, cx, cz, opaque: { positions, normals, uvs, colors, indices }, cutout: {...}, water: {...}, lava: {...}, portal: {...}, fire: {...}, animated: {...} }
- *   Main -> Worker: { type: 'init', atlasData, blockDefs, config }
- */
-
 import { Blocks, FACE, FRONT_FACE } from '../blocks/Blocks.js';
 import { SX, SY, SZ, MIN_Y, MAX_Y, idx } from './Chunk.js';
 
-/** Padded cache rows above and below the real range, one for each. */
 const PY = SY + 2;
 const PXW = SX + 2;
 const PZW = SZ + 2;
@@ -36,7 +22,6 @@ const FACE_DEFS = [
 const AO_LEVELS = [0.2, 0.4, 0.6, 0.8];
 const AO_LEVELS_OPEN = [0.4, 0.6, 0.8, 1.0];
 
-/** Per-face shading multipliers, per dimension, in FACE order */
 const FACE_SHADE = {
   overworld: [
     [0.60, 0.60, 1.00, 0.50, 0.80, 0.80],
@@ -199,7 +184,7 @@ function emitFace(buffers, group, px, py, pz, face, def, id, shade, biomeColor, 
 
 function meshChunk(chunkData) {
   const { blocks, light, biome, heightMap, maxY, cx, cz, dimension } = chunkData;
-  
+
   const buffers = {
     opaque: { positions: [], normals: [], uvs: [], colors: [], indices: [], count: [0] },
     cutout: { positions: [], normals: [], uvs: [], colors: [], indices: [], count: [0] },

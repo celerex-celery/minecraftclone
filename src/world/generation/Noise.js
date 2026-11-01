@@ -1,10 +1,3 @@
-/**
- * Deterministic noise used by the world generator.
- * Improved Perlin noise (Ken Perlin, 2002) plus fBm / ridged helpers
- * and a fast integer hash.
- */
-
-/* ---------- mulberry32: small seeded PRNG ---------- */
 export function mulberry32(seed) {
   let a = seed >>> 0;
   return function () {
@@ -16,7 +9,6 @@ export function mulberry32(seed) {
   };
 }
 
-/* ---------- 32-bit integer hash (xorshift finalizer) ---------- */
 export function hash3(x, y, z, seed) {
   let h = seed ^ 0x9e3779b9;
   h = Math.imul(h ^ x, 0x85ebca6b);
@@ -29,8 +21,6 @@ export function hash3(x, y, z, seed) {
 export function hash2(x, z, seed) {
   return hash3(x, 0, z, seed);
 }
-
-/* ---------- Improved Perlin noise ---------- */
 
 const GRAD3 = [
   [1, 1, 0], [-1, 1, 0], [1, -1, 0], [-1, -1, 0],
@@ -97,7 +87,6 @@ export class PerlinNoise {
     return this.noise3D(xin, yin, 0);
   }
 
-  /** Fractal Brownian motion, returns roughly -1..1 */
   fbm2(x, y, octaves = 4, lacunarity = 2, gain = 0.5, freq = 1) {
     let amp = 1, sum = 0, norm = 0;
     for (let o = 0; o < octaves; o++) {
@@ -120,7 +109,6 @@ export class PerlinNoise {
     return sum / norm;
   }
 
-  /** Ridged multifractal - good for mountain ranges and cave tunnels. */
   ridged3(x, y, z, octaves = 3, freq = 1) {
     let amp = 1, sum = 0, norm = 0;
     for (let o = 0; o < octaves; o++) {
@@ -134,27 +122,12 @@ export class PerlinNoise {
   }
 }
 
-/* ---------- seed helpers ---------- */
-
-/**
- * A random seed, the way the real game hands one out: a plain number, roughly
- * half of them negative.
- *
- * The sign is kept in the text the player sees rather than folded away, so a
- * seed that is written down and typed back in resolves to the same world -
- * `seedFromString` reads a leading minus, and `World` coerces with `>>> 0`,
- * which maps every signed value onto a distinct 32-bit pattern.
- *
- * @returns {string} the seed as text, ready to drop into the seed field
- */
 export function randomSeed() {
-  // 10 digits either side of the decimal point: large enough that a random
-  // world is very unlikely to repeat, small enough to stay readable
+
   const magnitude = Math.floor(Math.random() * 9_999_999_999);
   return Math.random() < 0.5 ? String(-magnitude) : String(magnitude);
 }
 
-/** Turn an arbitrary string into a 32-bit seed. */
 export function seedFromString(str) {
   if (!str) return (Math.random() * 4294967295) >>> 0;
   const t = String(str).trim();

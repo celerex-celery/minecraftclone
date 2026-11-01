@@ -1,10 +1,3 @@
-/**
- * Cave Carver System
- * 
- * Carves caves into terrain using carver-based approach (like vanilla).
- * Separate from the noise-field cave system for better control.
- */
-
 import { CONFIG } from '../../core/Config.js';
 import { Blocks } from '../blocks/Blocks.js';
 import { hash3, mulberry32 } from './Noise.js';
@@ -13,10 +6,6 @@ const SX = 16, SY = 384, SZ = 16;
 const MIN_Y = -64;
 const idx = (x, y, z) => (y - MIN_Y) * 256 + z * 16 + x;
 
-/**
- * Carve an ellipsoid into the chunk blocks.
- * Returns number of blocks removed.
- */
 function carveEllipsoid(blocks, cx, cy, cz, hx, hy, hz, skipChecker) {
   let removed = 0;
   const ixMin = Math.max(0, Math.floor(cx - hx));
@@ -52,10 +41,6 @@ function carveEllipsoid(blocks, cx, cy, cz, hx, hy, hz, skipChecker) {
 
 export { carveEllipsoid };
 
-/**
- * Carve a winding tunnel (like vanilla cave carvers).
- * Uses deterministic random based on seed for continuity across chunks.
- */
 function carveTunnel(blocks, startX, startY, startZ, horizontalRadius, verticalRadius, length, seed, skipChecker) {
   const random = mulberry32(seed);
   let x = startX;
@@ -71,10 +56,8 @@ function carveTunnel(blocks, startX, startY, startZ, horizontalRadius, verticalR
     const hr = horizontalRadius * (1.5 + Math.sin(Math.PI * prog));
     const vr = verticalRadius * (1.5 + Math.sin(Math.PI * prog));
 
-    // Carve ellipsoid at current position
     removed += carveEllipsoid(blocks, x, y, z, hr, vr, hr, skipChecker);
 
-    // Update direction
     const cosX = Math.cos(verticalRotation);
     x += Math.cos(horizontalRotation) * cosX;
     y += Math.sin(verticalRotation);
@@ -88,7 +71,6 @@ function carveTunnel(blocks, startX, startY, startZ, horizontalRadius, verticalR
     xRota += (random() - random()) * random() * 2;
     yRota += (random() - random()) * random() * 4;
 
-    // Chance to branch
     if (prog > 0.3 && prog < 0.7 && hr > 1.5 && random() < 0.02) {
       const branchSeed = random() * 0x100000000 | 0;
       const branchH = horizontalRotation + (random() < 0.5 ? -Math.PI/2 : Math.PI/2);
@@ -101,18 +83,12 @@ function carveTunnel(blocks, startX, startY, startZ, horizontalRadius, verticalR
 
 export { carveTunnel };
 
-/**
- * Carve a room/chamber (larger open space).
- */
 function carveRoom(blocks, cx, cy, cz, radius, yScale, skipChecker) {
   return carveEllipsoid(blocks, cx, cy, cz, radius * 1.5, radius * yScale, radius * 1.5, skipChecker);
 }
 
 export { carveRoom };
 
-/**
- * Carve a vertical shaft (goes straight down).
- */
 function carveShaft(blocks, x, z, topY, bottomY, radius, skipChecker) {
   let removed = 0;
   for (let y = bottomY; y <= topY; y++) {
@@ -123,45 +99,35 @@ function carveShaft(blocks, x, z, topY, bottomY, radius, skipChecker) {
 
 export { carveShaft };
 
-/**
- * Main cave carver - coordinates tunnels, rooms, and shafts for a chunk.
- */
 export class CaveCarver {
   constructor(worldSeed) {
     this.seed = worldSeed >>> 0;
   }
 
-  /**
-   * Get deterministic random for a chunk position.
-   */
   getChunkRandom(cx, cz, salt) {
     return mulberry32(hash3(cx, salt, cz, this.seed));
   }
 
-  /**
-   * Carve all caves in a chunk.
-   */
   carveChunk(blocks, chunkX, chunkZ, skipChecker) {
     const random = this.getChunkRandom(chunkX, chunkZ, 0x3b17);
     const baseX = chunkX * 16;
     const baseZ = chunkZ * 16;
     let totalRemoved = 0;
 
-    // Number of cave systems in this chunk
     const caveCount = 1 + Math.floor(random() * 2);
 
     for (let c = 0; c < caveCount; c++) {
-      // Pick cave type
+
       const type = random();
-      
+
       if (type < 0.6) {
-        // Standard tunnel system
+
         totalRemoved += this.carveTunnelSystem(blocks, baseX, baseZ, random());
       } else if (type < 0.85) {
-        // Large chamber with tunnels
+
         totalRemoved += this.carveChamberSystem(blocks, baseX, baseZ, random());
       } else {
-        // Vertical shaft
+
         totalRemoved += this.carveShaftSystem(blocks, baseX, baseZ, random());
       }
     }
@@ -169,34 +135,26 @@ export class CaveCarver {
     return totalRemoved;
   }
 
-  /**
-   * Carve a tunnel system (main cave type).
-   */
   carveTunnelSystem(blocks, baseX, baseZ, seed) {
     const random = mulberry32(seed);
     let removed = 0;
 
-    // Start position
     const x = baseX + random() * 16;
     const z = baseZ + random() * 16;
-    // Y distribution: more caves at mid-depths
+
     const y = -64 + random() * 300;
 
-    // Tunnel properties
     const thickness = 1 + random() * 1.5 + (random() < 0.1 ? random() * random() * 4 : 0);
     const horizontalRadius = 1.5 + thickness;
     const verticalRadius = horizontalRadius * (0.5 + random() * 0.5);
     const length = 15 + random() * 40;
 
-    removed += carveTunnel(blocks, x, y, z, horizontalRadius, verticalRadius, length, seed + 1, 
-      (bx, by, bz) => by < -60 || by > 300); // Don't carve bedrock or too high
+    removed += carveTunnel(blocks, x, y, z, horizontalRadius, verticalRadius, length, seed + 1,
+      (bx, by, bz) => by < -60 || by > 300);
 
     return removed;
   }
 
-  /**
-   * Carve a chamber system (large room with connecting tunnels).
-   */
   carveChamberSystem(blocks, baseX, baseZ, seed) {
     const random = mulberry32(seed);
     let removed = 0;
@@ -209,7 +167,6 @@ export class CaveCarver {
     removed += carveRoom(blocks, x, y, z, roomRadius, 0.6 + random() * 0.4,
       (bx, by, bz) => by < -60 || by > 300);
 
-    // Tunnels leading out
     const tunnelCount = 1 + Math.floor(random() * 2);
     for (let i = 0; i < tunnelCount; i++) {
       const tunnelSeed = seed + i + 1;
@@ -225,14 +182,10 @@ export class CaveCarver {
     return removed;
   }
 
-  /**
-   * Carve a vertical shaft system.
-   */
   carveShaftSystem(blocks, baseX, baseZ, seed) {
     const random = mulberry32(seed);
     let removed = 0;
 
-    // Shaft positions from 2D noise intersection
     const x = baseX + random() * 16;
     const z = baseZ + random() * 16;
     const topY = 80 + random() * 120;
@@ -242,7 +195,6 @@ export class CaveCarver {
     removed += carveShaft(blocks, x, z, topY, bottomY, radius,
       (bx, by, bz) => by < -60 || by > 300);
 
-    // Side tunnels at intervals
     const intervals = Math.floor((topY - bottomY) / 30);
     for (let i = 1; i < intervals; i++) {
       const y = bottomY + i * 30;

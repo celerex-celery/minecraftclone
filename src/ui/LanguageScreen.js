@@ -1,17 +1,8 @@
-/**
- * The Language screen.
- *
- * Opened from the Language row in Options, exactly like the real game: a
- * standalone panel with a scrollable list of every language file. Picking one
- * switches immediately and the whole UI re-renders, so you can read the menu in
- * the language you just chose.
- */
-
 import { lang, LANGUAGES, t } from './Lang.js';
 import { COLORS } from './PixelFont.js';
 
 export class LanguageScreen {
-  /** @param {import('../core/Game.js').Game} game */
+
   constructor(game) {
     this.game = game;
     this.root = document.getElementById('language-screen');
@@ -22,7 +13,6 @@ export class LanguageScreen {
 
   }
 
-  /** Re-render after the language changes, so the list stays in sync. */
   refresh() {
     this.listEl.textContent = '';
     this.titleEl.textContent = '';
@@ -55,8 +45,7 @@ export class LanguageScreen {
         await lang.load(l.code);
         this.game.settings.language = l.code;
         this.game.applySettings();
-        // lang.onChange already re-rendered the options panel; keep the
-        // highlighted entry in step too
+
         this.refresh();
       });
 
@@ -64,12 +53,8 @@ export class LanguageScreen {
     }
   }
 
-  /**
-   * Show the language screen. It is a genuinely separate screen, so whatever
-   * opened it is hidden rather than covered up.
-   */
   show() {
-    // remember where we came from so Done goes back there
+
     this.returnToOptions = this.game.screens.options.isOpen;
     if (this.returnToOptions) this.game.screens.options.hide();
 
@@ -78,7 +63,6 @@ export class LanguageScreen {
     this.root.classList.remove('hidden');
   }
 
-  /** Hide, and go back to the options screen when we came from there. */
   hide() {
     this.isOpen = false;
     this.root.classList.add('hidden');

@@ -1,35 +1,9 @@
-/**
- * Entity shadows.
- *
- * Vanilla does not have real shadows: it draws a flat, soft, dark quad on the
- * ground under every entity, sized to the entity's width, and fades it out
- * completely by sixteen blocks from the camera
- * (ShadowFeatureRenderer, EntityRenderer.renderShadow).
- *
- * That flat quad is a big part of why a Minecraft screenshot reads as a
- * Minecraft screenshot. Without it, a mob standing on a lit floor looks pasted
- * on - it has no contact with the ground at all, and the eye reads the missing
- * contact shadow as a rendering fault even when it cannot say why.
- *
- * The shadows are drawn as one instanced mesh: every caster is a quad on the
- * ground, and the whole lot is a single draw call.
- */
-
 import * as THREE from 'three';
 
-/** How many shadows can be drawn at once. */
 const MAX_SHADOWS = 128;
 
-/** The distance at which a shadow has faded out completely, in blocks. */
 const FADE_DISTANCE = 16;
 
-/**
- * The shadow texture: a soft-edged disc, black, fading to nothing at the rim.
- *
- * Vanilla ships this as textures/misc/shadow.png; the asset pack here does not
- * carry it, so it is drawn instead. The shape is what matters - a hard-edged
- * square reads as a hole in the floor.
- */
 function makeShadowTexture() {
   const size = 64;
   const canvas = document.createElement('canvas');
@@ -51,7 +25,7 @@ function makeShadowTexture() {
   return tex;
 }
 
-const SHADOW_VERT = /* glsl */`
+const SHADOW_VERT =  `
   attribute float aFade;
   varying float vFade;
   varying vec2 vUv;
@@ -66,7 +40,7 @@ const SHADOW_VERT = /* glsl */`
   }
 `;
 
-const SHADOW_FRAG = /* glsl */`
+const SHADOW_FRAG =  `
   uniform sampler2D map;
   uniform vec3 uColor;
   varying float vFade;
@@ -84,8 +58,7 @@ const SHADOW_FRAG = /* glsl */`
 export class EntityShadows {
   constructor(scene) {
     const geo = new THREE.PlaneGeometry(1, 1);
-    // the quad lies on the ground, so its scale is the entity's width in both
-    // horizontal directions
+
     geo.rotateX(-Math.PI / 2);
 
     this.fade = new THREE.InstancedBufferAttribute(new Float32Array(MAX_SHADOWS), 1);
@@ -116,13 +89,6 @@ export class EntityShadows {
     this._dummy = new THREE.Object3D();
   }
 
-  /**
-   * Place the shadows for this frame.
-   *
-   * @param {Array<{x:number,y:number,z:number,width:number}>} casters
-   * @param {THREE.Vector3} cameraPos
-   * @param {object} world - used to find the ground under each caster
-   */
   update(casters, cameraPos, world) {
     const dummy = this._dummy;
     let n = 0;
@@ -132,7 +98,7 @@ export class EntityShadows {
       const dz = c.z - cameraPos.z;
       const distSq = dx * dx + dz * dz;
       if (distSq > FADE_DISTANCE * FADE_DISTANCE) continue;
-      // vanilla fades the shadow out linearly over the last sixteen blocks
+
       const fade = 1 - distSq / (FADE_DISTANCE * FADE_DISTANCE);
 
       const groundY = this.groundY(world, c.x, c.y, c.z);
@@ -151,12 +117,6 @@ export class EntityShadows {
     this.fade.needsUpdate = true;
   }
 
-  /**
-   * The top of the ground the entity is standing on.
-   *
-   * @returns {number|null} the block height the shadow should sit on, or null
-   *   if there is no ground under the entity.
-   */
   groundY(world, x, y, z) {
     if (!world) return null;
     const bx = Math.floor(x);

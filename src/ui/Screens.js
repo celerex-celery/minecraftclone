@@ -1,11 +1,3 @@
-/**
- * Front-end screens: title, pause, death, options and the language screen.
- *
- * Each screen is a thin controller over the static markup in index.html; all
- * label text is rendered with the Minecraft bitmap font and resolved through
- * the JSON language files.
- */
-
 import { DEFAULT_BINDS, KEYBINDS, holderOf } from '../core/Config.js';
 import { keyLabel } from '../core/Input.js';
 import { COLORS } from './PixelFont.js';
@@ -16,10 +8,6 @@ import { WorldListScreen, CreateWorldScreen, WorldTypeScreen } from './WorldScre
 import { EndScreen } from './EndScreen.js';
 import { LoadingScreen } from './LoadingScreen.js';
 import { playerPreviewCanvas } from './PlayerPreview.js';
-
-/* ================================================================
-   title
-   ================================================================ */
 
 export class TitleScreen {
   constructor(game) {
@@ -52,22 +40,22 @@ export class TitleScreen {
 
   _changePlayerName() {
     const current = this.game.settings.playerName || 'Player';
-    // Electron doesn't support prompt(), use a custom input dialog
+
     const input = document.createElement('input');
     input.type = 'text';
     input.maxLength = 16;
     input.value = current;
     input.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;padding:8px 12px;font:16px Consolas,monospace;background:#1a1a1a;color:#fff;border:2px solid #7fd44a;outline:none;border-radius:4px;';
-    
+
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:999;';
-    
+
     const cleanup = () => {
       overlay.remove();
       input.remove();
       document.removeEventListener('keydown', onKeyDown);
     };
-    
+
     const onKeyDown = (e) => {
       if (e.key === 'Enter') {
         const name = input.value.trim();
@@ -81,19 +69,18 @@ export class TitleScreen {
         cleanup();
       }
     };
-    
+
     overlay.appendChild(input);
     document.body.appendChild(overlay);
     document.body.appendChild(input);
     input.focus();
     input.select();
     document.addEventListener('keydown', onKeyDown);
-    
+
     overlay.addEventListener('click', cleanup);
     input.addEventListener('click', (e) => e.stopPropagation());
   }
 
-  /** Chunky two-tone logo with a hard shadow layer behind each line. */
   _buildLogo() {
     const host = document.getElementById('title-logo');
     this.logoEl = host;
@@ -127,10 +114,7 @@ export class TitleScreen {
   _rotateSplash() {
     const text = randomSplash(lang.splashes(SPLASHES));
     const f = this.game.font;
-    // The real game shrinks the splash so a long line still fits across the
-    // logo instead of trailing off into the scenery, and the same fit is done
-    // here - in half steps, because the font caches by exact scale and this
-    // is a random string out of a long list, not a bar that slides.
+
     const BASE = 2;
     let scale = BASE;
     const logoW = this.logoEl?.offsetWidth ?? 0;
@@ -171,20 +155,16 @@ export class TitleScreen {
 
   }
 
-  /** Re-render the splash for the new language. */
   onLanguageChanged() {
     this._rotateSplash();
   }
 
     show() {
       this.root.classList.remove('hidden');
-      // A fresh splash every time the menu opens, which is what the real game
-      // does - and now that the screen is laid out, it can be fitted to the
-      // logo's real width rather than to nothing.
+
       this._rotateSplash();
       this._updatePlayerName();
-      // Hide the sky so the sun, moon and stars don't show through the title
-      // screen. `setDimension` restores their visibility when a world loads.
+
       const sky = this.game.sky;
      if (sky) {
        sky.dome.visible = false;
@@ -201,10 +181,6 @@ export class TitleScreen {
      this.root.classList.add('hidden');
    }
 }
-
-/* ================================================================
-   pause
-   ================================================================ */
 
 export class PauseScreen {
   constructor(game) {
@@ -238,9 +214,7 @@ export class PauseScreen {
   }
 
   show() {
-    // the title is translated through its data-i18n hook, but the bitmap font
-    // and the scale are this screen's business: vanilla's pause title is the
-    // same size as the buttons under it, not a display heading
+
     this.game.font.set(this.title, t('menu.game'), { scale: 2, color: COLORS.white });
     this.isOpen = true;
     this.root.classList.remove('hidden');
@@ -251,10 +225,6 @@ export class PauseScreen {
     this.root.classList.add('hidden');
   }
 }
-
-/* ================================================================
-   death
-   ================================================================ */
 
 export class DeathScreen {
   constructor(game) {
@@ -280,7 +250,7 @@ export class DeathScreen {
   }
 
   show(cause) {
-    // Mob attacks use death.attack.{mob}, environmental deaths use death.cause.{cause}
+
     const attackMobs = ['zombie'];
     const isAttack = attackMobs.includes(cause);
     const key = isAttack ? `death.attack.${cause}` : `death.cause.${cause}`;
@@ -321,10 +291,6 @@ export class DeathScreen {
   }
 }
 
-/* ================================================================
-   options
-   ================================================================ */
-
 export class OptionsScreen {
   constructor(game) {
     this.game = game;
@@ -333,11 +299,7 @@ export class OptionsScreen {
     this.title = document.getElementById('options-title');
     this.grid = document.getElementById('options-grid');
     this._onClose = null;
-    /**
-     * Which settings screen is open, or null when the menu of categories is
-     * showing. The real game's options screen opens on the menu and every
-     * category is a screen of its own behind it, which is what `null` is.
-     */
+
     this.category = null;
     this._build();
     this._bind();
@@ -345,17 +307,8 @@ export class OptionsScreen {
 
   _bind() {}
 
-  /**
-   * The menu itself: one button per settings screen, laid out the way the real
-   * game lays it out - two to a row, each a full button, in the real order.
-   *
-   * A category per button rather than a tab rail on the left, because that is
-   * what the real screen is. Only video, audio, controls and gameplay are
-   * settings screens here; language is a screen of its own in the real menu
-   * too, so it joins the row of buttons rather than hiding inside one.
-   */
   _menu() {
-    // a half-finished rebind must not survive leaving its screen
+
     this.game.input.cancelCapture();
     this._repaintKeybinds = null;
     this.category = null;
@@ -383,8 +336,6 @@ export class OptionsScreen {
       grid.appendChild(b);
     }
 
-    // Language opens its own screen from here, the way it does in the real
-    // game's menu, rather than being a row on another screen.
     const langBtn = document.createElement('button');
     langBtn.className = 'mc-btn';
     this.game.font.set(langBtn, `${t('options.language')}...`, { scale: 2, color: COLORS.white });
@@ -395,7 +346,6 @@ export class OptionsScreen {
     grid.appendChild(langBtn);
   }
 
-  /** One settings screen: one row per setting, in a scrolling column. */
   _category() {
     const grid = this.grid;
     grid.textContent = '';
@@ -422,28 +372,19 @@ export class OptionsScreen {
     } else if (this.category === 'audio') {
       R('soundVolume', this._slider(0, 1, 0.05, () => s.volume, (v) => { s.volume = v; }));
       R('muteAll', this._toggle(() => s.muted, (v) => { s.muted = v; }));
-      // Music, in the order the real game's audio screen puts it: a master
-      // switch, then its own volume, then the now-playing panel. The switch and
-      // the volume are separate because they are different intentions - "no
-      // music" and "music, but quieter" - and folding them into one slider means
-      // a player who mutes music cannot tell which they have set.
+
       R('music', this._toggle(() => s.musicEnabled ?? true, (v) => { s.musicEnabled = v; }));
       R('musicVolume', this._slider(0, 1, 0.05, () => s.musicVolume ?? 0.45, (v) => { s.musicVolume = v; }));
       R('musicToasts', this._toggle(() => s.musicToasts ?? true, (v) => { s.musicToasts = v; }));
-      // and the one ambient that is still on, so a player who wants the game
-      // silent can find it here rather than hunting a config
+
       R('caveAmbience', this._toggle(() => s.caveAmbience ?? false, (v) => { s.caveAmbience = v; }));
     } else if (this.category === 'gameplay') {
       R('sensitivity', this._slider(1, 15, 0.5, () => s.sensitivity, (v) => { s.sensitivity = v; }));
       R('waila', this._toggle(() => s.waila !== false, (v) => { s.waila = v; }));
-      // Sprinting and sneaking as latches rather than holds. Both are off by
-      // default, which is how the game has always behaved.
+
       R('toggleSprint', this._toggle(() => s.toggleSprint !== false, (v) => { s.toggleSprint = v; }));
       R('toggleSneak', this._toggle(() => s.toggleSneak !== false, (v) => { s.toggleSneak = v; }));
-      // No second row for the debug overlay. There used to be a "showDebug"
-      // toggle here written to `s.showFps` - the same field as the frame rate
-      // option on the video screen - so the two rows fought over one setting and
-      // flipping either one silently moved the other.
+
     } else {
       this._buildControls();
     }
@@ -456,8 +397,7 @@ export class OptionsScreen {
 
   open(onClose) {
     this._onClose = onClose;
-    // Opening always lands on the menu of categories, whatever category was
-    // last looked at - the same screen the real game opens on.
+
     this.category = null;
     this._build();
     this.isOpen = true;
@@ -470,7 +410,6 @@ export class OptionsScreen {
     this.root.classList.add('hidden');
   }
 
-  /** Re-show after returning from a sub screen, keeping the chosen category. */
   show() {
     this._build();
     this.isOpen = true;
@@ -482,7 +421,7 @@ export class OptionsScreen {
     row.className = 'option-row';
     const label = document.createElement('div');
     label.className = 'opt-name';
-    // the options panel is dark, so every label is white
+
     this.game.font.set(label, name, { scale: 2, color: COLORS.white });
     row.appendChild(label);
     const wrap = document.createElement('div');
@@ -533,7 +472,6 @@ export class OptionsScreen {
     return btn;
   }
 
-  /** Cycles through a list of labelled values. */
   _cycle(get, set, labels) {
     const btn = document.createElement('button');
     btn.className = 'mc-btn small mc-toggle';
@@ -550,15 +488,6 @@ export class OptionsScreen {
     return btn;
   }
 
-  /* -------------------------------------------------- controls */
-
-  /**
-   * Write a binding into the live table and into the saved settings.
-   *
-   * If the key is already spoken for, the other action is unbound first - the
-   * same thing the real game does, and the only behaviour that guarantees two
-   * actions never share a key.
-   */
   _applyBind(action, code) {
     const game = this.game;
     const binds = game.input.binds;
@@ -573,7 +502,6 @@ export class OptionsScreen {
     game.queueSettingsSave();
   }
 
-  /** The Controls tab: one row per action, click a key to rebind it. */
   _buildControls() {
     const game = this.game;
     const scroll = document.createElement('div');
@@ -584,9 +512,8 @@ export class OptionsScreen {
     list.className = 'keybind-list';
     scroll.appendChild(list);
 
-    /** The button currently waiting for a key, so only one ever listens. */
     let listening = null;
-    /** @type {Array<() => void>} one repaint per row */
+
     const repaints = [];
 
     const stopListening = () => {
@@ -625,7 +552,7 @@ export class OptionsScreen {
       paint();
 
       key.addEventListener('click', () => {
-        if (mouse) return;              // attack / use item are fixed to the mouse
+        if (mouse) return;
         game.audio.click();
         if (listening === key) {
           stopListening();
@@ -634,7 +561,7 @@ export class OptionsScreen {
           listening = key;
           key.classList.add('listening');
           game.input.captureKey((code) => {
-            // null means Escape: cancel and leave the binding alone
+
             stopListening();
             key.classList.remove('listening');
             if (code) this._applyBind(action, code === 'Unbound' ? '' : code);
@@ -644,7 +571,6 @@ export class OptionsScreen {
         repaintAll();
       });
 
-      // right click resets a single row, like the real game
       key.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         if (mouse) return;
@@ -673,10 +599,6 @@ export class OptionsScreen {
     this.panel.appendChild(footer);
   }
 }
-
-/* ================================================================
-   manager
-   ================================================================ */
 
 export class ScreenManager {
   constructor(game) {

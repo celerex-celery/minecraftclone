@@ -1,37 +1,14 @@
-/**
- * Mobs - Main Entry Point
- *
- * This file now serves as the main entry point for the mob system.
- * The actual implementation has been split into separate modules:
- * - Mob.js: Individual mob instance
- * - MobAI.js: General AI behaviors
- * - EndermanAI.js: Enderman-specific AI
- * - CreeperAI.js: Creeper-specific AI
- * - ZombieAI.js: Zombie-specific AI
- * - MobPhysics.js: Physics methods
- * - Herd.js: Herd management (Mobs class)
- * - MobSpawning.js: Spawning logic
- * - MobUpdate.js: Update coordination
- * - Variants.js: Mob variant definitions
- * - ModelLoader.js: Model loading and mesh building
- *
- * Model geometry data (PARTS) remains here for now.
- */
-
 import * as THREE from 'three';
 
-// Re-export mob classes from new modules
 export { Mob } from '../mobs/Mob.js';
 export { Mobs } from '../mobs/Herd.js';
 
-// Re-export AI modules
 export { updateCreatureAI, yawToward, playerIsTempting } from '../mobs/MobAI.js';
 export { updateEndermanAI } from '../mobs/EndermanAI.js';
 export { updateCreeperAI } from '../mobs/CreeperAI.js';
 export { updateIgniterAI } from '../mobs/IgniterAI.js';
 export { updateZombieAI } from '../mobs/ZombieAI.js';
 
-// Re-export physics module
 export {
   waterSurface,
   swim,
@@ -42,7 +19,6 @@ export {
   applyVelocity,
 } from '../mobs/MobPhysics.js';
 
-// Re-export spawning utilities
 export {
   SPAWNABLE_ON,
   SPAWN_TABLE,
@@ -51,10 +27,8 @@ export {
   rayBox,
 } from '../mobs/MobSpawning.js';
 
-// Re-export variant utilities
 export { resolveVariant, listVariants } from '../mobs/Variants.js';
 
-// Model geometry data - kept here for now
 const UNIT = 1 / 16;
 
 export const PARTS = [

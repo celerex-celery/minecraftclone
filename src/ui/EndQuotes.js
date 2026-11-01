@@ -1,10 +1,3 @@
-/**
- * End credits quotes.
- *
- * These are shown during the end credits sequence when returning from the End.
- * Picked randomly and scrolled through with the credits music.
- */
-
 export const END_QUOTES = [
   'The End is only the beginning',
   'Every journey must come to an end',

@@ -1,17 +1,3 @@
-/**
- * Entry point: load every asset, build the game, show the title screen.
- *
- * This file also owns three things the real game's launcher owns, because they
- * are all about the process around the game rather than the game itself:
- *
- *  - the loading screen, including the splash text the real game shows above
- *    the progress bar,
- *  - a crash screen, so a fatal error is a report the player can read and copy
- *    rather than a line in a console they may never have open,
- *  - the WebGL context guard, which is the one browser-level failure a voxel
- *    game actually hits in normal use.
- */
-
 import { Game, STATE } from './core/Game.js';
 import { Assets, blockTextureManifest, itemTextureManifest } from './core/Assets.js';
 import { Blocks } from './world/blocks/Blocks.js';
@@ -21,9 +7,6 @@ import { randomSplash, SPLASHES } from './ui/Splashes.js';
 import { createLogger, recent } from './core/Logger.js';
 import { LoadingScreen } from './ui/LoadingScreen.js';
 
-// The source Vanilla prints for its own boot lines is `(Minecraft)`; ours is the
-// game's name, which says the same thing at a glance in a terminal mixed with
-// other processes.
 const log = createLogger('Minexel');
 
 const crashEl = document.getElementById('crash-screen');
@@ -39,8 +22,6 @@ async function boot() {
 
   log.info('Starting Minexel');
 
-  // Show the loading screen for the whole boot sequence: assets, language,
-  // settings, version. It covers the canvas so nothing half-built is visible.
   const loadingEl = document.getElementById('loading-screen');
   loadingEl?.classList.remove('hidden');
   const progressFill = document.getElementById('load-progress-fill');
@@ -62,21 +43,13 @@ async function boot() {
   window.game = game;
   log.info('Built the game');
 
-  // The font sheet has arrived by now, which is what the splash needs. Vanilla
-  // draws its splash from the same sheet the rest of the UI uses, so it cannot
-  // appear before that sheet is loaded either.
-
-  // Switch from the raw DOM updates above to the LoadingScreen class now that
-  // the game (and its font) exist.
   const loadingScreen = new LoadingScreen(game);
 
-  // load the language file before anything renders text
   loadingScreen.setProgress(0.85);
   loadingScreen.setStatus('Loading language...');
   await game.initLanguage();
   log.info('Loaded language (%s)', game.settings.language ?? 'en_us');
 
-  // restore the saved options before anything reads them
   loadingScreen.setProgress(0.9);
   loadingScreen.setStatus('Loading settings...');
   await game.loadSettings();
@@ -84,10 +57,8 @@ async function boot() {
 
   loadingScreen.hide();
 
-  // show the title screen
-  // Check if running in Electron desktop app
   if (!window.electronSaves) {
-    // Not in Electron - show warning overlay with Continue option
+
     const container = document.getElementById('viewport');
     const overlay = document.createElement('div');
     overlay.style.cssText = `
@@ -132,17 +103,16 @@ async function boot() {
       </div>
     `;
     document.body.appendChild(overlay);
-    
+
     document.getElementById('continue-btn').addEventListener('click', () => {
       overlay.remove();
-      // Ensure clean state before starting
+
       game.state = STATE.LOADING;
       game.screens.title.show();
       game.start();
       game.applySettings();
       log.info('Reached the title screen (browser mode, no saves)');
-      
-      // resume audio on first interaction (browser autoplay policy)
+
       const resume = () => {
         audio.init();
         audio.resume();
@@ -151,10 +121,10 @@ async function boot() {
       window.addEventListener('pointerdown', resume, { once: true });
       window.addEventListener('keydown', resume, { once: true });
     });
-    
+
     document.getElementById('electron-btn').addEventListener('click', () => {
       overlay.remove();
-      // Can't launch Electron from browser - show helpful instructions
+
       const msg = document.createElement('div');
       msg.style.cssText = `
         position: fixed; inset: 0; z-index: 1000;
@@ -184,16 +154,15 @@ async function boot() {
       document.body.appendChild(msg);
       document.getElementById('close-msg').addEventListener('click', () => msg.remove());
     });
-    
-    return; // Wait for user choice
+
+    return;
   }
-  
+
   game.screens.title.show();
   game.start();
   game.applySettings();
   log.info('Reached the title screen');
 
-  // resume audio on the first interaction (browser autoplay policy)
   const resume = () => {
     audio.init();
     audio.resume();
@@ -206,11 +175,6 @@ async function boot() {
   watchForStaleCode();
 }
 
-/* ================================================================
-   crash screen
-   ================================================================ */
-
-/** One report, however many errors arrive: the first is the interesting one. */
 let crashShown = false;
 let lastReport = '';
 
@@ -225,15 +189,6 @@ function reportCode() {
   return `MCVOXEL-${stamp}-${tail}`;
 }
 
-/**
- * The text behind the "copy details" button.
- *
- * It carries the things a bug report actually needs and nothing that would
- * identify the player: the game version, when it happened, which stage of boot
- * it happened in, the browser, the error with its stack, and - as Vanilla's
- * crash reports do - the tail of the log, which says what the game was doing
- * in the moments before it died.
- */
 function buildReport(err, where) {
   const lines = [];
   const version = window.game?.version;
@@ -260,21 +215,10 @@ function buildReport(err, where) {
   return lines.join('\n');
 }
 
-/**
- * Show the crash screen.
- *
- * The error is logged as an ERROR line before the screen takes over, so the
- * terminal keeps it even if the player closes the window without copying the
- * report.
- *
- * @param {unknown} err what went wrong
- * @param {string} where which stage it went wrong in
- * @param {{title?: string, sub?: string, hint?: string, dismissible?: boolean}} [opts]
- */
 function showCrash(err, where, opts = {}) {
   log.error('%s during %s', err instanceof Error ? err.message : String(err), where, err);
   if (crashShown) {
-    // keep the first report, but never lose a later one entirely
+
     lastReport += `\n\n--- also during ${where} ---\n${err instanceof Error ? err.stack || err.message : String(err)}`;
     crashReportEl.textContent = lastReport;
     return;
@@ -287,7 +231,7 @@ function showCrash(err, where, opts = {}) {
   lastReport = buildReport(err, where);
   crashReportEl.textContent = lastReport;
   crashHintEl.textContent = opts.hint ?? '';
-  // a boot failure cannot be dismissed - there is no game to go back to
+
   crashDismissEl.classList.toggle('hidden', opts.dismissible === false);
 
   if (crashEl) crashEl.classList.remove('hidden');
@@ -308,7 +252,7 @@ if (crashEl) {
         await navigator.clipboard.writeText(lastReport);
         crashHintEl.textContent = 'Details copied to the clipboard.';
       } catch {
-        // no clipboard permission: the report is selectable, so say so instead
+
         crashHintEl.textContent = 'Could not reach the clipboard - the details below can be selected and copied by hand.';
       }
     });
@@ -319,14 +263,6 @@ if (crashEl) {
   });
 }
 
-/**
- * Catch what escapes.
- *
- * An error thrown inside a `requestAnimationFrame` callback or an event
- * listener has no caller left to report it to, so without these it lands in
- * the console and the game carries on in a state nobody chose. Anything that
- * reaches here is shown instead.
- */
 function installCrashHandling() {
   window.addEventListener('error', (ev) => {
     showCrash(ev.error ?? ev.message, 'runtime', {
@@ -344,25 +280,11 @@ function installCrashHandling() {
   });
 }
 
-/* ================================================================
-   webgl context
-   ================================================================ */
-
-/**
- * Survive the GPU driver resetting underneath the game.
- *
- * A lost context is not a crash and it is not recoverable in place: three.js
- * rebuilds its state when the context comes back, but the world on the other
- * side is not the one you were standing in. So the world is written out first,
- * the frame loop is stopped so nothing throws into a dead context, and the
- * player is told what happened. If the browser restores the context on its own
- * the loop picks straight back up.
- */
 function installContextGuard(game, canvas) {
   let stopped = false;
 
   canvas.addEventListener('webglcontextlost', (ev) => {
-    // without this the browser will not attempt a restore at all
+
     ev.preventDefault();
     stopped = true;
     if (game.raf) {
@@ -395,28 +317,11 @@ function installContextGuard(game, canvas) {
   }, false);
 }
 
-/**
- * Tell the player when the tab is running code that is older than the files on
- * disk.
- *
- * This exists because of a specific, repeated trap. A tab that has been open for
- * an hour keeps running the modules it loaded an hour ago, and `no-store` on
- * every response cannot help with that - it only governs the next fetch. The
- * symptom is always the same and always confusing: an error about a property
- * that plainly exists in the file, or a feature that "does nothing", because the
- * copy in the tab predates the edit.
- *
- * So the page asks the server what it last modified and says so, loudly, when the
- * answer has moved on. A reload is all it takes, and now the reload is requested
- * rather than guessed at.
- */
 function watchForStaleCode() {
   const mine = Date.now();
   let ask = true;
   const check = async () => {
-    // A server that answers 404 has not got the route, which means it was started
-    // before the stamp existed. Stop asking rather than filling the console with a
-    // 404 every four seconds, and say once that the check is not available.
+
     if (!ask) return;
     try {
       const res = await fetch(`/__stamp?at=${Date.now()}`, { cache: 'no-store' });
@@ -434,14 +339,13 @@ function watchForStaleCode() {
       document.title = 'Minexel - RELOAD';
       log.warn('This tab is running code older than the files on disk. Nothing you changed will appear until you reload.');
     } catch {
-      // the stamp is a convenience; a server that will not answer it is fine
+
     }
   };
   const tick = () => { check(); setTimeout(tick, 4000); };
   setTimeout(tick, 4000);
 }
 
-// installed before boot so a failure inside it is reported like any other
 installCrashHandling();
 
 boot().catch((err) => {

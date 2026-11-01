@@ -1,29 +1,11 @@
-/**
- * Enderman-specific AI
- *
- * Handles enderman behavior including:
- * - Neutral/provoked states
- * - Stare detection
- * - Teleportation
- * - Water sensitivity
- * - Daylight de-aggro
- */
-
 import * as THREE from 'three';
 import { Blocks } from '../blocks/Blocks.js';
 import { TELEPORT_COOLDOWN } from './Variants.js';
 
-/**
- * The yaw that sends a bird toward `(dx, dz)`.
- */
 function yawToward(dx, dz) {
   return Math.atan2(-dx, -dz);
 }
 
-/**
- * Raycast from mob's eye position to target's eye position, checking for
- * solid blocks along the way.
- */
 function lineOfSight(mob, target, world) {
   if (!target) return false;
   const tp = target.pos || target.position;
@@ -50,9 +32,6 @@ function lineOfSight(mob, target, world) {
   return true;
 }
 
-/**
- * Check if player is looking at enderman's eyes (vanilla provoke mechanic).
- */
 function isPlayerStaring(mob, player) {
   if (!player || !player.position || !player.getLookDirection) return false;
   const pp = player.position;
@@ -74,9 +53,6 @@ function isPlayerStaring(mob, player) {
   return lineOfSight(mob, player, mob._world);
 }
 
-/**
- * Teleport to random valid position nearby.
- */
 function teleportRandomly(mob, world) {
   for (let i = 0; i < 64; i++) {
     const tx = mob.pos.x + (Math.random() * 2 - 1) * 32;
@@ -103,9 +79,6 @@ function teleportRandomly(mob, world) {
   return false;
 }
 
-/**
- * Teleport behind player when provoked.
- */
 function teleportBehindPlayer(mob, player, world) {
   const behindX = player.position.x - Math.sin(player.yaw) * 2;
   const behindZ = player.position.z - Math.cos(player.yaw) * 2;
@@ -131,9 +104,6 @@ function teleportBehindPlayer(mob, player, world) {
   teleportRandomly(mob, world);
 }
 
-/**
- * Teleport 16 blocks closer to the target.
- */
 function teleportTowardsPlayer(mob, target, world) {
   if (!target || !target.position) return false;
   const tx = target.position.x;
@@ -156,9 +126,6 @@ function teleportTowardsPlayer(mob, target, world) {
   return teleportTo(mob, xx, yy, zz, world);
 }
 
-/**
- * Teleport to an arbitrary position.
- */
 function teleportTo(mob, x, y, z, world) {
   let yy = y;
   while (yy > world.constants.MIN_Y) {
@@ -180,9 +147,6 @@ function teleportTo(mob, x, y, z, world) {
   return false;
 }
 
-/**
- * Check whether this enderman is in bright daylight with sky access.
- */
 function isInBrightDaylight(mob, world) {
   const time = world.time ?? 0;
   const dayProgress = (time / 24000) % 1;
@@ -201,9 +165,6 @@ function isInBrightDaylight(mob, world) {
   return Math.random() * 30 < (br - 0.4) * 2;
 }
 
-/**
- * Rate-limit this enderman's teleports.
- */
 function canTeleport(mob, dt) {
   mob.teleportCooldown = Math.max(0, (mob.teleportCooldown ?? 0) - dt);
   if (mob.teleportCooldown > 0) return false;
@@ -211,14 +172,10 @@ function canTeleport(mob, dt) {
   return true;
 }
 
-/**
- * Main enderman AI update.
- */
 export function updateEndermanAI(mob, dt, world, player, solid, defAt, away, dx, dz, gain, inWater, underwater) {
   const v = mob.variant;
   let speed = 0;
 
-  // Water/rain damage
   if (inWater || underwater) {
     mob.waterDamageTimer = (mob.waterDamageTimer ?? 0) + dt;
     if (mob.waterDamageTimer >= 0.5) {
@@ -242,7 +199,6 @@ export function updateEndermanAI(mob, dt, world, player, solid, defAt, away, dx,
     mob.waterDamageTimer = 0;
   }
 
-  // Creative/spectator players are ignored
   const creativePlayer = player.creative || player.spectator;
   if (creativePlayer) {
     mob.provoked = false;
@@ -254,7 +210,6 @@ export function updateEndermanAI(mob, dt, world, player, solid, defAt, away, dx,
 
   const isStaring = isPlayerStaring(mob, player) && !creativePlayer;
 
-  // Daylight de-aggro
   if (mob.provoked) {
     mob.daylightTimer = (mob.daylightTimer ?? 0) + dt;
     if (mob.daylightTimer >= 30 && isInBrightDaylight(mob, world)) {
@@ -321,7 +276,7 @@ export function updateEndermanAI(mob, dt, world, player, solid, defAt, away, dx,
       if (away < 2.0) {
         speed = 0;
         if (!lineOfSight(mob, mob.target, world)) {
-          // blocked
+
         } else if (mob.attackCooldown <= 0) {
           mob.attackCooldown = 1.0;
           mob.attackAnimTimer = 0.45;
@@ -358,7 +313,7 @@ export function updateEndermanAI(mob, dt, world, player, solid, defAt, away, dx,
       if (gain > 0) v.idle?.(gain);
     }
   } else {
-    // Neutral behavior
+
     if (mob.wanderTarget === undefined) {
       mob.wanderTarget = null;
       mob.wanderState = 'idle';

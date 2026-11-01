@@ -1,28 +1,11 @@
-/**
- * Mob Spawning
- *
- * Contains spawning-related utilities and constants:
- * - Spawnable blocks
- * - Spawn tables by biome
- * - Biome spawn lookup
- * - Baby/adult relationships
- * - Ray-box intersection for hit testing
- */
-
 import { VARIANTS } from './Variants.js';
 
-/**
- * The blocks a passive mob will stand on.
- */
 export const SPAWNABLE_ON = new Set([
   'grass_block', 'dirt', 'coarse_dirt', 'podzol', 'mycelium',
   'snow_block', 'moss_block', 'rooted_dirt',
   'end_stone',
 ]);
 
-/**
- * How the spawner rolls which animal a group is made of.
- */
 export const SPAWN_TABLE = [
   {
     biomes: ['plains', 'forest', 'savanna'],
@@ -60,9 +43,6 @@ export const SPAWN_TABLE = [
 
 let biomeSpawns = null;
 
-/**
- * The candidate animals a biome offers, as a flat weighted list.
- */
 export function biomeSpawnsFor(biome) {
   if (!biomeSpawns) {
     biomeSpawns = new Map();
@@ -82,9 +62,6 @@ export function biomeSpawnsFor(biome) {
   return biomeSpawns.get(biome) ?? [];
 }
 
-/**
- * The baby of an adult's species, if that species has one.
- */
 export function babyOf(adult) {
   for (const v of Object.values(VARIANTS)) {
     if (v.grows && v.species === adult.species) return v;
@@ -92,9 +69,6 @@ export function babyOf(adult) {
   return null;
 }
 
-/**
- * Where a ray first enters a box, or null when it misses.
- */
 export function rayBox(o, d, b) {
   const oa = [o.x, o.y, o.z];
   const da = [d.x, d.y, d.z];

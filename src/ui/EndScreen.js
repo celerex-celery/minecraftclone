@@ -1,7 +1,3 @@
-/**
- * Simple end screen - shows postcredits quote, fade-in, continue button after 3s, fade-out.
- */
-
 const POSTCREDITS_RAW = `§3"Twenty years from now you will be more disappointed by the things that you didn't do than by the ones you did do. So throw off the bowlines. Sail away from the safe harbor. Catch the trade winds in your sails. Explore. Dream. Discover." §7- Unknown`;
 
 const SECTION_COLORS = {
@@ -15,12 +11,12 @@ const SECTION_COLORS = {
 
 function parseEndText(text, playerName = 'Steve') {
   text = text.replace(/PLAYERNAME/g, playerName);
-  
+
   let currentColor = '#FFFFFF';
   let currentStyle = {};
   let buffer = '';
   const segments = [];
-  
+
   for (let i = 0; i < text.length; i++) {
     const char = text[i];
     if (char === '§' && i + 1 < text.length) {
@@ -53,11 +49,11 @@ function parseEndText(text, playerName = 'Steve') {
       buffer += char;
     }
   }
-  
+
   if (buffer) {
     segments.push({ text: buffer, color: currentColor, style: { ...currentStyle } });
   }
-  
+
   return segments;
 }
 
@@ -69,7 +65,7 @@ export class EndScreen {
     this.content = document.getElementById('end-credits-quotes');
     this._onClose = null;
     this._animFrame = null;
-    this._phase = 0; // 0=fade-in, 1=wait, 2=show-button, 3=fade-out
+    this._phase = 0;
   }
 
   show(playerName = 'Steve', onClose) {
@@ -80,7 +76,6 @@ export class EndScreen {
     this.root.style.opacity = '0';
     this.content.innerHTML = '';
 
-    // Parse and render
     const segments = parseEndText(POSTCREDITS_RAW, playerName);
     for (const seg of segments) {
       const span = document.createElement('span');
@@ -94,22 +89,20 @@ export class EndScreen {
       this.content.appendChild(span);
     }
 
-    // Start credits music
     this.game.audio.playMusic('endcredits', true);
 
-    // Animation
     this._startTime = performance.now();
     this._animate();
   }
 
   _animate() {
     if (!this.isOpen) return;
-    
+
     const now = performance.now();
     const elapsed = (now - this._startTime) / 1000;
 
     if (this._phase === 0) {
-      // Fade in (2 seconds)
+
       const progress = Math.min(elapsed / 2, 1);
       this.root.style.opacity = progress;
       if (progress >= 1) {
@@ -117,13 +110,13 @@ export class EndScreen {
         this._phaseStartTime = now;
       }
     } else if (this._phase === 1) {
-      // Wait 3 seconds, then show button
+
       if (elapsed - (this._phaseStartTime - this._startTime) / 1000 >= 3) {
         this._phase = 2;
         this._showContinueButton();
       }
     } else if (this._phase === 3) {
-      // Fade out (1 second)
+
       const fadeElapsed = (now - this._fadeStartTime) / 1000;
       const progress = Math.min(fadeElapsed / 1, 1);
       this.root.style.opacity = 1 - progress;
@@ -148,13 +141,13 @@ export class EndScreen {
     this._continueBtn.style.zIndex = '1000';
     this._continueBtn.style.opacity = '0';
     this._continueBtn.style.transition = 'opacity 0.5s';
-    // Direct click handler on the button itself
+
     this._continueBtn.addEventListener('click', () => {
       this.game.audio.click();
       this._startFadeOut();
     });
     this.root.appendChild(this._continueBtn);
-    // Fade in button
+
     requestAnimationFrame(() => {
       this._continueBtn.style.opacity = '1';
     });

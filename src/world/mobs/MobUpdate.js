@@ -1,10 +1,3 @@
-/**
- * Mob Update Coordination
- *
- * This module coordinates all the AI and physics modules to provide
- * the main update() method for individual mobs.
- */
-
 import * as THREE from 'three';
 import { Blocks } from '../blocks/Blocks.js';
 import { CONFIG } from '../../core/Config.js';
@@ -22,17 +15,12 @@ const GRAVITY = 16;
 const TURN = 1.1;
 const WALK = 0.05;
 
-/**
- * Main update method for a mob.
- * This is called from the herd's update loop.
- */
 export function updateMob(mob, dt, world, player, drop, adults) {
   if (mob.dead) {
     if (mob.dying) updateDeath(mob, dt);
     return;
   }
 
-  // Check if GLB model finished loading and swap from fallback
   if (!mob.usingModel) {
     const state = getModelState(mob.variant.id);
     if (state.template) {
@@ -65,7 +53,6 @@ export function updateMob(mob, dt, world, player, drop, adults) {
   mob.underwater = head.liquid && head.name === 'water';
   mob._surfaceY = inWater ? waterSurface(mob, defAt) : null;
 
-  // Fire damage
   if (mob.fire > 0) {
     mob.fire -= dt;
     mob.fireTime += dt;
@@ -104,19 +91,16 @@ export function updateMob(mob, dt, world, player, drop, adults) {
     }
   }
 
-  // Water damage for water-sensitive mobs
   if (mob.variant.waterSensitive && inWater) {
     mob.hurt(1, null, 0);
   }
 
-// Calculate hearing gain
   const ear = player.eyePosition ?? player.position;
   const gain = mob.hearingGain(ear, mob.variant.range);
 
   const solid = (x, y, z) => world.isSolid(Math.floor(x), Math.floor(y), Math.floor(z));
   mob._world = world;
 
-  // Determine behavior
   const dx = player.position.x - mob.pos.x;
   const dz = player.position.z - mob.pos.z;
   const away = Math.hypot(dx, dz);
@@ -130,7 +114,7 @@ export function updateMob(mob, dt, world, player, drop, adults) {
     speed = v.speed * PANIC_SPEED;
     facing = yawToward(-dx, -dz);
   } else {
-    // AI selection based on mob type
+
     if (v.id === 'enderman') {
       speed = updateEndermanAI(mob, dt, world, player, solid, defAt, away, dx, dz, gain, inWater, mob.underwater);
     } else if (v.id === 'creeper') {
@@ -138,7 +122,7 @@ export function updateMob(mob, dt, world, player, drop, adults) {
     } else if (v.id === 'igniter') {
       speed = updateIgniterAI(mob, dt, world, player, away, dx, dz, gain);
     } else if (v.spawn?.category === CATEGORY.monster) {
-      // Generic monster AI
+
       const creativePlayer = mob.game?.player?.creative || mob.game?.player?.spectator;
       if (!creativePlayer) {
         const seesPlayer = away < (v.followRange ?? 16) && canSeeEntity(mob, player, world);
@@ -162,25 +146,19 @@ export function updateMob(mob, dt, world, player, drop, adults) {
 
   if (facing !== null && !mob.resting) mob.yaw = facing;
 
-  // Water slows movement
   if (inWater) speed *= CONFIG.MOB.SWIM_SPEED_FACTOR;
 
-  // Apply velocity-based movement
   applyVelocity(mob, dt, speed);
 
   const stepX = mob.vel.x * dt;
   const stepZ = mob.vel.z * dt;
 
-  // Apply movement with collision
   applyMovement(mob, dt, stepX, stepZ, solid, world);
 
-  // Apply gravity
   applyGravity(mob, dt, solid, inWater);
 
-  // Check for falling out of world
   if (mob.pos.y < world.constants.MIN_Y + 1) mob.kill();
 
-  // Suffocation check
   const headY = Math.floor(mob.pos.y + mob.variant.height * 0.8);
   const bodyY = Math.floor(mob.pos.y + 0.2);
   const headBlock = defAt(Math.floor(mob.pos.x), headY, Math.floor(mob.pos.z));
@@ -195,7 +173,6 @@ export function updateMob(mob, dt, world, player, drop, adults) {
     mob._suffocateTimer = 0;
   }
 
-  // Egg laying
   if (v.lays) {
     mob.eggTimer -= dt;
     if (mob.eggTimer <= 0) {
@@ -204,21 +181,16 @@ export function updateMob(mob, dt, world, player, drop, adults) {
     }
   }
 
-  // Growth (baby to adult)
   if (v.grows) {
     mob.grow -= dt;
     if (mob.grow <= 0) growUp(mob);
   }
 
-  // Animation and sounds
   updateAnimation(mob, dt, speed, gain, inWater);
 
   updateHurtFlash(mob);
 }
 
-/**
- * Check if this mob can see an entity.
- */
 function canSeeEntity(mob, target, world) {
   if (!target) return false;
   const tp = target.pos || target.position;
@@ -238,9 +210,6 @@ function canSeeEntity(mob, target, world) {
   return lightLevel > 0.5;
 }
 
-/**
- * Raycast for line of sight.
- */
 function lineOfSight(mob, target, world) {
   if (!target) return false;
   const tp = target.pos || target.position;
@@ -267,9 +236,6 @@ function lineOfSight(mob, target, world) {
   return true;
 }
 
-/**
- * Lay an egg if conditions are met.
- */
 function tryLayEgg(mob, world, drop, gain = 1) {
   if (!drop) return false;
   const x = Math.floor(mob.pos.x);
@@ -287,9 +253,6 @@ function tryLayEgg(mob, world, drop, gain = 1) {
   return true;
 }
 
-/**
- * Grow from baby to adult.
- */
 function growUp(mob) {
   const adult = VARIANTS[mob.variant.species];
   mob.variant = adult;
@@ -306,9 +269,6 @@ function growUp(mob) {
   if (parent) parent.add(mob.mesh.group);
 }
 
-/**
- * Update mob animation.
- */
 function updateAnimation(mob, dt, speed, gain, inWater) {
   const v = mob.variant;
   const moving = speed > 0.01;
@@ -348,7 +308,6 @@ function updateAnimation(mob, dt, speed, gain, inWater) {
     return;
   }
 
-  // Chicken/pig animation
   mob.flap += dt * (moving ? 15 : 3.5);
   const swing = moving ? Math.sin(mob.flap) : 0;
   const bob = moving ? Math.abs(Math.sin(mob.flap)) * 0.035 : 0;
@@ -380,9 +339,6 @@ function updateAnimation(mob, dt, speed, gain, inWater) {
   }
 }
 
-/**
- * Update hurt flash effect.
- */
 function updateHurtFlash(mob) {
   const hurtFlashing = mob.hurtFlash > 0;
   const primedFlashing = mob.primedFlash > 0;
@@ -454,9 +410,6 @@ function flashSourceMap(group) {
   return map;
 }
 
-/**
- * Death animation.
- */
 function updateDeath(mob, dt) {
   mob.deathTimer -= dt;
   if (mob.deathTimer <= 0) {

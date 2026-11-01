@@ -1,9 +1,3 @@
-/**
- * Model Loader and Mesh Building
- *
- * Handles loading GLTF models and building fallback meshes from box/quad definitions.
- */
-
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Blocks } from '../blocks/Blocks.js';
@@ -11,9 +5,6 @@ import { Blocks } from '../blocks/Blocks.js';
 const UNIT = 1 / 16;
 const MAX_Y = 255;
 
-/**
- * The six texture rectangles of a box laid out the way Minecraft unwraps one.
- */
 function standardRects([w, h, d], [u, v]) {
   return {
     'y+': [u + d, v, w, d],
@@ -29,9 +20,6 @@ const SHADE = { 'y+': 0.95, 'y-': 0.5, 'x+': 0.62, 'z-': 0.82, 'x-': 0.62, 'z+':
 const A = 'A';
 const B = 'B';
 
-/**
- * One box, with each face's texture rectangle given explicitly.
- */
 function boxGeometryFromRects([w, h, d], rects, sheet) {
   const faces = [
     { k: 'y+', t: A, c: [[0, 1, 0], [0, 1, 1], [1, 1, 1], [1, 1, 0]] },
@@ -111,23 +99,17 @@ function quadGeometry(quads, sheet) {
   return g;
 }
 
-/**
- * Model state per variant
- */
 export const MODELS = {};
 
-/**
- * Start loading a variant's model file.
- */
 export function loadMobModel(variant) {
   if (MODELS[variant.id]?.template || MODELS[variant.id]?.loading || MODELS[variant.id]?.failed) return;
   if (!variant.model) {
     MODELS[variant.id] = { template: null, loading: false, failed: true, material: null };
     return;
   }
-  
+
   MODELS[variant.id] = { template: null, loading: true, failed: false, material: null };
-  
+
   const loader = new GLTFLoader();
   loader.load(variant.model, (gltf) => {
     try {
@@ -170,21 +152,18 @@ export function isModelFailed(variantId) {
   return MODELS[variantId]?.failed ?? false;
 }
 
-/**
- * Skin state per variant
- */
 const skins = {};
 
 export function mobMaterial(variant) {
   const state = getSkinState(variant.id);
   if (state.material) return state.material;
-  
+
   state.material = new THREE.MeshBasicMaterial({
     vertexColors: true,
     transparent: false,
     alphaTest: 0.5,
   });
-  
+
   const tex = mobSkin(variant);
   if (tex) state.material.map = tex;
   return state.material;
@@ -200,10 +179,10 @@ function getSkinState(variantId) {
 export function mobSkin(variant) {
   const state = getSkinState(variant.id);
   if (state.texture || state.loading || state.failed) return state.texture;
-  
+
   if (typeof Image === 'undefined') return null;
   state.loading = true;
-  
+
   const img = new Image();
   img.onload = () => {
     const tex = new THREE.Texture(img);
@@ -214,7 +193,7 @@ export function mobSkin(variant) {
     tex.needsUpdate = true;
     state.texture = tex;
     state.loading = false;
-    
+
     if (state.material) {
       state.material.map = tex;
       state.material.needsUpdate = true;
@@ -225,17 +204,14 @@ export function mobSkin(variant) {
   return null;
 }
 
-/**
- * Build the fallback mob mesh from variant's geometry table
- */
 export function buildFallbackMob(variant) {
   const mat = createMobMaterial(variant);
   const group = new THREE.Group();
   const parts = {};
-  
+
   for (const p of variant.parts ?? []) {
     let mesh, joint;
-    
+
     if (variant.boxes) {
       const geo = p.rects
         ? boxGeometryFromRects(p.size, p.rects, variant.sheet)
@@ -246,7 +222,7 @@ export function buildFallbackMob(variant) {
       mesh = new THREE.Mesh(quadGeometry(p.quads, variant.sheet), mat);
       joint = p.joint ?? p.at;
     }
-    
+
     if (variant.legs.includes(p.name) || variant.wings.includes(p.name)) {
       const pivot = new THREE.Object3D();
       pivot.position.set(joint[0] * (1/16), joint[1] * (1/16), joint[2] * (1/16));
@@ -264,7 +240,7 @@ export function buildFallbackMob(variant) {
       parts[p.name] = mesh;
     }
   }
-  
+
   return { group, parts };
 }
 
@@ -277,17 +253,14 @@ function createMobMaterial(variant) {
   return mat;
 }
 
-/**
- * Take a loaded glTF scene apart into something this world can use.
- */
 export function prepareModel(gltf, variant) {
   const state = getModelState(variant.id);
-  
+
   let map = null;
   gltf.scene.traverse((o) => {
     if (!map && o.isMesh && o.material?.map) map = o.material.map;
   });
-  
+
   if (map) {
     map.magFilter = THREE.NearestFilter;
     map.minFilter = THREE.NearestFilter;
@@ -295,38 +268,38 @@ export function prepareModel(gltf, variant) {
     map.colorSpace = THREE.SRGBColorSpace;
     map.needsUpdate = true;
   }
-  
+
   state.material = new THREE.MeshLambertMaterial({
     map,
     vertexColors: true,
     transparent: false,
     alphaTest: 0.5,
   });
-  
+
   const meshes = [];
   gltf.scene.traverse((o) => { if (o.isMesh) meshes.push(o); });
-  
+
   for (const m of meshes) {
     bakeFaceShading(m.geometry);
     m.geometry.deleteAttribute('JOINTS_0');
     m.geometry.deleteAttribute('WEIGHTS_0');
-    
+
     if (!m.isSkinnedMesh) {
       m.material = state.material;
       continue;
     }
-    
+
     const plain = new THREE.Mesh(m.geometry, state.material);
     plain.name = m.name;
     plain.position.copy(m.position);
     plain.quaternion.copy(m.quaternion);
     plain.scale.copy(m.scale);
     plain.visible = m.visible;
-    
+
     const siblings = m.parent.children;
     siblings[siblings.indexOf(m)] = plain;
   }
-  
+
   return gltf.scene;
 }
 
@@ -334,7 +307,7 @@ function bakeFaceShading(geometry) {
   if (geometry.getAttribute('color')) return geometry;
   const nrm = geometry.getAttribute('normal');
   if (!nrm) return geometry;
-  
+
   const colour = new Float32Array(nrm.count * 3);
   for (let i = 0; i < nrm.count; i++) {
     const s = shadeForNormal(nrm.getX(i), nrm.getY(i), nrm.getZ(i));
@@ -346,23 +319,17 @@ function bakeFaceShading(geometry) {
   return geometry;
 }
 
-/**
- * A fresh instance of the loaded model, with its pivots indexed by name.
- */
 export function instantiateModel(template) {
   const group = template.clone(true);
   const parts = {};
-  
+
   group.traverse((o) => {
     if (o.name && !parts[o.name]) parts[o.name] = o;
   });
-  
+
   return { group, parts };
 }
 
-/**
- * Build the complete mob mesh (loads model if available, otherwise fallback)
- */
 export function buildMobMesh(variant) {
   loadMobModel(variant);
   const state = getModelState(variant.id);

@@ -1,19 +1,7 @@
-/**
- * Geometry Pool - reuses BufferGeometries to avoid GC pressure.
- *
- * Instead of creating new geometries and disposing old ones on every chunk
- * rebuild, we keep a pool of pre-allocated geometries and swap their
- * attribute buffers. This dramatically reduces allocation and deallocation
- * overhead.
- */
-
 import * as THREE from 'three';
 
 const MAX_GEOMETRIES_PER_TYPE = 16;
-/* Attribute arrays are grown to the actual vertex count of the chunk being
-   meshed instead of a fixed maximum, so a small chunk no longer carries a
-   65536-vertex buffer (~3.5 MB) it does not use. The normal attribute is
-   dropped entirely: nothing writes it and no material reads it. */
+
 const INITIAL_VERTICES = 256;
 const INITIAL_INDICES = 512;
 
@@ -69,14 +57,6 @@ export class GeometryPool {
     }
   }
 
-  /**
-   * Grow `geo`'s attribute buffers to fit `vertexCount` vertices and
-   * `indexCount` indices. three.js does not allow resizing a BufferAttribute's
-   * array after it has been rendered, so when the current buffers are too small
-   * we replace the attributes entirely via setAttribute (which is supported).
-   * Arrays only ever grow, so a pooled geometry keeps the largest size it has
-   * been asked to hold rather than reallocating on every chunk rebuild.
-   */
   fit(geo, vertexCount, indexCount) {
     const pos = geo.getAttribute('position');
     const index = geo.getIndex();

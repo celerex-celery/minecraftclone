@@ -1,26 +1,10 @@
-/**
- * Creeper-specific AI
- *
- * Handles creeper behavior including:
- * - Stalking the player
- * - Lighting and detonating the fuse
- * - Explosion mechanics
- */
-
 import { Blocks } from '../blocks/Blocks.js';
 import { audio } from '../../audio/SoundEngine.js';
 
-/**
- * The yaw that sends a bird toward `(dx, dz)`.
- */
 function yawToward(dx, dz) {
   return Math.atan2(-dx, -dz);
 }
 
-/**
- * Raycast from mob's eye position to target's eye position, checking for
- * solid blocks along the way.
- */
 function lineOfSight(mob, target, world) {
   if (!target) return false;
   const tp = target.pos || target.position;
@@ -47,14 +31,10 @@ function lineOfSight(mob, target, world) {
   return true;
 }
 
-/**
- * Main creeper AI update.
- */
 export function updateCreeperAI(mob, dt, world, player, away, dx, dz, gain) {
   const v = mob.variant;
   let speed = 0;
 
-  // Creepers ignore creative/spectator players
   const creativePlayer = mob.game?.player?.creative || mob.game?.player?.spectator;
   if (creativePlayer) {
     speed = 0;
@@ -71,7 +51,7 @@ export function updateCreeperAI(mob, dt, world, player, away, dx, dz, gain) {
         mob.primedFlash = 0;
         mob.exploded = true;
         if (mob.game?.explode) mob.game.explode(mob.pos, v.explosionPower);
-        // Fire Creeper spawns fire on explosion
+
         if (v.id === 'firecreeper' && mob.game?.world) {
           const world = mob.game.world;
           const x = Math.floor(mob.pos.x);
@@ -99,7 +79,7 @@ export function updateCreeperAI(mob, dt, world, player, away, dx, dz, gain) {
         speed = 0;
       }
     } else {
-      // Defuse when player backs off
+
       if (mob.primed && away > 7.0) {
         mob.primed = false;
         mob.fuseTimer = 0;

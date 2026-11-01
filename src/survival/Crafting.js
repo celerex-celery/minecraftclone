@@ -1,20 +1,7 @@
-/**
- * Crafting grid matching.
- *
- * `grid` is a flat array of stacks (or null) in row-major order. Shaped
- * recipes are matched after trimming empty rows/columns so they can be placed
- * anywhere in the matrix.
- */
-
 import { RECIPES } from './Recipes.js';
 import { Items } from '../world/blocks/Items.js';
 import { makeStack } from './Inventory.js';
 
-/**
- * @param {number} size 2 or 3
- * @param {Array<object|null>} grid
- * @returns {{name:string,count:number}|null} the crafting result
- */
 export function craftingResult(size, grid) {
   for (const recipe of RECIPES) {
     if (recipe.type === 'shaped') {
@@ -28,7 +15,6 @@ export function craftingResult(size, grid) {
   return null;
 }
 
-/** Index list of occupied cells, trimmed to the recipe's bounding box. */
 function matchShaped(recipe, size, grid) {
   const pat = recipe.pattern;
   const ph = pat.length;
@@ -87,7 +73,6 @@ function matchShapeless(recipe, grid) {
   return true;
 }
 
-/** Consume one of every ingredient in the grid. */
 export function consumeCraftingGrid(grid) {
   for (let i = 0; i < grid.length; i++) {
     const s = grid[i];
@@ -97,14 +82,13 @@ export function consumeCraftingGrid(grid) {
   }
 }
 
-/** Can `stack` be split into the crafting grid (shift-click quick move)? */
 export function quickMoveToGrid(inv, grid, size) {
   const s = inv.held;
   if (!s) return false;
   if (!Items.get(s.name)) return false;
 
   if (size === 2) {
-    // 2x2 recipes only
+
     const r = craftingResult(2, grid);
     if (!r || r.name !== s.name) return false;
   }

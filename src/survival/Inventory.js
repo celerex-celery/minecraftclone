@@ -1,11 +1,3 @@
-/**
- * Player inventory: 9 hotbar slots, 27 main slots and 4 armour slots.
- *
- * A stack is `{ name, count, dur }` where `dur` only exists for tools and
- * armour. Everything is a plain object so the whole inventory can be
- * serialised straight into the save file.
- */
-
 import { Items } from '../world/blocks/Items.js';
 import { Blocks } from '../world/blocks/Blocks.js';
 
@@ -16,15 +8,13 @@ export const ARMOUR_ORDER = ['helmet', 'chestplate', 'leggings', 'boots'];
 
 export class Inventory {
   constructor() {
-    /** @type {Array<{name:string,count:number,dur?:number}|null>} */
+
     this.slots = new Array(HOTBAR_SIZE + MAIN_SIZE).fill(null);
-    /** @type {Array<object|null>} indexed like ARMOUR_ORDER */
+
     this.armour = new Array(ARMOUR_SIZE).fill(null);
     this.selected = 0;
     this.version = 0;
   }
-
-  /* --------------------------------------------------- accessors */
 
   get held() {
     return this.slots[this.selected];
@@ -36,15 +26,11 @@ export class Inventory {
 
   touch() { this.version++; }
 
-  /* --------------------------------------------------- mutations */
-
-  /** @returns {number} how many items could not fit */
   add(name, count = 1) {
     const def = Items.get(name);
     if (!def) return count;
     const max = def.stack;
 
-    // top up existing stacks first, hotbar before main like the real game
     if (max > 1) {
       for (let pass = 0; pass < 2; pass++) {
         const range = pass === 0 ? [0, HOTBAR_SIZE] : [HOTBAR_SIZE, this.slots.length];
@@ -77,7 +63,6 @@ export class Inventory {
     return count;
   }
 
-  /** @returns {number} how many were actually removed */
   remove(name, count = 1) {
     let left = count;
     for (let i = 0; i < this.slots.length && left > 0; i++) {
@@ -102,7 +87,6 @@ export class Inventory {
     return this.count(name) >= count;
   }
 
-  /** Consume one of the held stack (tools lose durability). */
   consumeHeld(amount = 1) {
     const s = this.held;
     if (!s) return;
@@ -134,7 +118,6 @@ export class Inventory {
     return true;
   }
 
-  /** Armour points currently worn, 0..20. */
   armourPoints() {
     let p = 0;
     for (const s of this.armour) {
@@ -145,17 +128,6 @@ export class Inventory {
     return p;
   }
 
-  /**
-   * Wear the armour in a given slot, or take off what is worn there.
-   *
-   * This is the one-click version of dragging a helmet onto the armour column,
-   * and it is deliberately a swap rather than a move: clicking a second helmet
-   * while one is worn has to put the old one back in your inventory rather than
-   * deleting it, and the durability bar has to go with the piece that was worn.
-   *
-   * @param {number} index a slot in `this.slots`, hotbar included
-   * @returns {boolean} whether the slot held something wearable
-   */
   equipArmour(index) {
     const s = this.slots[index];
     if (!s) return false;
@@ -167,14 +139,11 @@ export class Inventory {
 
     const worn = this.armour[slot];
     this.armour[slot] = { ...s };
-    // the worn piece comes off into the slot the new one was taken from, so a
-    // swap is lossless even when the two are different tiers
+
     this.slots[index] = worn ? { ...worn } : null;
     this.touch();
     return true;
   }
-
-  /* --------------------------------------------------- serialise */
 
   toJSON() {
     return {
@@ -195,10 +164,6 @@ export class Inventory {
   }
 }
 
-/* ================================================================
-   helper for building stacks
-   ================================================================ */
-
 export function makeStack(name, count = 1) {
   const def = Items.get(name);
   if (!def) return null;
@@ -208,7 +173,6 @@ export function makeStack(name, count = 1) {
   return s;
 }
 
-/** Can two stacks merge? */
 export function canMerge(a, b) {
   if (!a || !b) return false;
   if (a.name !== b.name) return false;
@@ -217,12 +181,10 @@ export function canMerge(a, b) {
   return def.stack > 1;
 }
 
-/** Is this item placeable in the world? */
 export function isPlaceable(name) {
   return Blocks.has(name) && Blocks.get(Blocks.id(name)).placeable;
 }
 
-/** The armour slot each armour piece name is written for. */
 const ARMOUR_SLOT = {
   helmet: 'Head',
   chestplate: 'Chest',
@@ -230,7 +192,6 @@ const ARMOUR_SLOT = {
   boots: 'Feet',
 };
 
-/** Can this item be worn in the given armour slot index? */
 export function armourFits(name, index) {
   const def = Items.get(name);
   if (!def || !def.armour) return false;

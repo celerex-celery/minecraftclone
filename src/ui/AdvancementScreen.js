@@ -1,12 +1,3 @@
-/**
- * The Advancements screen: category tabs down the side, a grid of the tree for
- * whichever tab is selected, and completed advancements drawn lit.
- *
- * The real game lays this out as a tree with connecting lines and a background
- * page. Here the parents are shown as a line between the icons, which keeps the
- * dependency readable without needing a scrolling tree layout.
- */
-
 import { COLORS } from './PixelFont.js';
 import { t } from './Lang.js';
 import {
@@ -51,7 +42,6 @@ export class AdvancementScreen {
     const adv = game.advancements;
     game.font.set(this.title, t('adv.title'), { scale: 4, color: COLORS.white });
 
-    /* ---- tab bar ---- */
     this.tabs.textContent = '';
     for (const cat of CATEGORIES) {
       const btn = document.createElement('button');
@@ -68,13 +58,12 @@ export class AdvancementScreen {
       this.tabs.appendChild(btn);
     }
 
-    /* ---- the tree for this category ---- */
     this.body.textContent = '';
     const list = document.createElement('div');
     list.className = 'adv-grid';
 
     const inCat = ADVANCEMENTS.filter((a) => a.category === this.category);
-    // depth from the parents, so a child is never in a row above its parent
+
     const depth = new Map();
     const depthOf = (a, guard = 0) => {
       if (depth.has(a.id)) return depth.get(a.id);

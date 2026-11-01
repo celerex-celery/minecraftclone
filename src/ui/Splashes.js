@@ -1,16 +1,5 @@
-/**
- * Title screen splash texts.
- *
- * This is the shared English list. Minecraft picks one at random every time the
- * main menu is opened. Kept in its own file so the list is easy to find and
- * extend - just add strings.
- *
- * A language can override the whole list by adding a `"splash": [...]` array to
- * its JSON file in `assets/lang/`; anything it leaves out falls back to this one.
- */
-
 export const SPLASHES = [
-  // ---- the classics ----
+
   'Now with 100% more blocks!',
   'As seen on TV!',
   'Awesome!',
@@ -24,7 +13,6 @@ export const SPLASHES = [
   'Every block is hand placed',
   'Infinite worlds, finite patience',
 
-  // ---- things that will get you killed ----
   'Do not dig straight down',
   'Dig straight down, they said',
   'Diamonds are below y=16, lava is too',
@@ -40,7 +28,6 @@ export const SPLASHES = [
   'Sleep is for the bold',
   'Night is just the tutorial ending',
 
-  // ---- gravity worlds ----
   'Down is optional',
   'Gravity is a suggestion',
   'The floor is wherever you land',
@@ -48,7 +35,6 @@ export const SPLASHES = [
   'Sideways is a direction too',
   'Sir, you are standing on the sky',
 
-  // ---- enderman ----
   'Do not look at it',
   'It watched back',
   'Look away. Now.',
@@ -56,7 +42,6 @@ export const SPLASHES = [
   'It teleported into your walls',
   'Purple eyes in purple sky',
 
-  // ---- chunks, physics, engine ----
   'Voxels all the way down',
   '16 by 16 by forever',
   'One chunk at a time',
@@ -79,7 +64,6 @@ export const SPLASHES = [
   'Bugs are features',
   'Fixed by adding a semicolon',
 
-  // ---- hands off the controls ----
   'Press F3 for the good stuff',
   'Press F5 to see yourself',
   'Press F2 for a photo',
@@ -90,7 +74,6 @@ export const SPLASHES = [
   'WASD, the four horsemen',
   'Escape is just a suggestion too',
 
-  // ---- food & farming ----
   'Punch a tree, get wood',
   'Apples drop from leaves',
   'Leaves are cutout, not solid',
@@ -98,7 +81,6 @@ export const SPLASHES = [
   'Bread: now with 100% more grain',
   'Farming is just waiting',
 
-  // ---- world tour ----
   'The sky is not the limit!',
   'The sky is purple over there',
   'The sun really moves',
@@ -123,7 +105,6 @@ export const SPLASHES = [
   'Sand is gravity-enabled',
   'You can craft that',
 
-  // ---- mobs ----
   'Passive mobs: also 0',
   'Hostile mobs: 0',
   'Chickens have opinions',
@@ -134,7 +115,6 @@ export const SPLASHES = [
   'Every mob is hand coded',
   'Wolves do not bite, yet',
 
-  // ---- you, the player ----
   'You are reading this',
   'Still reading?',
   'Go play already!',

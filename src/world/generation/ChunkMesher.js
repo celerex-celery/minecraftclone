@@ -1,61 +1,20 @@
-/**
- * Chunk mesher.
- *
- * Produces five geometries per chunk:
- *   - opaque  : solid geometry, one atlas draw call
- *   - cutout  : alpha-tested geometry (leaves, glass, torches, plants, fences)
- *   - water   : water, world-tiled UVs, and its own material
- *   - lava    : lava, world-tiled UVs, its own opaque material
- *   - portal  : nether portals, a thin scrolling sheet and its own material
- *   - fire    : fire, the same frame-sheet trick as the portal, so it flickers
- *
- * The portal and the fire get groups of their own for the same reason water and
- * lava do: they are alpha-tested sheets whose UVs either scroll or step through an
- * animation, and neither the plain cutout material (which never declares the
- * uniforms) nor the water one (which displaces its surface) can draw them.
- *
- * Every block is built from axis aligned boxes described by its `shape`, so
- * cubes, slabs, stairs, fences, panes, walls and logs all go through the same
- * face emitter and get the same ambient occlusion, smooth lighting and biome
- * tinting.
- *
- * Neighbour lookups go through a padded 18 x (SY+2) x 18 cache so the inner
- * loops are plain array reads. Padded row `py` is world y = MIN_Y + py - 1, so
- * the skirt covers one block below the bedrock and one above the build ceiling.
- * The hot loops deliberately allocate nothing:
- * all per-face working values live in reusable module level scratch buffers,
- * because a chunk can produce tens of thousands of faces and per-face garbage
- * is what makes a mesher like this stutter.
- */
-
 import * as THREE from 'three';
 import { Blocks, FACE, FRONT_FACE } from '../blocks/Blocks.js';
 import { SX, SY, SZ, MIN_Y, MAX_Y } from './Chunk.js';
 import { geometryPool } from './GeometryPool.js';
 
-/** Padded cache rows above and below the real range, one for each. */
 const PY = SY + 2;
 const PXW = SX + 2;
 const PZW = SZ + 2;
 const PAD_VOL = PXW * PY * PZW;
-/* Padded row `py` holds world y = MIN_Y + py - 1, so row 0 is one below the
-   bottom of the world and row PY-1 is one above the top. */
+
 const pIdx = (px, py, pz) => (py * PZW + pz) * PXW + px;
 
-/* stride layout: [x, y, z, u, v, sky, block, r, g, b] */
 const STRIDE = 10;
 const ONE3 = [1, 1, 1];
 
-/* Face directions, the two axes tangent to each face, and the winding of the
-   four corners. `tan[c] = [s0, s1]` says which end of the t0 / t1 axis corner c
-   sits at, 0 = min and 1 = max.
-
-   Both the geometry and the ambient occlusion are derived from this one table,
-   so a corner can never be shaded using a different cell than the vertex it
-   actually belongs to. Getting this out of sync is what makes faces look wrong.
-*/
 const FACE_DEFS = [
-  //        normal          t0 t1  shade   corners (t0, t1)
+
   { n: [1, 0, 0], t0: 1, t1: 2, shade: 0.60, tan: [[0, 1], [0, 0], [1, 0], [1, 1]] },
   { n: [-1, 0, 0], t0: 1, t1: 2, shade: 0.60, tan: [[0, 0], [0, 1], [1, 1], [1, 0]] },
   { n: [0, 1, 0], t0: 0, t1: 2, shade: 1.00, tan: [[0, 1], [1, 1], [1, 0], [0, 0]] },
@@ -63,53 +22,17 @@ const FACE_DEFS = [
   { n: [0, 0, 1], t0: 0, t1: 1, shade: 0.80, tan: [[0, 0], [1, 0], [1, 1], [0, 1]] },
   { n: [0, 0, -1], t0: 0, t1: 1, shade: 0.80, tan: [[1, 0], [0, 0], [0, 1], [1, 1]] },
 ];
-/**
- * Ambient occlusion, as a multiplier on the face shade, by how enclosed a corner
- * is. The index is the corner's occlusion rank: 3 for a corner with nothing
- * around it, 0 for one walled in on both sides.
- *
- * These are the vanilla values, and they come out of an average rather than a
- * lookup. Vanilla averages four samples per corner - the two edge neighbours,
- * the diagonal across the corner, and the block the face belongs to - where a
- * full block contributes 0.2 and anything else contributes 1.0
- * (BlockModelLighter.prepareQuadAmbientOcclusion, and
- * BlockBehaviour.getShadeBrightness). The block itself counts, so even an
- * entirely open corner of a full block lands on 0.8, not 1.0: a bare stone
- * wall in daylight is drawn at four fifths of its texture, and every step
- * between there and a sealed corner is exactly 0.2.
- *
- * A sealed corner receives a fifth of the light. That much contrast is what
- * makes a Minecraft corner read as a corner: the crease is dark enough to draw
- * the edge of the cube, so a stack of blocks still looks like a stack of blocks
- * even though the lighting itself is flat and unlit.
- *
- * The second table is for blocks that are not full cubes - slabs, stairs,
- * fences, plants. Their own sample counts as 1.0 instead of 0.2, so every step
- * of their ramp is 0.2 higher and an open corner is drawn at full strength.
- */
+
 const AO_LEVELS = [0.2, 0.4, 0.6, 0.8];
 const AO_LEVELS_OPEN = [0.4, 0.6, 0.8, 1.0];
 
-/**
- * The per-face shading multipliers, per dimension, in FACE order
- * (+X, -X, +Y, -Y, +Z, -Z).
- *
- * These are vanilla's (CardinalLighting.DEFAULT and CardinalLighting.NETHER).
- * The Overworld's set is the one baked into FACE_DEFS above; the Nether's
- * lifts the top and bottom faces from 1.0 and 0.5 to a flat 0.9, because a
- * dimension with no sky has no reason for an upward face to be brighter than
- * the rest.
- */
 const OVERWORLD_SHADES = [0.60, 0.60, 1.00, 0.50, 0.80, 0.80];
 const NETHER_SHADES = [0.60, 0.60, 0.90, 0.90, 0.80, 0.80];
 
-/* Internal face bitmask, in FACE order: +X,-X,+Y,-Y,+Z,-Z */
 export const FACE_PX = 1, FACE_NX = 2, FACE_PY = 4, FACE_NY = 8, FACE_PZ = 16, FACE_NZ = 32;
 
-/** Axis index of each face's normal. */
 const FACE_AXIS = [0, 0, 1, 1, 2, 2];
 
-/* AO sample offsets per face corner, precomputed from the table above. */
 const AO_OFFSETS = [];
 for (const f of FACE_DEFS) {
   const per = [];
@@ -127,10 +50,6 @@ for (const f of FACE_DEFS) {
   AO_OFFSETS.push(per);
 }
 
-/**
- * Write the three world offsets of face `fi`'s four corners into `out`.
- * Shared by the box and liquid emitters so both agree exactly.
- */
 function faceCorners(fi, minX, minY, minZ, maxX, maxY, maxZ, out) {
   const f = FACE_DEFS[fi];
   const axis = FACE_AXIS[fi];
@@ -145,24 +64,13 @@ function faceCorners(fi, minX, minY, minZ, maxX, maxY, maxZ, out) {
   }
 }
 
-/** Reusable vertex scratch shared by every emit path. */
 const V = [new Float32Array(STRIDE), new Float32Array(STRIDE), new Float32Array(STRIDE), new Float32Array(STRIDE)];
-/* Reusable corner offsets, filled by faceCorners(). */
-/**
- * Reusable corner offsets, filled by faceCorners().
- *
- * This has to be a FLOAT array. Slab tops sit at 0.5, the water surface at
- * 0.875 and fence arms at 0.375, and an integer array silently truncates all
- * of those to zero - which flattens the water and collapses fences and panes
- * into solid blocks.
- */
+
 const CORNER = [new Float32Array(3), new Float32Array(3), new Float32Array(3), new Float32Array(3)];
-/* Per corner light / AO results, filled by sampleFace. */
+
 const CORNER_SKY = new Float32Array(4);
 const CORNER_BLK = new Float32Array(4);
 const CORNER_AO = new Float32Array(4);
-
-/* ---------------- vertex buffer pool ---------------- */
 
 class VertexBufferPool {
   constructor() {
@@ -219,8 +127,6 @@ class VertexBufferPool {
 
 const vertexBufferPool = new VertexBufferPool();
 
-/* ---------------- growable attribute buffers ---------------- */
-
 class Builder {
   constructor() {
     this.cap = 8192;
@@ -257,7 +163,7 @@ class Builder {
     this.count = 0;
     this.indexCount = 0;
   }
-  /** Push the four scratch vertices built in V[] as one quad. */
+
   pushQuad() {
     this.ensure(4);
     const d = this.data;
@@ -289,8 +195,7 @@ function acquirePooledGeometry(type, count, indexCount) {
 
 function updatePooledGeometry(geo, data, count, indexCount, indices) {
   if (!data || count === 0) return;
-  // Size attribute arrays to the actual vertex count instead of a fixed
-  // maximum, so a small chunk does not carry an oversized buffer.
+
   geometryPool.fit(geo, count, indexCount);
 
   const posAttr = geo.getAttribute('position');
@@ -331,14 +236,6 @@ function updatePooledGeometry(geo, data, count, indexCount, indices) {
   return geo;
 }
 
-/* ================================================================
-   mesher
-   ================================================================ */
-
-/* ================================================================
-   standalone block geometry
-   ================================================================ */
-
 const BOX_POS = [];
 const BOX_UV = [];
 const BOX_LIGHT = [];
@@ -348,20 +245,6 @@ const BOX_CORNER = [
   [0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0],
 ];
 
-/**
- * A single free-floating block, for the falling-sand animation.
- *
- * Built from the same face table, corner winding, UV lookup and per-face
- * shading as the chunk mesher, so a block in mid-air is pixel-for-pixel the
- * block it will become when it lands. It carries no biome tint, which is why it
- * is safe to draw with the plain opaque material.
- *
- * @param {TextureAtlas} atlas
- * @param {object} def a block definition
- * @param {number} sky light 0..15
- * @param {number} block light 0..15
- * @returns {THREE.BufferGeometry}
- */
 export function buildBlockGeometry(atlas, def, sky, block) {
   BOX_POS.length = 0;
   BOX_UV.length = 0;
@@ -379,14 +262,13 @@ export function buildBlockGeometry(atlas, def, sky, block) {
     for (let c = 0; c < 4; c++) {
       const o = BOX_CORNER[c];
       BOX_POS.push(o[0], o[1], o[2]);
-      // corners are bottom-left, bottom-right, top-right, top-left
+
       BOX_UV.push(
         uvr[0] + (c === 1 || c === 2 ? du : 0),
         uvr[1] + (c === 0 || c === 1 ? dv : 0),
       );
       BOX_LIGHT.push(sky, block);
-      // no ambient occlusion on a block with no neighbours, so every corner
-      // takes the full level and only the face shade varies
+
       const s = AO_LEVELS[3] * f.shade;
       BOX_COL.push(s, s, s);
     }
@@ -402,40 +284,30 @@ export function buildBlockGeometry(atlas, def, sky, block) {
   return g;
 }
 
-/* ================================================================
-   class ChunkMesher
-   ================================================================ */
-
 export class ChunkMesher {
   constructor(atlas) {
     this.atlas = atlas;
-    /** the per-face shades for the dimension being meshed */
+
     this.shades = OVERWORLD_SHADES;
     this.opaque = new Builder();
     this.cutout = new Builder();
-    // Water and lava get separate builders because they get separate materials:
-    // lava has no waves and no transparency, so it cannot share water's shader.
+
     this.water = new Builder();
     this.lava = new Builder();
     this.portal = new Builder();
     this.fire = new Builder();
-    // Blocks whose texture is an animation strip rather than an atlas tile -
-    // seagrass today. Same arrangement as fire: whole-sheet UVs, one frame
-    // picked per fragment by the material.
+
     this.animated = new Builder();
 
-    // padded caches reused between chunks
     this.padBlocks = new Uint8Array(PAD_VOL);
     this.padLight = new Uint8Array(PAD_VOL);
     this.padBiome = new Uint8Array(PXW * PZW);
 
-    // Fast shape handler lookup by block ID (populated lazily)
     this._shapeHandlers = null;
-    // Fast opacity array for isOpaqueAt (populated lazily)
+
     this._opacityCache = null;
   }
 
-  /** Initialize fast lookup tables from block registry. */
   _ensureLookupTables() {
     if (this._shapeHandlers !== null) return;
     const maxId = Blocks.list.length;
@@ -445,7 +317,7 @@ export class ChunkMesher {
       const def = Blocks.list[id];
       if (!def) continue;
       const shape = def.shape;
-      // Map shape string to handler function
+
       if (shape === 'none') this._shapeHandlers[id] = 0;
       else if (shape === 'cross') this._shapeHandlers[id] = 1;
       else if (shape === 'liquid') this._shapeHandlers[id] = 2;
@@ -458,19 +330,17 @@ export class ChunkMesher {
       else if (shape === 'stairs') this._shapeHandlers[id] = 9;
       else if (shape === 'post') this._shapeHandlers[id] = 10;
       else if (shape === 'layer') this._shapeHandlers[id] = 11;
-      else this._shapeHandlers[id] = 4; // default to cube
+      else this._shapeHandlers[id] = 4;
       this._opacityCache[id] = def.opaque ? 1 : 0;
     }
   }
-  /** Copy the chunk plus a one-block skirt into flat arrays. */
+
   buildPadCache(chunk, world) {
     const pb = this.padBlocks;
     const pl = this.padLight;
     const ox = chunk.ox, oz = chunk.oz;
     const bedrock = world.bedrockBelow;
-    // The Nether has no sky, so a cell the light engine has not reached is 0
-    // rather than 15. Without this the open caverns would be lit as though the
-    // whole dimension were under open sky, which is the one thing it is not.
+
     const openSky = world.hasSky ? (15 << 4) : 0;
 
     pb.fill(0);
@@ -486,7 +356,7 @@ export class ChunkMesher {
         if (!src) {
           this.padBiome[colBase] = 0;
           for (let py = 0; py < PY; py++) {
-            pl[colBase + py * PXW * PZW] = openSky;   // open sky above nothing
+            pl[colBase + py * PXW * PZW] = openSky;
           }
           continue;
         }
@@ -519,11 +389,11 @@ export class ChunkMesher {
   padGet(px, py, pz) {
     if (px < 0) px = 0; else if (px >= PXW) px = PXW - 1;
     if (pz < 0) pz = 0; else if (pz >= PZW) pz = PZW - 1;
-    if (py < 0) return -1;                 // treated as opaque (world floor)
+    if (py < 0) return -1;
     if (py >= PY) return 0;
     return this.padBlocks[pIdx(px, py, pz)];
   }
-  /** true when the padded cell is a fully opaque block */
+
   isOpaqueAt(px, py, pz) {
     this._ensureLookupTables();
     const b = this.padGet(px, py, pz);
@@ -531,9 +401,6 @@ export class ChunkMesher {
     return this._opacityCache[b] === 1;
   }
 
-  /* -------------------------------------------------- connection helper */
-
-  /** Does a neighbour cell connect to this block? (fences, panes, walls) */
   connects(px, py, pz, dx, dz, id) {
     const b = this.padGet(px + dx, py, pz + dz);
     if (b < 0 || b === id) return b === id;
@@ -541,31 +408,16 @@ export class ChunkMesher {
     return !!nd.connect;
   }
 
-  /**
-   * Start building a chunk.
-   *
-   * Split from the work so the build can be *interrupted*. Meshing one chunk is
-   * around eighty thousand cell visits and a hundred thousand more inside the face
-   * emitters, which is several milliseconds of solid work; the game used to check
-   * the clock only *between* chunks, so a single chunk that landed badly was a
-   * visible hitch no matter how small the frame budget was. The state lives on
-   * the mesher between calls, so `band()` can be handed a few milliseconds, do a
-   * scanline band, and come back for the rest on the next frame.
-   */
   begin(chunk, world) {
     this.buildPadCache(chunk, world);
-    // the liquid emitter needs the flow sim to know how deep each cell is
+
     this.world = world;
-    // Vanilla shades faces per dimension: the Nether's top and bottom faces
-    // are much closer to its sides, because there is no sky above it to make
-    // a top face brighter than the rest (CardinalLighting).
+
     this.shades = world?.dimension === 'nether' ? NETHER_SHADES : OVERWORLD_SHADES;
     this.buildChunk = chunk;
     this.buildTop = Math.min(MAX_Y, chunk.maxY + 1);
     this.buildY = MIN_Y;
-    // The geometry is built in chunk-local space and the mesh is moved onto the
-    // chunk, so anything that has to be asked about in *world* coordinates -
-    // which is only the block entities - needs the chunk's corner added first.
+
     this.buildOx = chunk.ox;
     this.buildOz = chunk.oz;
     this.opaque.reset();
@@ -577,24 +429,15 @@ export class ChunkMesher {
     this.animated.reset();
   }
 
-  /**
-   * Build up to `maxMs` worth of scanlines.
-   *
-   * @returns {object|null} the geometries when the chunk is finished, null when
-   *   there is more to do. The caller keeps the chunk's existing meshes until the
-   *   final call, so an interrupted chunk never flickers.
-   */
   band(maxMs) {
     if (!this.buildChunk) return null;
-    this._ensureLookupTables(); // Initialize fast lookups
+    this._ensureLookupTables();
     const deadline = performance.now() + maxMs;
     const chunk = this.buildChunk;
     const pb = this.padBlocks;
     const top = this.buildTop;
     const handlers = this._shapeHandlers;
 
-    // one band is sixteen scanlines: small enough that a check costs little next
-    // to the work, big enough that the check is not the work
     for (let n = 0; n < 16 && this.buildY <= top; n++) {
       const y = this.buildY++;
       const py = y - MIN_Y + 1;
@@ -606,11 +449,11 @@ export class ChunkMesher {
           if (id === 0) continue;
           const def = Blocks.get(id);
           const handler = handlers[id] ?? 4;
-          // Fast path: inline the common cases
-          if (handler === 0) continue; // none
-          if (handler === 1) { this.emitCross(x, y, z, px, py, pz, def); continue; } // cross
-          if (handler === 2) { this.emitLiquid(x, y, z, px, py, pz, def); continue; } // liquid
-          if (handler === 3) { // portal
+
+          if (handler === 0) continue;
+          if (handler === 1) { this.emitCross(x, y, z, px, py, pz, def); continue; }
+          if (handler === 2) { this.emitLiquid(x, y, z, px, py, pz, def); continue; }
+          if (handler === 3) {
             const defName = def.name;
             if (defName === 'end_portal') this.emitEndPortal(x, y, z, px, py, pz);
             else this.emitPortal(x, y, z, px, py, pz);
@@ -623,9 +466,8 @@ export class ChunkMesher {
           if (handler === 8) { this.emitBox(x, y, z, px, py, pz, def, id, 0.125, 0, 0.125, 0.875, 1, 0.875, 0); continue; }
           if (handler === 9) { this.emitStairs(x, y, z, px, py, pz, def, id); continue; }
           if (handler === 10) { this.emitPost(x, y, z, px, py, pz, def, id); continue; }
-          if (handler === 11) { // layer (snow)
-            // Snow layers 1-7: only top face visible (bottom against block, sides hidden by block below)
-            // Layer 8 (full snow block): all faces visible
+          if (handler === 11) {
+
             const isFullBlock = (def.layerHeight ?? 0.125) >= 1.0;
             const mask = isFullBlock ? 0 : (FACE_PX | FACE_NX | FACE_NY | FACE_PZ | FACE_NZ);
             this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, def.layerHeight ?? 0.125, 1, mask);
@@ -634,12 +476,11 @@ export class ChunkMesher {
           this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 1, 1, 0);
         }
       }
-      // Check deadline less frequently (every band, not every cell)
+
       if (performance.now() >= deadline && this.buildY <= top) return null;
     }
     if (this.buildY <= top) return null;
 
-    // done: hand the geometry over and forget the chunk
     this.world = null;
     this.buildChunk = null;
     void chunk;
@@ -654,18 +495,11 @@ export class ChunkMesher {
     };
   }
 
-  /** Abandon a half-built chunk, if the chunk it belonged to has gone away. */
   abort() {
     this.world = null;
     this.buildChunk = null;
   }
 
-  /**
-   * Build a whole chunk in one go.
-   *
-   * Kept for the tools and tests, which want a finished geometry and do not care
-   * about frame time. The game goes through `begin`/`band` instead.
-   */
   build(chunk, world) {
     this.begin(chunk, world);
     let geo = null;
@@ -673,27 +507,12 @@ export class ChunkMesher {
     return geo;
   }
 
-  /* -------------------------------------------------- box emitter */
-
-  /**
-   * Emit the visible faces of one axis aligned box inside a block cell.
-   *
-   * @param {number} mask bitmask of faces that are internal and must be skipped
-   */
   emitBox(x, y, z, px, py, pz, def, id, minX, minY, minZ, maxX, maxY, maxZ, mask) {
     const atlas = this.atlas;
     const builder = def.cutout ? this.cutout : this.opaque;
     const inset = def.inset ?? 0;
     if (inset || def.insetY !== null) {
-      // A block can be inset on the horizontal axes but not the vertical one, which
-      // is what a cactus wants: its sides are a ribbed column narrower than the
-      // cell, but its top and bottom must reach the full height of the cell or a
-      // stack of two has a visible gap between them and reads as two blocks
-      // sitting near each other rather than one column. Vanilla's cactus model is
-      // built exactly this way.
-      //
-      // `insetY` of null means "the same as the sides", which is every block but
-      // the cactus.
+
       const iy = def.insetY ?? inset;
       minX += inset; maxX -= inset;
       minZ += inset; maxZ -= inset;
@@ -705,48 +524,23 @@ export class ChunkMesher {
     const tintG = col ? col[1] : 1;
     const tintB = col ? col[2] : 1;
 
-    // A full cube contributes 0.2 to its own occlusion average; anything else
-    // contributes 1.0, which lifts the whole ramp by 0.2 (see AO_LEVELS).
     const fullCube = minX === 0 && minY === 0 && minZ === 0
       && maxX === 1 && maxY === 1 && maxZ === 1;
     const aoLevels = fullCube ? AO_LEVELS : AO_LEVELS_OPEN;
 
-    /**
-     * The second layer some blocks draw over their side faces.
-     *
-     * The grass block is the one that has it: a greyscale fringe of grass that
-     * lies along the top of the side face and carries the biome colour, while
-     * the dirt under it stays brown. Vanilla draws it as a separate alpha
-     * tested layer, so it goes into the cutout group and lands on top of the
-     * side face rather than replacing it.
-     *
-     * It needs a tint to be worth drawing at all - untinted it is a grey
-     * fringe - so a block without one is left alone.
-     */
     const overlayUvr = (def.sideOverlay && col) ? atlas.get(def.sideOverlay) : null;
 
-    // Which way this block's front faces, for the blocks that have one.
-    //
-    // Read once per block rather than once per face, and only for the blocks
-    // that need it: the padded cache holds block ids and nothing else, so this
-    // is the one lookup in the whole emitter that has to go back to the world.
-    // It is a map read on a key the furnace and the crafting table already have
-    // an entity for, and every other block in the world skips it entirely.
-    //
-    // `x, y, z` are chunk-local here - the mesh is moved onto the chunk after it
-    // is built - so the chunk's corner comes off before the world is asked.
     const facing = def.faces && this.world
       ? (this.world.getBlockEntity(this.buildOx + x, y, this.buildOz + z)?.facing ?? 0)
       : 0;
 
-    // End portal frame: vanilla model is only 13/16 (0.8125) blocks tall
     const isEndFrame = def.name === 'end_portal_frame';
     const frameEntity = isEndFrame && this.world
       ? this.world.getBlockEntity(this.buildOx + x, y, this.buildOz + z)
       : null;
     const frameHasEye = isEndFrame && frameEntity?.eye === true;
     const frameFacing = isEndFrame && frameEntity && frameEntity.facing !== undefined ? frameEntity.facing : 0;
-    const frameHeight = isEndFrame ? 0.8125 : 1.0; // vanilla: 13/16
+    const frameHeight = isEndFrame ? 0.8125 : 1.0;
 
     for (let fi = 0; fi < 6; fi++) {
       if (mask & (1 << fi)) continue;
@@ -754,8 +548,6 @@ export class ChunkMesher {
       const axis = FACE_AXIS[fi];
       const sign = f.n[axis];
 
-      // a face sitting on the cell boundary can be hidden by the neighbour;
-      // a face inside the cell (a slab's top, a fence post's side) always shows
       const onBoundary = axis === 0 ? (sign > 0 ? maxX === 1 : minX === 0)
         : axis === 1 ? (sign > 0 ? maxY === 1 : minY === 0)
           : (sign > 0 ? maxZ === 1 : minZ === 0);
@@ -767,7 +559,7 @@ export class ChunkMesher {
         if (nb < 0) continue;
         const nd = Blocks.get(nb);
         if (nd.opaque) continue;
-        // glass, leaves and fences hide the shared face with their own kind
+
         if (nb === id && !def.opaque) continue;
       }
 
@@ -786,8 +578,7 @@ export class ChunkMesher {
         a[0] = x + o[0];
         a[1] = y + o[1];
         a[2] = z + o[2];
-        // UVs follow the corner order: bottom-left, bottom-right, top-right,
-        // top-left around the face
+
         a[3] = uvr[0] + (c === 1 || c === 2 ? du : 0);
         a[4] = uvr[1] + (c === 0 || c === 1 ? dv : 0);
         a[5] = CORNER_SKY[c];
@@ -801,11 +592,6 @@ export class ChunkMesher {
       }
       builder.pushQuad();
 
-      // The overlay layer, over the four sides only: the top and bottom faces
-      // of a block are its own texture, and the fringe is shaped for a side.
-      // The corners are the side face's own, so only the texture coordinates
-      // and the colour change - and the colour is the biome tint, which is the
-      // whole point of the layer.
       if (overlayUvr && fi !== FACE.PY && fi !== FACE.NY) {
         const odu = overlayUvr[2] - overlayUvr[0];
         const odv = overlayUvr[3] - overlayUvr[1];
@@ -819,13 +605,9 @@ export class ChunkMesher {
         this.cutout.pushQuad();
       }
     }
-  
 
-
-// End portal frame eye: render a small cube on top when the frame has an eye
   if (isEndFrame && frameHasEye) {
-    // Eye sits on top of frame (vanilla frame is 13/16 = 0.8125 tall, eye is 3/16 tall)
-    // Eye texture has transparency, so use cutout buffer
+
     const eyeBuilder = this.cutout;
     const eyeUvr = atlas.get('end_portal_frame_eye');
     const shade = 1.0;
@@ -833,27 +615,20 @@ export class ChunkMesher {
     const eyeBottom = frameTop;
     const eyeTop = y + 1.0;
 
-    // Vanilla eye texture UV layout:
-    // - Top face uses center: u=4/16..12/16, v=4/16..12/16
-    // - Side faces use top strip: u=4/16..12/16, v=0/16..3/16
     const eyeU = eyeUvr[0] + (4/16) * (eyeUvr[2] - eyeUvr[0]);
     const eyeV_top = eyeUvr[1] + (4/16) * (eyeUvr[3] - eyeUvr[1]);
     const eyeV_side = eyeUvr[1] + (0/16) * (eyeUvr[3] - eyeUvr[1]);
-    const eyeDu = (8/16) * (eyeUvr[2] - eyeUvr[0]); // 12-4 = 8 pixels
+    const eyeDu = (8/16) * (eyeUvr[2] - eyeUvr[0]);
     const eyeDv_top = (8/16) * (eyeUvr[3] - eyeUvr[1]);
     const eyeDv_side = (3/16) * (eyeUvr[3] - eyeUvr[1]);
 
-    // Sample light at the top of the eye
     this.sampleFace(px, py, pz, FACE.PY);
 
-    // Render eye as a 3D cube (top + 4 sides) matching vanilla model
-    // Eye is 0.5 blocks wide (4/16 to 12/16) and 0.1875 tall (13/16 to 16/16)
     const eyeMinX = x + 0.25;
     const eyeMaxX = x + 0.75;
     const eyeMinZ = z + 0.25;
     const eyeMaxZ = z + 0.75;
 
-    // Top face (uses center of texture)
     const topCorners = [
       [eyeMinX, eyeTop, eyeMinZ],
       [eyeMaxX, eyeTop, eyeMinZ],
@@ -873,15 +648,14 @@ export class ChunkMesher {
     }
     eyeBuilder.pushQuad();
 
-    // 4 side faces (use top strip of texture)
     const sideFaces = [
-      // North (negative Z)
+
       { face: FACE.PZ, corners: [[eyeMinX, eyeBottom, eyeMinZ], [eyeMaxX, eyeBottom, eyeMinZ], [eyeMaxX, eyeTop, eyeMinZ], [eyeMinX, eyeTop, eyeMinZ]] },
-      // South (positive Z)
+
       { face: FACE.NZ, corners: [[eyeMaxX, eyeBottom, eyeMaxZ], [eyeMinX, eyeBottom, eyeMaxZ], [eyeMinX, eyeTop, eyeMaxZ], [eyeMaxX, eyeTop, eyeMaxZ]] },
-      // West (negative X)
+
       { face: FACE.PX, corners: [[eyeMinX, eyeBottom, eyeMaxZ], [eyeMinX, eyeBottom, eyeMinZ], [eyeMinX, eyeTop, eyeMinZ], [eyeMinX, eyeTop, eyeMaxZ]] },
-      // East (positive X)
+
       { face: FACE.NX, corners: [[eyeMaxX, eyeBottom, eyeMinZ], [eyeMaxX, eyeBottom, eyeMaxZ], [eyeMaxX, eyeTop, eyeMaxZ], [eyeMaxX, eyeTop, eyeMinZ]] }
     ];
 
@@ -903,37 +677,6 @@ export class ChunkMesher {
   }
 }
 
-  /**
-      a[0] = corners[c][0];
-      a[1] = corners[c][1];
-      a[2] = corners[c][2];
-      a[3] = eyeUvr[0] + (c === 1 || c === 2 ? eyeDu : 0);
-      a[4] = eyeUvr[1] + (c === 0 || c === 1 ? eyeDv : 0);
-      a[5] = CORNER_SKY[c];
-      a[6] = CORNER_BLK[c];
-      a[7] = shade; a[8] = shade; a[9] = shade;
-    }
-    eyeBuilder.pushQuad();
-  }
-}
-
-  /**
-      a[1] = corners[c][1];
-      a[2] = corners[c][2];
-      a[3] = eyeUvr[0] + (c === 1 || c === 2 ? eyeDu : 0);
-      a[4] = eyeUvr[1] + (c === 0 || c === 1 ? eyeDv : 0);
-      a[5] = CORNER_SKY[c];
-      a[6] = CORNER_BLK[c];
-      a[7] = shade; a[8] = shade; a[9] = shade;
-    }
-    eyeBuilder.pushQuad();
-  }
-}
-
-  /**
-   * cell (sx,sy,sz). Averages the light of the four cells touching each corner
-   * (skipping fully opaque ones) and derives the voxel AO term.
-   */
   sampleFace(sx, sy, sz, fi) {
     const n = FACE_DEFS[fi].n;
     const per = AO_OFFSETS[fi];
@@ -977,27 +720,21 @@ export class ChunkMesher {
     }
   }
 
-  /* -------------------------------------------------- stairs */
-
   emitStairs(x, y, z, px, py, pz, def, id) {
-    // lower step fills the whole footprint, the upper step the back half
+
     this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 0.5, 1, FACE_PY);
     this.emitBox(x, y, z, px, py, pz, def, id, 0, 0.5, 0, 1, 1, 0.5, FACE_NY);
   }
 
-  /* -------------------------------------------------- fences and panes */
-
   emitPost(x, y, z, px, py, pz, def, id) {
-    const t = def.postThickness ?? 0.25;      // half width
+    const t = def.postThickness ?? 0.25;
     const armLo = def.armLow ?? 0.375;
     const armHi = def.armHigh ?? 0.625;
     const a0 = 0.5 - t;
     const a1 = 0.5 + t;
 
-    // the post itself, full height
     this.emitBox(x, y, z, px, py, pz, def, id, a0, 0, a0, a1, 1, a1, 0);
 
-    // an arm towards each connected neighbour
     if (this.connects(px, py, pz, 1, 0, id)) {
       this.emitBox(x, y, z, px, py, pz, def, id, a1 - t / 2, armLo, a0, 1, armHi, a1, 0);
     }
@@ -1012,19 +749,6 @@ export class ChunkMesher {
     }
   }
 
-  /* -------------------------------------------------- cross (plants) */
-
-  /**
-   * A cross-shaped block, drawn as two intersecting quads.
-   *
-   * Fire is the exception and gets its own builder and its own material. It is
-   * the one cross in the game that moves: the pack ships it as a 16 x 512 strip
-   * of 32 animation frames, and one static tile of that is a flicker-free orange
-   * blob, which reads as a painted-on sprite rather than as fire. The fire
-   * builder takes the same geometry with 0..1 UVs, and the fire material picks a
-   * frame out of its own sheet per fragment - the same arrangement the nether
-   * portal uses, for the same reason.
-   */
   emitCross(x, y, z, px, py, pz, def) {
     const atlas = this.atlas;
     const isFire = def.name === 'fire';
@@ -1037,7 +761,7 @@ export class ChunkMesher {
     const w = def.crossWidth ?? 1.0;
     const h = def.crossHeight ?? 1.0;
     const o = (1 - w) * 0.5;
-    // deterministic jitter keeps a field of plants from looking mechanical
+
     const j = ((px * 73856093) ^ (pz * 19349663) ^ (py * 83492791)) >>> 0;
     const jx = (((j & 255) / 255) - 0.5) * 0.16;
     const jz = ((((j >> 8) & 255) / 255) - 0.5) * 0.16;
@@ -1057,15 +781,7 @@ export class ChunkMesher {
         a[3] = uvr[0] + (corner === 1 || corner === 2 ? du : 0);
         a[4] = uvr[1] + (corner === 0 || corner === 1 ? dv : 0);
       } else {
-        // fire and the animated blocks need no atlas coordinates: their material
-        // samples one cell of their own sheet, and the corner is the coordinate
-        // that picks it.
-        //
-        // v is flipped relative to the atlas path. Corners 0 and 1 are the
-        // *bottom* of the quad, and the atlas branch gives them the upper v
-        // because GL's v = 1 is the top of an image. The frame sheet is read
-        // the same way, so without the flip a flame hangs upside down - which is
-        // exactly how it looked before this line existed.
+
         a[3] = corner === 1 || corner === 2 ? 1 : 0;
         a[4] = corner === 0 || corner === 1 ? 0 : 1;
       }
@@ -1073,7 +789,6 @@ export class ChunkMesher {
       a[7] = col[0]; a[8] = col[1]; a[9] = col[2];
     };
 
-    // two intersecting quads, drawn double sided by the cutout material
     set(0, a0, 0, b0, 0); set(1, a1, 0, b1, 1);
     set(2, a1, h, b1, 2); set(3, a0, h, b0, 3);
     builder.pushQuad();
@@ -1083,17 +798,11 @@ export class ChunkMesher {
     builder.pushQuad();
   }
 
-  /* -------------------------------------------------- liquids */
-
   emitLiquid(x, y, z, px, py, pz, def) {
-    // the flow sim knows how deep this cell is, so a spreading river gets
-    // visibly shallower as it moves away from where it was placed; a source is
-    // a full block, so it renders at full height rather than stopping at
-    // liquidTop and looking like a flat pane.
+
     const level = this.world ? this.world.fluid.levelAt(x, y, z) : 0;
     const surface = level === 0 ? 1 : (this.world ? this.world.fluid.surfaceAt(x, y, z) : def.liquidTop);
-    // Lava goes to its own builder, and its own material: it is opaque and it does
-    // not scroll.
+
     const isWater = def.name === 'water';
     const builder = isWater ? this.water : this.lava;
 
@@ -1103,11 +812,11 @@ export class ChunkMesher {
       if (nb < 0) continue;
       const nd = Blocks.get(nb);
       if (nd.opaque) continue;
-      if (nd.liquid) continue;              // no faces between liquid blocks
+      if (nd.liquid) continue;
       if (fi === FACE.PY && !nd.replaceable && nb !== 0) continue;
 
       this.sampleFace(px + f.n[0], py + f.n[1], pz + f.n[2], fi);
-      // the box is the whole cell, except the top which sits at the water line
+
       faceCorners(fi, 0, 0, 0, 1, surface, 1, CORNER);
       const shade = this.shades[fi] * 0.9;
       const axis = FACE_AXIS[fi];
@@ -1118,7 +827,7 @@ export class ChunkMesher {
         a[0] = x + o[0];
         a[1] = y + o[1];
         a[2] = z + o[2];
-        // world tiled UVs so the surface flows continuously across blocks
+
         if (axis === 1) { a[3] = a[0] / 16; a[4] = a[2] / 16; }
         else if (axis === 0) { a[3] = a[2] / 16; a[4] = a[1] / 16; }
         else { a[3] = a[0] / 16; a[4] = a[1] / 16; }
@@ -1129,33 +838,11 @@ export class ChunkMesher {
     }
   }
 
-  /* -------------------------------------------------- nether portal */
-
-  /**
-   * A portal cell is a single thin sheet, not a box.
-   *
-   * Which way the sheet runs comes from the frame's *ends*, not from the cells
-   * beside this one. The two side columns of a frame stand at the far ends of
-   * the opening, so for a portal two or more cells wide the immediate neighbour
-   * on both sides is another portal cell and there is nothing to read. The run
-   * has to be walked out to the columns past it, which is what this does.
-   *
-   * Both walks are bounded: a portal standing on its own has no frame to stop
-   * them, and an unbounded walk steps off the edge of the world.
-   *
-   * The UVs run 0..1 across the cell and the atlas is not involved: the portal
-   * material carries a sheet of animation frames and picks one per fragment, so
-   * a cell shows a whole frame, exactly as a vanilla portal block does.
-   */
   emitPortal(x, y, z, px, py, pz) {
     const isPortal = (b) => b >= 0 && Blocks.get(b).name === 'nether_portal';
     const isObsidian = (b) => b >= 0 && Blocks.get(b).name === 'obsidian';
     const LIMIT = 24;
 
-    // How many portal cells sit beyond this one in each direction. Both ends
-    // have to be measured separately: the frame's column on the far side of a
-    // three wide opening is three cells away and the near one is one, and a
-    // single symmetric run only ever finds the ends of a one wide opening.
     const run = (dx, dz) => {
       let out = 0;
       let n = 0;
@@ -1168,19 +855,15 @@ export class ChunkMesher {
     const [plusX, minusX] = run(1, 0);
     const [plusZ, minusZ] = run(0, 1);
 
-    // the opening spans X when the columns past both ends of its X run are
-    // obsidian, and spans Z the same way
     const endsX = isObsidian(this.padGet(px + plusX + 1, py, pz))
       && isObsidian(this.padGet(px - minusX - 1, py, pz));
     const endsZ = isObsidian(this.padGet(px, py, pz + plusZ + 1))
       && isObsidian(this.padGet(px, py, pz - minusZ - 1));
-    // an unframed cell, or one whose frame is being built, draws in XY
+
     const alongX = !endsZ || endsX;
 
     const mid = 0.5;
 
-    // The portal lights itself, so the light is sampled from its own cell
-    // rather than from the air in front of it.
     this.sampleFace(px, py, pz, FACE.PY);
     const shade = 1.0;
 
@@ -1202,16 +885,8 @@ export class ChunkMesher {
     this.portal.pushQuad();
   }
 
-  /* -------------------------------------------------- end portal */
-
-  /**
-   * End portal: a 3x3 block with animated texture, no frame detection needed.
-   * The end portal is always a 3x3 square, so we just draw a thin sheet
-   * with the animated end_portal texture.
-   */
   emitEndPortal(x, y, z, px, py, pz) {
-    // The end portal is a full block with animated texture
-    // Draw a thin sheet at the top of the block (like a liquid surface)
+
     this.sampleFace(px, py, pz, FACE.PY);
     const shade = 1.0;
 
@@ -1236,8 +911,6 @@ export class ChunkMesher {
     this.portal.pushQuad();
   }
 
-  /* -------------------------------------------------- biome tint */
-
   biomeTint(px, pz, kind) {
     const b = this.padBiome[pz * PXW + px];
     return BIOME_TINT[kind]?.[b] ?? ONE3;
@@ -1254,10 +927,6 @@ export class ChunkMesher {
   }
 }
 
-/* ================================================================
-   Biome tint tables, roughly matching the vanilla biome colours.
-   Index order matches WorldGen.BIOME.
-   ================================================================ */
 export const BIOME_ORDER = [
   'ocean', 'beach', 'plains', 'forest', 'taiga', 'snowy_plains',
   'desert', 'savanna', 'swamp', 'mountains', 'jungle',
@@ -1272,17 +941,16 @@ export const BIOME_TINT = {
     6: grass(0.75, 0.72, 0.33), 7: grass(0.75, 0.72, 0.33), 8: grass(0.20, 0.52, 0.09),
     9: grass(0.28, 0.81, 0.26), 10: grass(0.12, 0.89, 0.06),
     11: grass(0.68, 0.44, 0.36),
-    12: grass(0.20, 0.20, 0.35),  // the_end: dark purple-grey
+    12: grass(0.20, 0.20, 0.35),
   },
   foliage: {
     0: grass(0.22, 0.75, 0.10), 1: grass(0.22, 0.75, 0.10), 2: grass(0.22, 0.75, 0.10),
     3: grass(0.18, 0.83, 0.14), 4: grass(0.18, 0.75, 0.14), 5: grass(0.18, 0.85, 0.20),
     6: grass(0.68, 0.66, 0.22), 7: grass(0.68, 0.66, 0.22), 8: grass(0.18, 0.50, 0.06),
     9: grass(0.20, 0.73, 0.20), 10: grass(0.06, 0.83, 0.03),
-    // the Nether has no foliage, but any block that does ask for a tint gets a
-    // dry, dusty colour rather than falling through to white
+
     11: grass(0.62, 0.40, 0.34),
-    12: grass(0.15, 0.10, 0.30),  // the_end: very dark purple
+    12: grass(0.15, 0.10, 0.30),
   },
 };
 

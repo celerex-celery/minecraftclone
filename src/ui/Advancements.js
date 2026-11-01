@@ -1,27 +1,7 @@
-/**
- * Advancements.
- *
- * The real game hands out advancements from a tree of conditions, groups them
- * into categories with a tab each, and pops a toast in the top right the moment
- * one is earned. This is the same idea with the subset of the tree this build
- * can actually detect: mining, crafting, what ends up in the inventory, how
- * deep you have been, how far you have walked, and what you are wearing.
- *
- * A condition is re-tested every frame rather than pushed as an event, because
- * almost every trigger here is state the player already has ("is a diamond in
- * the inventory") rather than something that happens once. Forty slots is
- * nothing to walk.
- *
- * Advancement titles and descriptions are language keys like everything else, so
- * they follow the selected language, and the toast title is announced through
- * the announcer so a screen reader hears it too.
- */
-
 import { CONFIG } from '../core/Config.js';
 import { iconCanvas } from './ItemIcons.js';
 import { t } from './Lang.js';
 
-/** The tab order, the same as the real game's tab bar. */
 export const CATEGORIES = [
   { id: 'survival', icon: 'oak_planks' },
   { id: 'building', icon: 'cobblestone' },
@@ -29,10 +9,8 @@ export const CATEGORIES = [
   { id: 'misc', icon: 'crafting_table' },
 ];
 
-/** Every log, so "Getting Wood" fires on any wood. */
 const LOGS = ['oak_log', 'birch_log', 'spruce_log'];
 
-/** One full set of armour, by material. */
 const ARMOUR_SETS = {
   suit_up: ['iron_helmet', 'iron_chestplate', 'iron_leggings', 'iron_boots'],
   cover_me_with_diamonds: [
@@ -40,7 +18,6 @@ const ARMOUR_SETS = {
   ],
 };
 
-/** Does the player have a full set of this armour on? */
 function wearingAll(inv, pieces) {
   for (let i = 0; i < pieces.length; i++) {
     const slot = inv.armour[i];
@@ -49,39 +26,21 @@ function wearingAll(inv, pieces) {
   return true;
 }
 
-/**
- * The advancements read their counts out of the statistics module rather than
- * keeping a second set, so the numbers on the statistics screen and the numbers
- * a condition was judged on can never disagree.
- */
-
-/** Every ore, for the "Time to Mine" family. */
 const ORES = [
   'coal_ore', 'iron_ore', 'copper_ore', 'gold_ore',
   'diamond_ore', 'emerald_ore', 'redstone_ore', 'lapis_ore',
 ];
 
-/** The foods there are enough distinct kinds of to make a diet of. */
 const FOODS = ['bread', 'apple', 'cooked_porkchop', 'cooked_beef', 'cooked_chicken', 'cooked_mutton'];
 
-/** Iron, gold, copper or a diamond - the four things that count as hardware. */
 const HARDWARE = ['iron_ingot', 'gold_ingot', 'copper_ingot', 'diamond'];
 
-/** Hostile mobs the player can hunt - whatever is a `monster` in VARIANTS. */
 const MONSTER_MOBS = ['enderman'];
 
-/** Baby variants of neutral mobs - killing one is a kindness the world remembers. */
 const BABY_MOBS = ['chick', 'piglet'];
 
-/**
- * The tree.
- *
- * `test(ctx)` returns true once the advancement should be handed out. `after`
- * lists the advancements that should complete first, which is what draws the
- * little connecting lines in the screen.
- */
 export const ADVANCEMENTS = [
-  /* ---------------- misc: the root ---------------- */
+
   {
     id: 'root',
     category: 'misc',
@@ -97,7 +56,6 @@ export const ADVANCEMENTS = [
     test: (c) => c.total > 1 && c.earnedCount >= c.total,
   },
 
-  /* ---------------- survival ---------------- */
   {
     id: 'getting_wood',
     category: 'survival',
@@ -183,7 +141,6 @@ export const ADVANCEMENTS = [
     test: (c) => c.nights >= 3,
   },
 
-  /* ---------------- building ---------------- */
   {
     id: 'stone_age',
     category: 'building',
@@ -262,7 +219,6 @@ export const ADVANCEMENTS = [
     test: (c) => c.travelled >= 500,
   },
 
-  /* ---------------- combat ---------------- */
   {
     id: 'adrenaline',
     category: 'combat',
@@ -300,27 +256,24 @@ export const ADVANCEMENTS = [
   },
 ];
 
-/** id -> definition, for the parents lookup and the save file. */
 export const BY_ID = new Map(ADVANCEMENTS.map((a) => [a.id, a]));
 
 export class Advancements {
-  /** @param {import('../core/Game.js').Game} game */
+
   constructor(game) {
     this.game = game;
-    /** @type {Set<string>} ids earned in this world */
+
     this.earned = new Set();
-    /** Furthest the player has been from spawn, and the furthest the world is deep. */
+
     this.travelled = 0;
     this.deepestY = 128;
     this.lowestHealth = 20;
     this.kills = 0;
     this._spawn = null;
-    /** Toast queue, so two advancements in the same frame do not overlap. */
+
     this._queue = [];
     this._showing = false;
   }
-
-  /* -------------------------------------------------- the context passed to each test */
 
   get _ctx() {
     const inv = this.game.inventory;
@@ -346,13 +299,6 @@ export class Advancements {
       hasAny: (names) => inv.slots.some((st) => st && names.includes(st.name)),
     };
   }
-
-  /* -------------------------------------------------- event hooks
-
-   * These only forward to the statistics module, which is the real home for the
-   * numbers. They stay as methods because the call sites read better with a
-   * named intent than with `statistics.recordX` in four different files.
-   */
 
   recordMined(name) {
     this.game.statistics.recordBlockMined(name);
@@ -386,21 +332,12 @@ export class Advancements {
     this.game.statistics.recordNight();
   }
 
-  /** @param {object|null} saved the earned ids from a previous visit */
   restore(saved) {
     this.earned = new Set(saved?.earned ?? []);
     this.lowestHealth = CONFIG.MAX_HEALTH;
     this.spawnAt(this.game.player?.position);
   }
 
-  /**
-   * A new life starts the health record over.
-   *
-   * Without this the run that killed you still counted: coming back at full
-   * health left the old low point sitting in the record, so a death you had
-   * already survived the first half of still unlocked A Close Call on the walk
-   * back to wherever.
-   */
   onRespawn() {
     this.lowestHealth = CONFIG.MAX_HEALTH;
   }
@@ -408,8 +345,6 @@ export class Advancements {
   toJSON() {
     return [...this.earned];
   }
-
-  /* -------------------------------------------------- per frame */
 
   spawnAt(pos) {
     this._spawn = pos ? { x: pos.x, y: pos.y, z: pos.z } : null;
@@ -424,16 +359,12 @@ export class Advancements {
         this.travelled = Math.max(this.travelled, d);
       }
     }
-    // Only a dip you lived through counts. The death blow is not "a close call",
-    // it is the end of the run, and recording it meant dying handed out both
-    // Adrenaline and A Close Call on the way down.
+
     const survival = this.game.survival;
     if (survival && !survival.dead && survival.health > 0) {
       this.lowestHealth = Math.min(this.lowestHealth, survival.health);
     }
 
-    // a night is counted when the clock wraps past midnight, which is the same
-    // moment the world starts counting the day number
     const time = this.game.world?.time ?? 0;
     if (this._lastTime !== undefined && this._lastTime > time && time < 2000) {
       this.recordNight();
@@ -443,8 +374,7 @@ export class Advancements {
     const ctx = this._ctx;
     for (const a of ADVANCEMENTS) {
       if (this.earned.has(a.id)) continue;
-      // a parent that has not been earned yet means the chain is not reached;
-      // `root` has no parent so it is always available
+
       if (a.after.length && !a.after.every((p) => this.earned.has(p))) continue;
       let done = false;
       try {
@@ -465,13 +395,11 @@ award(a) {
     this.game.onAdvancementEarned?.(a);
   }
 
-  /** Grant an advancement by ID (for commands). */
   grant(id) {
     const a = ADVANCEMENTS.find((x) => x.id === id);
     if (a) this.award(a);
   }
 
-  /** Revoke an advancement by ID (for commands). */
   revoke(id) {
     this.earned.delete(id);
   }
@@ -486,7 +414,6 @@ award(a) {
   }
 }
 
-/** Human readable label, used by the screen and the toast. */
 export function advancementTitle(a) {
   return t(`adv.${a.id}.title`);
 }
@@ -495,7 +422,6 @@ export function advancementDesc(a) {
   return t(`adv.${a.id}.desc`);
 }
 
-/** The icon for a category tab or an advancement, as a fresh canvas. */
 export function advancementIcon(game, name, size) {
   return iconCanvas(name, size, game.assets);
 }
