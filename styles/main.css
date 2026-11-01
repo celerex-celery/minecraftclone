@@ -17,7 +17,7 @@
   --mc-green: #55ff55;
   --mc-red: #ff5555;
   --mc-yellow: #ffff55;
-  /* GUI scale, recalculated from the window size by Game.resize() */
+  /* Fixed normal GUI scale */
   --gui: 3;
 }
 

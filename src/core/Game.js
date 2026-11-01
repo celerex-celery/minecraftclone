@@ -27,7 +27,7 @@ import { Boats } from '../world/entities/Boat.js';
 import { Beds } from '../world/structures/Beds.js';
 import { Chests, chestOwner } from '../world/structures/Chests.js';
 import { placeBonusChest } from '../world/structures/BonusChest.js';
-import { lightPortal, checkPortalNeighbours, findFrame, ignitePortal, findEndPortalFrame, activateEndPortal, playerInPortal, playerInEndPortal, portalNearby, findPortalNear } from '../world/structures/Portal.js';
+import { lightPortal, checkPortalNeighbours, findFrame, ignitePortal, findEndPortalFrame, activateEndPortal, playerInPortal, playerInEndPortal, portalNearby, findPortalNear, buildEndExitPortal } from '../world/structures/Portal.js';
 import { seedFromString } from '../world/generation/Noise.js';
 import { Player } from '../player/Player.js';
 import { ViewModel } from '../player/ViewModel.js';
@@ -262,17 +262,6 @@ this._bedsByDimension = {};
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.viewModel.setAspect(w / h);
-    this.applyGuiScale();
-  }
-
-  applyGuiScale() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    const manual = this.settings.guiScale ?? 0;
-    const auto = Math.max(1, Math.min(3, Math.round(Math.min(w, h) / 380)));
-    const gui = snapToDevicePixels(manual > 0 ? manual : auto, window.devicePixelRatio || 1);
-    document.documentElement.style.setProperty('--gui', String(gui));
-    this.guiScale = gui;
   }
 
   _bindCanvas() {
@@ -387,7 +376,6 @@ this._bedsByDimension = {};
       this.applyRenderDistance(s.renderDistance);
     }
     this.updateCameraRanges();
-    this.applyGuiScale();
     this.queueSettingsSave();
   }
 
@@ -598,7 +586,7 @@ this._bedsByDimension = {};
       this.player.spectator = false;
     }
 
-    this.player.flying = (this.player.creative || this.player.spectator) && !saveData;
+    this.player.flying = false;
     this.survival = new Survival(this.world, this.player);
     this.survival.difficulty = difficulty;
     if (hardcore) {

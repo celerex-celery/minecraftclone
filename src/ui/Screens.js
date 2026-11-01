@@ -359,10 +359,8 @@ export class OptionsScreen {
 
     const s = this.game.settings;
     const R = (key, control) => this._row(t(`options.${key}`), control);
-    const scaleNames = ['auto', 'small', 'normal', 'large', 'huge'].map((k) => t(`options.guiScale.${k}`));
 
     if (this.category === 'video') {
-      R('guiScale', this._cycle(() => (s.guiScale ?? 0), (v) => { s.guiScale = v; }, scaleNames));
       R('renderDistance', this._slider(3, 32, 1, () => s.renderDistance, (v) => { s.renderDistance = v; }));
       R('fov', this._slider(50, 110, 1, () => s.fov, (v) => { s.fov = v; }));
       R('brightness', this._slider(-0.5, 0.8, 0.05, () => s.brightness, (v) => { s.brightness = v; }));
