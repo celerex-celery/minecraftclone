@@ -401,12 +401,12 @@ const NEEDS_SUPPORT = ['short_grass', 'fern', 'dead_bush', 'poppy', 'dandelion',
 
 Blocks.add('torch', {
   tiles: 'torch', hardness: 0, light: 14, solid: false, opaque: false,
-  shape: 'cross', cutout: true, placeable: true, faces: true,
+  shape: 'cross', cutout: true, placeable: true,
   crossWidth: 0.34, crossHeight: 1.0,
 });
 Blocks.add('wall_torch', {
   tiles: 'wall_torch', hardness: 0, light: 14, solid: false, opaque: false,
-  shape: 'cross', cutout: true, placeable: true, faces: true,
+  shape: 'cross', cutout: true, placeable: true,
   crossWidth: 0.34, crossHeight: 1.0,
 });
 Blocks.add('short_grass', {
