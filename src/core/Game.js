@@ -2076,8 +2076,9 @@ const payload = {
     let bobX = 0;
     if (this.settings.viewBobbing && mode === 0 && !player.flying && !player.spectator) {
       const amount = player.bobAmount * (player.crouching ? 0.3 : 1);
-      bobY = Math.sin(player.bobPhase * 2) * 0.045 * amount;
-      bobX = Math.cos(player.bobPhase) * 0.035 * amount;
+      const sprintMult = player.sprinting ? 1.3 : 1.0;
+      bobY = Math.sin(player.bobPhase * 2) * 0.06 * amount * sprintMult;
+      bobX = Math.cos(player.bobPhase) * 0.05 * amount * sprintMult;
     }
 
     if (mode === 0) {

@@ -295,14 +295,23 @@ export class Player {
     } else if (!this.onGround && !this.inWater) {
 
       const ticks = dt * CONFIG.TICKS_PER_SECOND;
+      const drag = Math.pow(CONFIG.AIR_FRICTION, ticks);
+      this.velocity.x *= drag;
+      this.velocity.z *= drag;
 
-      const along = moving
-        ? (wishX * this.velocity.x + wishZ * this.velocity.z) > 0
-        : false;
-      const drag = Math.pow(along ? CONFIG.AIR_DRAG : CONFIG.AIR_COAST_DRAG, ticks);
-      const steer = CONFIG.AIR_STEER * ticks * (moving ? 1 : 0);
-      this.velocity.x = this.velocity.x * drag + wishX * steer;
-      this.velocity.z = this.velocity.z * drag + wishZ * steer;
+      const accel = CONFIG.AIR_ACCEL * ticks;
+      const wishLen = Math.hypot(wishX, wishZ);
+      if (wishLen > 1e-4) {
+        const wx = wishX / wishLen;
+        const wz = wishZ / wishLen;
+        const currSpeed = this.velocity.x * wx + this.velocity.z * wz;
+        const addSpeed = CONFIG.WALK_SPEED - currSpeed;
+        if (addSpeed > 0) {
+          const add = Math.min(addSpeed, accel);
+          this.velocity.x += wx * add;
+          this.velocity.z += wz * add;
+        }
+      }
 
       const cap = this.sprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED;
       const now = Math.hypot(this.velocity.x, this.velocity.z);
@@ -318,10 +327,34 @@ export class Player {
           : (this.sprinting ? CONFIG.SPRINT_SPEED : CONFIG.WALK_SPEED))
         : CONFIG.SWIM_SPEED;
 
-      const decay = Math.pow(friction, dt * CONFIG.TICKS_PER_SECOND);
-      const k = 1 - decay;
-      this.velocity.x += (wishX * target - this.velocity.x) * k;
-      this.velocity.z += (wishZ * target - this.velocity.z) * k;
+      const ticks = dt * CONFIG.TICKS_PER_SECOND;
+      const decay = Math.pow(friction, ticks);
+      this.velocity.x *= decay;
+      this.velocity.z *= decay;
+
+      const accel = CONFIG.GROUND_ACCEL * ticks;
+      const wishX2 = wishX * target;
+      const wishZ2 = wishZ * target;
+      const wishLen = Math.hypot(wishX2, wishZ2);
+      if (wishLen > 1e-4) {
+        const wx = wishX2 / wishLen;
+        const wz = wishZ2 / wishLen;
+        const currSpeed = this.velocity.x * wx + this.velocity.z * wz;
+        const addSpeed = wishLen - currSpeed;
+        if (addSpeed > 0) {
+          const add = Math.min(addSpeed, accel * wishLen);
+          this.velocity.x += wx * add;
+          this.velocity.z += wz * add;
+        }
+      }
+
+      const cap = target;
+      const now = Math.hypot(this.velocity.x, this.velocity.z);
+      if (now > cap) {
+        const k = cap / now;
+        this.velocity.x *= k;
+        this.velocity.z *= k;
+      }
     }
 
     if (this.spectator) {

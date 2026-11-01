@@ -18,3 +18,8 @@
 - Added four more language variants: Norwegian Bokmål (Norway) no_nb.json, Portuguese (Brazil) pt_br.json, Dutch (Netherlands) nl_nl.json, Finnish (Finland) fi_fi.json.
 - Registered no_nb, pt_br, nl_nl, fi_fi in Lang.js LANGUAGES list and updated languages maps in all language files.
 - Stripped accented characters from all translations; the bitmap font (ascii.png) only renders ASCII codes 32-126, so accented glyphs would not display.
+- Improved camera and player movement to feel more like Minecraft:
+  - Ground movement now uses friction-then-acceleration (slide on release, gradual accel) instead of instant speed interpolation.
+  - Air movement now preserves momentum with air friction and steerable acceleration.
+  - Ground friction set to Minecraft's 0.6; added GROUND_ACCEL (10) and AIR_ACCEL (3).
+  - Camera walk/sprint bob slightly more pronounced; sprint increases bob amplitude.
