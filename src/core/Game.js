@@ -134,7 +134,7 @@ export class Game {
     this.scene.frustumCulled = true;
     this.camera = new THREE.PerspectiveCamera(this.settings.fov, 1, 0.08, 600);
 
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0);
+    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.06);
     this.scene.add(this.ambientLight);
 
     this.shadows = new EntityShadows(this.scene);
