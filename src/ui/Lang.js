@@ -7,7 +7,19 @@ const LANG_DIR = 'assets/lang/';
 export const LANGUAGES = [
   { code: 'en_us', label: 'English (US)' },
   { code: 'en_gb', label: 'English (UK)' },
-  { code: 'es_es', label: 'Espanol' },
+  { code: 'en_ca', label: 'English (Canada)' },
+  { code: 'es_es', label: 'Español (España)' },
+  { code: 'es_mx', label: 'Español (México)' },
+  { code: 'de_de', label: 'Deutsch (Deutschland)' },
+  { code: 'fr_fr', label: 'Français (France)' },
+  { code: 'it_it', label: 'Italiano (Italia)' },
+  { code: 'tr_tr', label: 'Türkçe (Türkiye)' },
+  { code: 'da_da', label: 'Dansk (Danmark)' },
+  { code: 'sv_se', label: 'Svenska (Sverige)' },
+  { code: 'no_nb', label: 'Norsk bokmål (Norge)' },
+  { code: 'pt_br', label: 'Português (Brasil)' },
+  { code: 'nl_nl', label: 'Nederlands (Nederland)' },
+  { code: 'fi_fi', label: 'Suomi (Suomi)' },
 ];
 
 const DEFAULT = 'en_us';
