@@ -614,7 +614,6 @@ export class WorldTypeScreen {
         ev.stopPropagation();
         this.game.audio.click();
         if (opt.id === 'islands') {
-          this.hide();
           this.showIslandsCustomize();
           return;
         }
@@ -642,8 +641,8 @@ export class WorldTypeScreen {
       b.addEventListener('click', (ev) => {
         ev.stopPropagation();
         this.game.audio.click();
-        this.hide();
         const pick = this._onPick;
+        this.hide();
         if (pick) pick({ id: 'islands', islandBiome: bio.id });
       });
       this.grid.appendChild(b);
