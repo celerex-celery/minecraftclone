@@ -1219,7 +1219,7 @@ export class World {
    */
   _applyChunkMesh(chunk, geo) {
     const meshes = {};
-    const add = (geometry, material, renderOrder) => {
+    const add = (geometry, material, type, renderOrder) => {
       if (!geometry) return;
       const m = new THREE.Mesh(geometry, material);
       m.position.set(chunk.ox, 0, chunk.oz);
@@ -1234,23 +1234,23 @@ export class World {
       m.userData.chunkCx = chunk.cx;
       m.userData.chunkCz = chunk.cz;
       this.scene.add(m);
-      meshes[renderOrder] = m;
+      meshes[type] = m;
     };
-    add(geo.opaque, this.materials.opaque, 0);
-    add(geo.cutout, this.materials.cutout, 1);
+    add(geo.opaque, this.materials.opaque, 'opaque', 0);
+    add(geo.cutout, this.materials.cutout, 'cutout', 1);
     // Water and lava are separate draw groups: they use different materials,
     // and the render order is keyed on it, so a chunk can hold both at once.
-    add(geo.water, this.materials.water, 2);
-    add(geo.lava, this.materials.lava, 3);
+    add(geo.water, this.materials.water, 'water', 2);
+    add(geo.lava, this.materials.lava, 'lava', 3);
     // A nether portal is a third kind of sheet: alpha tested, double sided, and
     // playing through its own sheet of animation frames.
-    add(geo.portal, this.materials.portal, 4);
+    add(geo.portal, this.materials.portal, 'portal', 4);
     // Fire is the same arrangement for the same reason: it is an animation strip
     // in the pack, and a static tile of it is a flicker-free orange blob.
-    add(geo.fire, this.materials.fire, 5);
+    add(geo.fire, this.materials.fire, 'fire', 5);
     // Seagrass, same arrangement once more: its texture is an animation strip,
     // so it is drawn from its own material rather than from the block atlas.
-    add(geo.animated, this.materials.seagrass, 6);
+    add(geo.animated, this.materials.seagrass, 'animated', 6);
 
     // the old geometry comes down only now, with the new one already in place
     if (chunk.meshes) {
@@ -1281,7 +1281,8 @@ export class World {
   buildAreaNow(px, pz, maxChunks = 512) {
     for (let i = 0; i < 12; i++) this.update(px, pz, 12, 0);
     let built = 0;
-    while (this._meshQueue.length && built < maxChunks) {
+    const deadline = performance.now() + 8;  // don't block one frame for all of it
+    while (this._meshQueue.length && built < maxChunks && performance.now() < deadline) {
       const [cx, cz] = this._meshQueue.shift();
       this._meshQueued?.delete(CHUNK_KEY(cx, cz));
       const c = this.chunkAt(cx, cz);
