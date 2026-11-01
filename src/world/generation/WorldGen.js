@@ -285,11 +285,11 @@ export class WorldGen {
    */
   continentAt(wx, wz) {
     if (this.worldType === 'flat') return 1;
-    // islands: an infinite ocean with a few small land patches of the chosen biome
+    // islands: an infinite ocean with scattered small land patches
     if (this.worldType === 'islands') {
-      // one island per ~200x200 block area, small and scattered
-      const c = this.nContinent.fbm2(wx * 0.0045, wz * 0.0045, 3, 2, 0.5);
-      return c - 0.75;   // nearly always below land threshold → ocean, rare islands
+      // one island per ~100x100 block area - common enough to find within view distance
+      const c = this.nContinent.fbm2(wx * 0.0035, wz * 0.0035, 3, 2, 0.5);
+      return c - 0.5;   // more land than before - scattered islands across an ocean
     }
     const c = this.nContinent.fbm2(wx * 0.0011, wz * 0.0011, 4, 2, 0.5);
 
