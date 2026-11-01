@@ -397,6 +397,7 @@ export class CreateWorldScreen {
     this.body.appendChild(nameRow);
 
     /* ---- seed, with a dice button ---- */
+    const editing = existing !== null;
     const seedRow = el('div', 'wc-field');
     const seedLabel = el('label', 'wc-option-label');
     game.font.set(seedLabel, t('create.seed'), { scale: 2, color: COLORS.white });
@@ -424,7 +425,6 @@ export class CreateWorldScreen {
     this.body.appendChild(seedRow);
 
     /* ---- the option grids ---- */
-    const editing = existing !== null;
     const hardcore = this.opts.gameMode === 'hardcore';
     if (hardcore) this.opts.difficulty = 'hard';
     const gameModeRow = optionRow(game, t('create.gameMode'), GAME_MODES, this.opts.gameMode,
