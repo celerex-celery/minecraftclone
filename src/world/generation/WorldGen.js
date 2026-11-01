@@ -341,8 +341,8 @@ export class WorldGen {
     // islands: ocean everywhere except the rare land patches from continentAt
     if (this.worldType === 'islands') {
       const cont = this.continentAt(wx, wz);
-      if (cont < -0.05) return CONFIG.SEA_LEVEL;   // ocean surface
-      return CONFIG.SEA_LEVEL + 2 + cont * 6;       // small island poking above water
+      if (cont < -0.05) return CONFIG.SEA_LEVEL - 3;   // ocean floor, room for water above
+      return CONFIG.SEA_LEVEL + 2 + cont * 6;          // small island poking above water
     }
     const key = (wx & 0x3fffff) * 4194304 + (wz & 0x3fffff);
     const hit = this._hCache.get(key);
@@ -388,7 +388,7 @@ export class WorldGen {
   biomeAt(wx, wz, h) {
     // islands: everything below the waves is ocean, the rare land is the chosen biome
     if (this.worldType === 'islands') {
-      if (h < CONFIG.SEA_LEVEL - 2) return BIOME.ocean;
+      if (h <= CONFIG.SEA_LEVEL) return BIOME.ocean;
       return this.islandBiome ? BIOME[this.islandBiome] ?? BIOME.plains : BIOME.plains;
     }
     // Temperature and humidity decide the biome, so their scale is the scale of
