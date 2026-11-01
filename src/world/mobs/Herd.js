@@ -340,10 +340,13 @@ export class Mobs {
       for (let j = i + 1; j < list.length; j++) {
         const b = list[j];
         if (b.dead) continue;
+        const bdx = b.pos.x - a.pos.x;
+        const bdz = b.pos.z - a.pos.z;
+        if (bdx * bdx + bdz * bdz > 64) continue;
         if (a.pos.y >= b.pos.y + b.variant.height) continue;
         if (b.pos.y >= a.pos.y + at) continue;
-        const dx = b.pos.x - a.pos.x;
-        const dz = b.pos.z - a.pos.z;
+        const dx = bdx;
+        const dz = bdz;
         const min = ar + b.variant.width * 0.5;
         const d2 = dx * dx + dz * dz;
         if (d2 >= min * min) continue;
