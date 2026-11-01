@@ -1,4 +1,5 @@
 import { Blocks } from '../blocks/Blocks.js';
+import { CONFIG } from '../../core/Config.js';
 import { SX, SY, SZ, MIN_Y, MAX_Y, VOLUME, inRange } from '../generation/Chunk.js';
 
 const SKY = 0;
@@ -183,7 +184,10 @@ export class LightEngine {
 
               level -= def.opacity;
               if (level <= 0) break;
+            } else if (y < CONFIG.SEA_LEVEL) {
+              level--; // sky light fades below sea level
             }
+            if (level <= 0) break;
             light[lay(y, col)] |= level << 4;
           }
         }
@@ -312,7 +316,7 @@ export class LightEngine {
 
         const packed = c.light[nIdx];
 
-        const want = (isSky && dy === -1 && from === 15) ? 15 : from - 1 - def.opacity;
+        const want = from - 1 - def.opacity;
         if (want <= 1) continue;
 
         if (isSky) {
