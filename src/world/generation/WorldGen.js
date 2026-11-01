@@ -285,11 +285,11 @@ export class WorldGen {
    */
   continentAt(wx, wz) {
     if (this.worldType === 'flat') return 1;
-    // islands: an infinite ocean with scattered small land patches
+    // islands: a single island at spawn in an infinite ocean
     if (this.worldType === 'islands') {
-      // small but visible islands scattered across the ocean
-      const c = this.nContinent.fbm2(wx * 0.004, wz * 0.004, 3, 2, 0.5);
-      return c - 0.55;   // mostly ocean, small grass-topped dirt islands here and there
+      const d = Math.sqrt(wx * wx + wz * wz);
+      // island radius about 40 blocks around spawn
+      return d < 40 ? 1 : -1;
     }
     const c = this.nContinent.fbm2(wx * 0.0011, wz * 0.0011, 4, 2, 0.5);
 
@@ -338,11 +338,15 @@ export class WorldGen {
       if (this._hCache.size > 200000) this._hCache.clear();
       return 4;
     }
-    // islands: ocean everywhere except the rare land patches from continentAt
+    // islands: a single island at spawn, ocean everywhere else
     if (this.worldType === 'islands') {
-      const cont = this.continentAt(wx, wz);
-      if (cont < -0.05) return CONFIG.SEA_LEVEL - 3;   // ocean floor, room for water above
-      return CONFIG.SEA_LEVEL + 2 + cont * 4;          // short islands just above water
+      const d = Math.sqrt(wx * wx + wz * wz);
+      if (d < 40) {
+        // island surface: grass-topped dirt, ~5 blocks above sea level
+        return CONFIG.SEA_LEVEL + 5;
+      }
+      // ocean floor, room for water above
+      return CONFIG.SEA_LEVEL - 3;
     }
     const key = (wx & 0x3fffff) * 4194304 + (wz & 0x3fffff);
     const hit = this._hCache.get(key);
@@ -386,10 +390,11 @@ export class WorldGen {
   }
 
   biomeAt(wx, wz, h) {
-    // islands: everything below the waves is ocean, the rare land is the chosen biome
+    // islands: a single island at spawn with plains biome, ocean everywhere else
     if (this.worldType === 'islands') {
-      if (h <= CONFIG.SEA_LEVEL) return BIOME.ocean;
-      return this.islandBiome ? BIOME[this.islandBiome] ?? BIOME.plains : BIOME.plains;
+      const d = Math.sqrt(wx * wx + wz * wz);
+      if (d < 40) return BIOME.plains;
+      return BIOME.ocean;
     }
     // Temperature and humidity decide the biome, so their scale is the scale of
     // the biomes.

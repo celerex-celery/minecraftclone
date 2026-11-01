@@ -542,18 +542,8 @@ export class World {
     // place to come back to
     if (this.spawnPoint) return this.spawnPoint.clone();
     if (this.gen.worldType === 'islands') {
-      // islands are sparse - search a wide radius for any land above water
-      for (let r = 0; r < 800; r++) {
-        for (let a = 0; a < 16; a++) {
-          const ang = (a / 16) * Math.PI * 2;
-          const x = Math.round(Math.cos(ang) * r * 2);
-          const z = Math.round(Math.sin(ang) * r * 2);
-          const h = this.gen.heightAt(x, z);
-          if (h > CONFIG.SEA_LEVEL && h < MAX_Y - 12) {
-            return new THREE.Vector3(x + 0.5, h + 2.2, z + 0.5);
-          }
-        }
-      }
+      // single island at spawn (0,0): grass surface at SEA_LEVEL + 5
+      return new THREE.Vector3(0.5, CONFIG.SEA_LEVEL + 5 + 2.2, 0.5);
     }
     for (let r = 0; r < 400; r++) {
       for (let a = 0; a < 12; a++) {
