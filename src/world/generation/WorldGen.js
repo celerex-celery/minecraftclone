@@ -88,6 +88,10 @@ export class WorldGen {
     this.treeRoll = (wx, wz) => hash2(wx, wz, this.seed ^ 0xbeef);
     this.nContinent = new PerlinNoise(this.seed);
 
+    this.nErosion = new PerlinNoise(this.seed ^ 0x55aa);
+
+    this.nPeaksValleys = new PerlinNoise(this.seed ^ 0xdead);
+
     this.nCoast = new PerlinNoise(this.seed ^ 0x3ab9);
 
     this.nMid = new PerlinNoise(this.seed ^ 0x6d1f);
@@ -154,15 +158,25 @@ export class WorldGen {
       const d = Math.sqrt(wx * wx + wz * wz);
       return d < 25 ? 1 : -1;
     }
-    const c = this.nContinent.fbm2(wx * 0.0011, wz * 0.0011, 4, 2, 0.5);
+
+    const scale = 0.0011;
+    const c = this.nContinent.fbm2(wx * scale, wz * scale, 4, 2, 0.5);
+
+    const erosion = this.nErosion.fbm2(wx * scale, wz * scale, 3, 2, 0.5);
+    const peaks = this.nPeaksValleys.fbm2(wx * scale * 1.5, wz * scale * 1.5, 3, 2, 0.5);
 
     const coast = this.nCoast.fbm2(wx * 0.0068, wz * 0.0068, 3, 2, 0.5);
-
     const mid = this.nMid.fbm2(wx * 0.0031, wz * 0.0031, 2, 2, 0.5);
 
-    const base = c + LAND_BIAS + mid * 0.42;
-    const coastWeight = Math.max(0, 1 - Math.abs(base) * 3.2);
-    return base + coast * 0.22 * coastWeight;
+    const continentalness = c + LAND_BIAS + mid * 0.42;
+
+    const coastWeight = Math.max(0, 1 - Math.abs(continentalness) * 3.2);
+    const land = continentalness + coast * 0.22 * coastWeight;
+
+    const erosionFlatten = Math.max(0, erosion - 0.2) * 0.45;
+    const peaksAmplify = Math.max(0, peaks - 0.15) * 1.6;
+
+    return land - erosionFlatten + peaksAmplify;
   }
 
   heightAt(wx, wz) {
@@ -206,11 +220,22 @@ export class WorldGen {
       const crag = this.nRidge.fbm2(wx * 0.018, wz * 0.018, 3, 2, 0.5);
       const mountain = Math.max(0, r - 0.12) * (1 - Math.max(0, e)) * 2.4
         + Math.max(0, crag - 0.4) * 1.6 * Math.max(0, r - 0.12);
+
+      const ridges = this.nRidge.ridged3(wx, wz, 0, 4, 0.015);
+      const mountainPeak = Math.max(0, ridges - 0.55) * 44;
+
+      const detail = this.nDetail.fbm2(wx * 0.022, wz * 0.022, 5, 2, 0.5);
+
       const scale = this.worldType === 'amplified' ? 2.6 : this.worldType === 'cursed' ? 1.6 : 1;
       land += mountain * 46 * scale;
-      land += d * 5.5 * (1 - mountain * 0.6) * scale;
+      land += mountainPeak * scale;
+      land += detail * 5.5 * (1 - mountain * 0.6) * scale;
       h = land;
     }
+
+    const erosion = this.nErosion.fbm2(wx * 0.0011, wz * 0.0011, 3, 2, 0.5);
+    const smooth = Math.max(0, erosion - 0.35) * 2.0;
+    h -= smooth * (cont > 0.04 ? 0.5 : 0.8);
 
     h = Math.max(MIN_Y + 8, Math.min(MAX_Y - 12, Math.round(h)));
     if (this._hCache.size > 200000) this._hCache.clear();

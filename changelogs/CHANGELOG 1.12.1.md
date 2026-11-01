@@ -23,3 +23,8 @@
   - Air movement now preserves momentum with air friction and steerable acceleration.
   - Ground friction set to Minecraft's 0.6; added GROUND_ACCEL (10) and AIR_ACCEL (3).
   - Camera walk/sprint bob slightly more pronounced; sprint increases bob amplitude.
+- Improved terrain noise to match Minecraft:
+  - Added erosion noise (flattens plains/beaches) and peaks/valleys noise (dramatic mountain terrain).
+  - Continentalness now separated into continentalness + erosion + peaks components.
+  - Added ridged noise for sharp mountain peaks and craters.
+  - Added erosion-based height smoothing for more natural terrain transitions.
