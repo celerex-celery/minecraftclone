@@ -148,7 +148,7 @@ export class CaveCarver {
     let totalRemoved = 0;
 
     // Number of cave systems in this chunk
-    const caveCount = 1 + Math.floor(random() * 3);
+    const caveCount = 1 + Math.floor(random() * 2);
 
     for (let c = 0; c < caveCount; c++) {
       // Pick cave type
@@ -183,10 +183,10 @@ export class CaveCarver {
     const y = -64 + random() * 300;
 
     // Tunnel properties
-    const thickness = 1 + random() * 2 + (random() < 0.1 ? random() * random() * 6 : 0);
+    const thickness = 1 + random() * 1.5 + (random() < 0.1 ? random() * random() * 4 : 0);
     const horizontalRadius = 1.5 + thickness;
     const verticalRadius = horizontalRadius * (0.5 + random() * 0.5);
-    const length = 20 + random() * 60;
+    const length = 15 + random() * 40;
 
     removed += carveTunnel(blocks, x, y, z, horizontalRadius, verticalRadius, length, seed + 1, 
       (bx, by, bz) => by < -60 || by > 300); // Don't carve bedrock or too high
@@ -205,20 +205,20 @@ export class CaveCarver {
     const z = baseZ + random() * 16;
     const y = -64 + random() * 250;
 
-    const roomRadius = 3 + random() * 5;
+    const roomRadius = 2 + random() * 3;
     removed += carveRoom(blocks, x, y, z, roomRadius, 0.6 + random() * 0.4,
       (bx, by, bz) => by < -60 || by > 300);
 
     // Tunnels leading out
-    const tunnelCount = 2 + Math.floor(random() * 3);
+    const tunnelCount = 1 + Math.floor(random() * 2);
     for (let i = 0; i < tunnelCount; i++) {
       const tunnelSeed = seed + i + 1;
       const tRandom = mulberry32(tunnelSeed);
       const tX = x + (tRandom() - 0.5) * roomRadius * 2;
       const tY = y + (tRandom() - 0.5) * roomRadius;
       const tZ = z + (tRandom() - 0.5) * roomRadius * 2;
-      removed += carveTunnel(blocks, tX, tY, tZ, 2 + tRandom() * 1.5, 1.5 + tRandom(), 
-        15 + tRandom() * 30, tunnelSeed + 0x1000,
+      removed += carveTunnel(blocks, tX, tY, tZ, 2 + tRandom() * 1.5, 1.5 + tRandom(),
+        12 + tRandom() * 24, tunnelSeed + 0x1000,
         (bx, by, bz) => by < -60 || by > 300);
     }
 
@@ -235,18 +235,18 @@ export class CaveCarver {
     // Shaft positions from 2D noise intersection
     const x = baseX + random() * 16;
     const z = baseZ + random() * 16;
-    const topY = 100 + random() * 150;
-    const bottomY = -60 + random() * 50;
-    const radius = 1.5 + random() * 2;
+    const topY = 80 + random() * 120;
+    const bottomY = -60 + random() * 40;
+    const radius = 1.5 + random() * 1.5;
 
     removed += carveShaft(blocks, x, z, topY, bottomY, radius,
       (bx, by, bz) => by < -60 || by > 300);
 
     // Side tunnels at intervals
-    const intervals = Math.floor((topY - bottomY) / 20);
+    const intervals = Math.floor((topY - bottomY) / 30);
     for (let i = 1; i < intervals; i++) {
-      const y = bottomY + i * 20;
-      if (random() < 0.3) {
+      const y = bottomY + i * 30;
+      if (random() < 0.2) {
         const tSeed = seed + i + 0x2000;
         const tRandom = mulberry32(tSeed);
         removed += carveTunnel(blocks, x, y, z, 2 + tRandom() * 1.5, 1.5 + tRandom(),

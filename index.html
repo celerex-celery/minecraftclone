@@ -225,10 +225,14 @@
 
 <!-- ============================ WORLD LIST ============================ -->
 <div id="worldlist-screen" class="screen hidden dim">
-  <div class="screen-stack">
-    <h2 class="mc-heading light" id="worldlist-title">Select World</h2>
-    <div class="worldlist-entries" id="worldlist-entries"></div>
+    <div class="screen-stack">
+      <h2 class="mc-heading light" id="worldlist-title">Select World</h2>
+      <input type="text" id="worldlist-search" class="mc-input" placeholder="Search worlds..." />
+      <div class="worldlist-entries" id="worldlist-entries"></div>
     <div class="screen-actions">
+      <button class="mc-btn" data-action="play" data-i18n="menu.play">Play</button>
+      <button class="mc-btn" data-action="edit" data-i18n="menu.edit">Edit</button>
+      <button class="mc-btn danger" data-action="delete" data-i18n="menu.delete">Delete</button>
       <button class="mc-btn primary" data-action="create" data-i18n="menu.createNew">Create New World</button>
       <button class="mc-btn" data-action="back" data-i18n="menu.back">Back</button>
     </div>

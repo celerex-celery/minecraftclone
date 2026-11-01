@@ -124,25 +124,27 @@ function iconCanvas(game, optionId, size = 30) {
  * Laid out the way the real game does it: a fixed label cell on the left, then
  * the option buttons, with the selected one drawn inset and highlighted.
  */
-function optionRow(game, label, options, selected, onPick) {
+function optionRow(game, label, options, selected, onPick, readOnly = false) {
   const row = el('div', 'wc-option-row');
   const lab = el('div', 'wc-option-label');
   game.font.set(lab, label, { scale: 2, color: COLORS.white });
   row.appendChild(lab);
 
   for (const opt of options) {
-    const b = el('button', `wc-option${opt.id === selected ? ' selected' : ''}`);
+    const b = el('button', `wc-option${opt.id === selected ? ' selected' : ''}${readOnly ? ' readonly' : ''}`);
     b.dataset.id = opt.id;
     b.appendChild(iconCanvas(game, opt.id));
     const cap = el('span', 'wc-option-caption');
     game.font.set(cap, t(`create.${opt.id}`), { scale: 2, color: COLORS.white });
     b.appendChild(cap);
-    b.addEventListener('click', () => {
-      game.audio.click();
-      for (const other of row.querySelectorAll('.wc-option')) other.classList.remove('selected');
-      b.classList.add('selected');
-      onPick(opt.id);
-    });
+    if (!readOnly) {
+      b.addEventListener('click', () => {
+        game.audio.click();
+        for (const other of row.querySelectorAll('.wc-option')) other.classList.remove('selected');
+        b.classList.add('selected');
+        onPick(opt.id);
+      });
+    }
     row.appendChild(b);
   }
   return row;
@@ -158,43 +160,79 @@ export class WorldListScreen {
     this.root = document.getElementById('worldlist-screen');
     this.listEl = document.getElementById('worldlist-entries');
     this.heading = document.getElementById('worldlist-title');
+    this.search = document.getElementById('worldlist-search');
     this.isOpen = false;
+    this._selectedId = null;
+    this._selectedEl = null;
+    this._filter = '';
+
+    this.search.addEventListener('input', (e) => {
+      this._filter = e.target.value.toLowerCase();
+      this.refresh();
+    });
 
     this.root.addEventListener('click', async (e) => {
       const btn = e.target.closest('[data-action]');
-      if (!btn) return;
+      if (!btn || btn.disabled) return;
       this.game.audio.click();
-      const id = btn.dataset.world;
-      if (btn.dataset.action === 'back') {
+      const action = btn.dataset.action;
+      if (action === 'back') {
         this.hide();
         this.game.screens.title.show();
-        } else if (btn.dataset.action === 'create') {
-          this.hide();
-          // the options the form returns are what actually build the world
-          this.game.screens.create.show(async (opts) => {
-            if (!opts) { await this.show(); return; }
-            const newId = await this.game.createWorldRecord(opts);
-            this.game.playWorld(newId);
-          });
-        } else if (btn.dataset.action === 'play') {
+      } else if (action === 'create') {
         this.hide();
-        await this.game.playWorld(id);
-      } else if (btn.dataset.action === 'edit') {
-        this.hide();
+        // the options the form returns are what actually build the world
         this.game.screens.create.show(async (opts) => {
-          const w = await this.game.saveGame.list().then((l) => l.find((x) => x.id === id));
-          await this.game.renameWorld(id, opts.name, opts.seed);
+          if (!opts) { await this.show(); return; }
+          const newId = await this.game.createWorldRecord(opts);
+          this.game.playWorld(newId);
+        });
+      } else if (action === 'play') {
+        this.hide();
+        await this.game.playWorld(this._selectedId);
+      } else if (action === 'edit') {
+        this.hide();
+        const w = await this.game.saveGame.list().then((l) => l.find((x) => x.id === this._selectedId));
+        this.game.screens.create.show(async (opts) => {
+          await this.game.renameWorld(this._selectedId, opts.name, opts.seed);
           this.show();
         }, w);
-      } else if (btn.dataset.action === 'delete') {
-        await this.game.deleteWorld(id);
+      } else if (action === 'delete') {
+        await this.game.deleteWorld(this._selectedId);
+        this._selectedId = null;
+        this._selectedEl = null;
         await this.refresh();
+        this._updateActions();
       }
     });
   }
 
+  selectWorld(id) {
+    if (this._selectedEl) this._selectedEl.classList.remove('selected');
+    this._selectedId = id;
+    this._selectedEl = null;
+    if (id) {
+      for (const el of this.listEl.querySelectorAll('.worldlist-entry')) {
+        if (el.dataset.world === id) {
+          el.classList.add('selected');
+          this._selectedEl = el;
+          break;
+        }
+      }
+    }
+    this._updateActions();
+  }
+
+  _updateActions() {
+    const on = !!this._selectedId;
+    for (const b of this.root.querySelectorAll('[data-action="play"],[data-action="edit"],[data-action="delete"]')) {
+      b.disabled = !on;
+    }
+  }
+
   async refresh() {
-    const worlds = await this.game.saveGame.list();
+    const worlds = (await this.game.saveGame.list()).filter((w) =>
+      w.name.toLowerCase().includes(this._filter));
     this.listEl.textContent = '';
     this.game.font.set(this.heading, t('menu.worldList'), { scale: 3, color: COLORS.white });
 
@@ -202,10 +240,18 @@ export class WorldListScreen {
       const empty = el('div', 'worldlist-empty');
       this.game.font.set(empty, t('menu.noWorlds'), { scale: 2, color: '#b0b0b0' });
       this.listEl.appendChild(empty);
+      this._selectedId = null;
+      this._selectedEl = null;
+      this._updateActions();
+      return;
     }
+
+    this._selectedId = null;
+    this._selectedEl = null;
 
     for (const w of worlds) {
       const entry = el('div', 'worldlist-entry');
+      entry.dataset.world = w.id;
 
       // a flat swatch stands in for the screenshot preview
       const preview = el('div', 'worldlist-preview');
@@ -217,15 +263,22 @@ export class WorldListScreen {
       this.game.font.set(name, w.name, { scale: 3, color: COLORS.white });
       info.appendChild(name);
 
-      const meta = el('div', 'worldlist-meta');
-      // positional %s args, one per placeholder in menu.worldMeta
-      this.game.font.set(meta, t('menu.worldMeta',
-        t(`create.${w.gameMode ?? 'survival'}`),
-        t(`create.${w.worldType ?? 'default'}`),
-        t(`create.${w.difficulty ?? 'normal'}`),
-        formatWhen(w.lastPlayed),
-        w.seedText || w.seed), { scale: 2, color: '#b8b8b8' });
-      info.appendChild(meta);
+      const date = el('div', 'worldlist-date');
+      this.game.font.set(date, formatWhen(w.lastPlayed), { scale: 2, color: '#b8b8b8' });
+      info.appendChild(date);
+
+      const mode = el('div', 'worldlist-mode');
+      this.game.font.set(mode, `${t('create.gameMode')}: ${t(`create.${w.gameMode ?? 'survival'}`)}`, { scale: 2, color: '#b8b8b8' });
+      info.appendChild(mode);
+
+      const difficulty = el('div', 'worldlist-difficulty');
+      this.game.font.set(difficulty, `${t('create.difficulty')}: ${t(`create.${w.difficulty ?? 'normal'}`)}`, { scale: 2, color: '#b8b8b8' });
+      info.appendChild(difficulty);
+
+      // Storage size of the world's save file (KB/MB/GB).
+      const size = el('div', 'worldlist-size');
+      this.game.font.set(size, formatSize(w.size), { scale: 2, color: '#909090' });
+      info.appendChild(size);
 
       // A world whose file was damaged says so here rather than looking like
       // any other world. `recovered` means it was read back from the backup,
@@ -238,23 +291,11 @@ export class WorldListScreen {
         info.appendChild(note);
       }
 
-      const actions = el('div', 'worldlist-actions');
-      for (const [action, key, cls] of [
-        ['play', 'menu.play', 'primary'],
-        ['edit', 'menu.edit', ''],
-        ['delete', 'menu.delete', 'danger'],
-      ]) {
-        const b = el('button', `mc-btn small ${cls}`.trim());
-        b.dataset.action = action;
-        b.dataset.world = w.id;
-        this.game.font.set(b, t(key), { scale: 2, color: COLORS.white });
-        actions.appendChild(b);
-      }
-
+      entry.addEventListener('click', () => this.selectWorld(w.id));
       entry.appendChild(info);
-      entry.appendChild(actions);
       this.listEl.appendChild(entry);
     }
+    this._updateActions();
   }
 
   async   show() {
@@ -379,30 +420,33 @@ export class CreateWorldScreen {
     this.body.appendChild(seedRow);
 
     /* ---- the option grids ---- */
+    const editing = existing !== null;
     this.body.appendChild(optionRow(game, t('create.gameMode'), GAME_MODES, this.opts.gameMode,
       (id) => { this.opts.gameMode = id; updateCreateButton(); }));
     const worldTypeRow = optionRow(game, t('create.worldType'), WORLD_TYPES, this.opts.worldType,
-      (id) => { this.opts.worldType = id; });
-    const wtMore = el('button', 'mc-btn small');
-    wtMore.textContent = t('create.more');
-    wtMore.style.marginLeft = '6px';
-    wtMore.addEventListener('click', (e) => {
-      e.stopPropagation();
-      game.audio.click();
-      this.game.screens.worldType.show((id) => {
-        this.opts.worldType = id;
-        // re-highlight the main row to match the popup pick
-        for (const b of worldTypeRow.querySelectorAll('.wc-option')) {
-          b.classList.toggle('selected', b.dataset.id === id);
-        }
+      (id) => { this.opts.worldType = id; }, editing);
+    if (!editing) {
+      const wtMore = el('button', 'mc-btn small');
+      wtMore.textContent = t('create.more');
+      wtMore.style.marginLeft = '6px';
+      wtMore.addEventListener('click', (e) => {
+        e.stopPropagation();
+        game.audio.click();
+        this.game.screens.worldType.show((id) => {
+          this.opts.worldType = id;
+          // re-highlight the main row to match the popup pick
+          for (const b of worldTypeRow.querySelectorAll('.wc-option')) {
+            b.classList.toggle('selected', b.dataset.id === id);
+          }
+        });
       });
-    });
-    worldTypeRow.appendChild(wtMore);
+      worldTypeRow.appendChild(wtMore);
+    }
     this.body.appendChild(worldTypeRow);
     this.body.appendChild(optionRow(game, t('create.difficulty'), DIFFICULTIES, this.opts.difficulty,
       (id) => { this.opts.difficulty = id; }));
     this.body.appendChild(optionRow(game, t('create.bonusChest'), BONUS_CHEST_OPTIONS, this.opts.bonusChest,
-      (id) => { this.opts.bonusChest = id; }));
+      (id) => { this.opts.bonusChest = id; }, editing));
 
     const actions = el('div', 'wc-actions');
     const create = el('button', 'mc-btn primary');
@@ -443,7 +487,20 @@ export class CreateWorldScreen {
 function formatWhen(ts) {
   if (!ts) return '-';
   const d = new Date(ts);
-  return d.toLocaleDateString();
+  return d.toLocaleString();
+}
+
+/** Format bytes as KB/MB/GB, e.g. `12.4 MB` or `--` when unknown. */
+function formatSize(bytes) {
+  if (!bytes && bytes !== 0) return '--';
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let size = bytes;
+  let u = 0;
+  while (size >= 1024 && u < units.length - 1) {
+    size /= 1024;
+    u++;
+  }
+  return u === 0 ? `${size} ${units[u]}` : `${size.toFixed(1)} ${units[u]}`;
 }
 
 /* ================================================================

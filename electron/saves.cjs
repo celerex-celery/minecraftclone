@@ -190,19 +190,20 @@ function createSaves({ dir, settingsFile, log }) {
       for (const name of await fsp.readdir(folder)) {
         if (!isWorldFile(name)) continue;
         const file = path.join(folder, name);
+        const stat = await fsp.stat(file).catch(() => null);
         const { value, damaged, recovered } = await readJsonWithBackup(file);
         if (value) {
-          out.push({ ...value, damaged, recovered });
+          out.push({ ...value, size: stat?.size ?? 0, damaged, recovered });
         } else if (damaged) {
           // The file is on disk but unreadable and there is no backup to fall
           // back on. It is listed anyway so the player can see that it is
           // there and delete it, rather than it vanishing with no
           // explanation.
-          const stat = await fsp.stat(file).catch(() => null);
           const id = name.slice(0, -'.json'.length);
           out.push({
             id,
             name: id,
+            size: stat?.size ?? 0,
             gameMode: 'survival',
             worldType: 'default',
             difficulty: 'normal',
