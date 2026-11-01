@@ -447,6 +447,9 @@ export class CreateWorldScreen {
     if (!editing) {
       const wtMore = el('button', 'mc-btn small');
       wtMore.appendChild(iconCanvas(game, 'crafting_table'));
+      const moreText = el('span');
+      game.font.set(moreText, t('create.more'), { scale: 2, color: COLORS.white });
+      wtMore.appendChild(moreText);
       wtMore.style.marginLeft = '6px';
       wtMore.addEventListener('click', (e) => {
         e.stopPropagation();
