@@ -313,7 +313,8 @@ export class ContainerScreen {
     arrow.className = 'craft-arrow';
     const bar = document.createElement('div');
     bar.className = 'arrow';
-    this.resultArrow = document.createElement('i');
+    this.resultArrow = document.createElement('span');
+    this.resultArrow.className = 'result-arrow';
     bar.appendChild(this.resultArrow);
     arrow.appendChild(bar);
     row.appendChild(arrow);
@@ -510,7 +511,7 @@ this.slots.push(el);
       const burn = this.furnace.burnMax > 0 ? this.furnace.burn / this.furnace.burnMax : 0;
       this.flameFill.style.height = `${Math.max(0, Math.min(1, burn)) * 100}%`;
     } else if (this.resultArrow) {
-      this.resultArrow.style.width = this.craftResult ? '100%' : '0%';
+      this.resultArrow.style.opacity = this.craftResult ? '1' : '0.45';
     }
 
     if (this.held) {

@@ -59,14 +59,12 @@ export class TextureAtlas {
 
     this.canvas = canvas;
     this.texture = new THREE.CanvasTexture(canvas);
-
     this.texture.magFilter = THREE.NearestFilter;
     this.texture.minFilter = THREE.NearestMipmapLinearFilter;
     this.texture.generateMipmaps = true;
     this.texture.wrapS = THREE.ClampToEdgeWrapping;
     this.texture.wrapT = THREE.ClampToEdgeWrapping;
     this.texture.colorSpace = THREE.SRGBColorSpace;
-
     this.texture.anisotropy = Math.max(1, Math.min(4, maxAnisotropy));
     this.texture.needsUpdate = true;
 
@@ -98,10 +96,8 @@ export class TextureAtlas {
 
     ctx.drawImage(canvas, cx, cy, 1, size, ox, cy, g, size);
     ctx.drawImage(canvas, cx + last, cy, 1, size, cx + size, cy, g, size);
-
     ctx.drawImage(canvas, cx, cy, size, 1, cx, oy, size, g);
     ctx.drawImage(canvas, cx, cy + last, size, 1, cx, cy + size, size, g);
-
     ctx.drawImage(canvas, cx, cy, 1, 1, ox, oy, g, g);
     ctx.drawImage(canvas, cx + last, cy, 1, 1, cx + size, oy, g, g);
     ctx.drawImage(canvas, cx, cy + last, 1, 1, ox, cy + size, g, g);
