@@ -787,7 +787,7 @@ export class ChunkMesher {
       a[7] = col[0]; a[8] = col[1]; a[9] = col[2];
     };
 
-    if (faceFacing >= 0 && faceFacing < 6) {
+    if (faceFacing >= 0 && faceFacing < 6 && faceFacing !== 2) {
       // Wall torch: render a single flat quad on the attached face
       const f = FACE_DEFS[faceFacing];
       const axis = FACE_AXIS[faceFacing];
