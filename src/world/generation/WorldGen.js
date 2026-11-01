@@ -287,9 +287,9 @@ export class WorldGen {
     if (this.worldType === 'flat') return 1;
     // islands: an infinite ocean with scattered small land patches
     if (this.worldType === 'islands') {
-      // one island per ~100x100 block area - common enough to find within view distance
-      const c = this.nContinent.fbm2(wx * 0.0035, wz * 0.0035, 3, 2, 0.5);
-      return c - 0.5;   // more land than before - scattered islands across an ocean
+      // small islands scattered across the ocean
+      const c = this.nContinent.fbm2(wx * 0.004, wz * 0.004, 3, 2, 0.5);
+      return c - 0.55;   // mostly ocean, small islands here and there
     }
     const c = this.nContinent.fbm2(wx * 0.0011, wz * 0.0011, 4, 2, 0.5);
 
@@ -342,7 +342,7 @@ export class WorldGen {
     if (this.worldType === 'islands') {
       const cont = this.continentAt(wx, wz);
       if (cont < -0.05) return CONFIG.SEA_LEVEL - 3;   // ocean floor, room for water above
-      return CONFIG.SEA_LEVEL + 2 + cont * 6;          // small island poking above water
+      return CONFIG.SEA_LEVEL + 2 + cont * 4;          // short islands just above water
     }
     const key = (wx & 0x3fffff) * 4194304 + (wz & 0x3fffff);
     const hit = this._hCache.get(key);
@@ -1012,6 +1012,11 @@ let c = -1;
 
   surfaceBlock(biome, h, wx, wz) {
     if (this.worldType === 'flat') return Blocks.id('grass_block');
+    // islands: grass on top of the dirt island, sand on the ocean floor
+    if (this.worldType === 'islands') {
+      if (h <= CONFIG.SEA_LEVEL) return Blocks.id('sand');
+      return Blocks.id('grass_block');
+    }
     if (h < CONFIG.SEA_LEVEL) {
       // sea floor
       return hash2(wx, wz, this.seed ^ 0x31) < 0.28 ? Blocks.id('gravel') : Blocks.id('sand');
