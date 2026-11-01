@@ -68,17 +68,17 @@ function el(tag, cls, text) {
  * are. Items are cutout sprites, exactly as they appear in Minecraft.
  */
 const ICONS = {
-  survival: 'diamond_axe',
-  creative: 'command_block',
+  survival: 'wooden_sword',
+  creative: 'blaze_rod',
   hardcore: 'hardcore_full',
   default: 'grass_block',
-  flat: 'oak_planks',
-  amplified: 'deepslate',
-  cursed: 'bedrock',
-  peaceful: 'wheat_seeds',
-  easy: 'cooked_chicken',
-  normal: 'wheat',
-  hard: 'iron_sword',
+  flat: 'white_wool',
+  amplified: 'cobblestone',
+  cursed: 'obsidian',
+  peaceful: 'poppy',
+  easy: 'cooked_porkchop',
+  normal: 'iron_sword',
+  hard: 'flint_and_steel',
   off: 'redstone',
   on: 'chest',
 };
@@ -446,7 +446,7 @@ export class CreateWorldScreen {
       (id) => { this.opts.worldType = id; }, editing);
     if (!editing) {
       const wtMore = el('button', 'mc-btn small');
-      wtMore.textContent = t('create.more');
+      wtMore.appendChild(iconCanvas(game, 'crafting_table'));
       wtMore.style.marginLeft = '6px';
       wtMore.addEventListener('click', (e) => {
         e.stopPropagation();
