@@ -1309,6 +1309,32 @@ input[type="range"]::-moz-range-thumb {
   z-index: 1;
 }
 
+#worldlist-screen {
+  background: #1c1c1c;
+  backdrop-filter: none;
+}
+
+#worldlist-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: #6b4f31;
+  background-image: url("../assets/textures/blocks/dirt.png");
+  background-repeat: no-repeat;
+  /* one tile, filling the window */
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  /* darkened, so the form's text and its controls still read on top of it */
+  filter: brightness(0.55) saturate(0.8);
+  z-index: 0;
+  pointer-events: none;
+}
+
+#worldlist-screen > * {
+  position: relative;
+  z-index: 1;
+}
+
 .create-body {
   display: flex;
   flex-direction: column;
