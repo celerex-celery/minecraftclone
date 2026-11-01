@@ -39,7 +39,7 @@ export class Survival {
     this.hurtFlash = 0;
 
     this.hurtTilt = 0;
-
+    this.hurtShake = 0;
     this.tiltSign = 1;
     this.lastDamageCause = '';
 
@@ -107,6 +107,7 @@ export class Survival {
     this.hurtFlash = Math.min(1, this.hurtFlash + dmg / 8);
 
     this.hurtTilt = Math.min(1, this.hurtTilt + dmg / 6);
+    this.hurtShake = Math.min(1, this.hurtShake + dmg / 4);
     this.tiltSign = -this.tiltSign;
     this.lastDamageCause = cause;
     for (const h of this.hurtHandlers) h(cause, dmg);
@@ -149,6 +150,9 @@ export class Survival {
     const w = this.world;
 
     this.hurtFlash = Math.max(0, this.hurtFlash - dt * 2.2);
+
+    this.hurtTilt = Math.max(0, this.hurtTilt - dt * 3.5);
+    this.hurtShake = Math.max(0, this.hurtShake - dt * 6.0);
 
     this.hurtTilt = Math.max(0, this.hurtTilt - dt * 3.5);
 

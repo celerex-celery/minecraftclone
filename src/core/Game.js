@@ -2116,8 +2116,15 @@ const payload = {
     const tilt = this.survival?.hurtTilt ?? 0;
     if (tilt > 0.001) {
       const e = tilt * tilt;
-      camera.rotation.z = -this.survival.tiltSign * e * 0.14;
-      camera.rotation.x -= e * 0.05;
+      camera.rotation.z = -this.survival.tiltSign * e * 0.28;
+      camera.rotation.x -= e * 0.10;
+    }
+
+    const shake = this.survival?.hurtShake ?? 0;
+    if (shake > 0.001) {
+      camera.position.x += (Math.random() - 0.5) * shake * 0.15;
+      camera.position.y += (Math.random() - 0.5) * shake * 0.15;
+      camera.position.z += (Math.random() - 0.5) * shake * 0.15;
     }
   }
 

@@ -397,6 +397,11 @@ export class Player {
         this.onGround = false;
         this.lastJump = performance.now() / 1000;
         this.jumpEvent = true;
+        if (this.sprinting) {
+          const boost = CONFIG.JUMP_SPRINT_BOOST;
+          this.velocity.x += this._forward.x * boost;
+          this.velocity.z += this._forward.z * boost;
+        }
       }
     }
 

@@ -28,3 +28,6 @@
   - Continentalness now separated into continentalness + erosion + peaks components.
   - Added ridged noise for sharp mountain peaks and craters.
   - Added erosion-based height smoothing for more natural terrain transitions.
+- Improved camera and impact feel:
+  - Sprint jumping now adds a forward speed boost.
+  - Taking damage now knocks the camera with stronger tilt/rotation and positional shake.
