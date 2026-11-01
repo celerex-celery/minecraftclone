@@ -509,17 +509,6 @@ let c = -1;
         const col = z * SX + x;
 
         {
-          const floor = this.findPocket(blocks, col, P.LAVA_MAX_Y, MIN_Y, roughTop, false);
-          if (floor !== null) {
-            const field = this.nPool.fbm3(wx * P.SCALE, floor * 0.05, wz * P.SCALE, 2, 2, 0.5);
-
-            const threshold = P.LAVA_THRESHOLD
-              * (0.55 + 0.45 * (P.LAVA_MAX_Y - floor) / (P.LAVA_MAX_Y - MIN_Y));
-            if (Math.abs(field) > threshold) this.fillPool(chunk, col, floor, B.lava, field);
-          }
-        }
-
-        {
           const floor = this.findPocket(
             blocks, col, P.WATER_MAX_Y, P.WATER_MIN_Y, roughTop, false,
           );
