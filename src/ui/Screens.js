@@ -1,5 +1,6 @@
 import { DEFAULT_BINDS, KEYBINDS, holderOf } from '../core/Config.js';
 import { keyLabel } from '../core/Input.js';
+import { STATE } from '../core/Game.js';
 import { COLORS } from './PixelFont.js';
 import { randomSplash, SPLASHES } from './Splashes.js';
 import { lang, t } from './Lang.js';
