@@ -27,21 +27,20 @@ export const WORLD_TYPES = [
   { id: 'flat', icon: '' },
   { id: 'amplified', icon: '' },
   { id: 'cursed', icon: '' },
-  { id: 'islands', icon: '' },
 ];
 
 /** Biomes that can be the single biome of an Islands world. */
 export const ISLAND_BIOMES = [
-  { id: 'beach', label: 'Beach' },
-  { id: 'plains', label: 'Plains' },
-  { id: 'forest', label: 'Forest' },
-  { id: 'taiga', label: 'Taiga' },
-  { id: 'snowy_plains', label: 'Snowy Plains' },
-  { id: 'desert', label: 'Desert' },
-  { id: 'savanna', label: 'Savanna' },
-  { id: 'swamp', label: 'Swamp' },
-  { id: 'mountains', label: 'Mountains' },
-  { id: 'jungle', label: 'Jungle' },
+  { id: 'beach', label: 'Beach', icon: 'sand' },
+  { id: 'plains', label: 'Plains', icon: 'grass_block' },
+  { id: 'forest', label: 'Forest', icon: 'oak_leaves' },
+  { id: 'taiga', label: 'Taiga', icon: 'spruce_leaves' },
+  { id: 'snowy_plains', label: 'Snowy Plains', icon: 'ice' },
+  { id: 'desert', label: 'Desert', icon: 'sand' },
+  { id: 'savanna', label: 'Savanna', icon: 'grass_block' },
+  { id: 'swamp', label: 'Swamp', icon: 'mushroom_stew' },
+  { id: 'mountains', label: 'Mountains', icon: 'stone' },
+  { id: 'jungle', label: 'Jungle', icon: 'oak_leaves' },
 ];
 
 /**
@@ -603,10 +602,11 @@ export class WorldTypeScreen {
     this._onPick = onPick;
     this.game.font.set(this.title, t('create.worldType'), { scale: 2, color: COLORS.white });
     this.grid.textContent = '';
-    for (const opt of WORLD_TYPES) {
+    const types = [...WORLD_TYPES, { id: 'islands', icon: 'sand' }];
+    for (const opt of types) {
       const b = el('button', 'wc-option');
       b.dataset.id = opt.id;
-      b.appendChild(iconCanvas(this.game, opt.id));
+      b.appendChild(iconCanvas(this.game, opt.icon));
       const cap = el('span', 'wc-option-caption');
       this.game.font.set(cap, t(`create.${opt.id}`), { scale: 2, color: COLORS.white });
       b.appendChild(cap);
@@ -635,7 +635,7 @@ export class WorldTypeScreen {
     for (const bio of ISLAND_BIOMES) {
       const b = el('button', 'wc-option');
       b.dataset.id = bio.id;
-      b.appendChild(iconCanvas(this.game, bio.id));
+      b.appendChild(iconCanvas(this.game, bio.icon));
       const cap = el('span', 'wc-option-caption');
       this.game.font.set(cap, bio.label, { scale: 2, color: COLORS.white });
       b.appendChild(cap);
