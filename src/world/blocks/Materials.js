@@ -11,7 +11,7 @@ export const sharedUniforms = {
   uTime: { value: 0 },
   uUnderwater: { value: 0 },
 
-  uAmbient: { value: 0.048 },
+  uAmbient: { value: 0 },
   uAmbientTint: { value: new THREE.Color(1, 1, 1) },
 
   uFlicker: { value: 1.0 },
