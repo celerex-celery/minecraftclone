@@ -317,8 +317,10 @@ export class PlayerModel {
     if (head) head.rotation.x = player.pitch;
 
     if (player.riding) {
-      if (la) la.rotation.x = -ROW;
-      if (ra) ra.rotation.x = -ROW;
+      const row = Math.sin(player.riding.stroke ?? 0);
+      const base = -ROW;
+      if (la) la.rotation.x = base + row * 0.8;
+      if (ra) ra.rotation.x = base - row * 0.8;
     } else if (state.swing) {
 
       const s = state.swing;
