@@ -117,7 +117,7 @@ export class World {
     if (y < MIN_Y) return 0;
     if (y > MAX_Y) return this.hasSky ? (15 << 4) : 0;
     const c = this.chunkAtBlock(x, z);
-    if (!c) return this.hasSky ? (15 << 4) : 0;
+    if (!c) return 0;
     return c.light[idx(x - c.ox, y, z - c.oz)];
   }
 
@@ -125,9 +125,9 @@ export class World {
 
     if (!this.hasSky) return 0;
     if (y < MIN_Y) return 0;
-    if (y > MAX_Y) return 15;
+    if (y > MAX_Y) return 0;
     const c = this.chunkAtBlock(x, z);
-    return c ? c.light[idx(x - c.ox, y, z - c.oz)] >> 4 : 15;
+    return c ? c.light[idx(x - c.ox, y, z - c.oz)] >> 4 : 0;
   }
 
   getBlockLight(x, y, z) {

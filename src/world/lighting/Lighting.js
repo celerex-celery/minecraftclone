@@ -75,7 +75,7 @@ export class LightEngine {
     if (y < MIN_Y) return 0;
     if (y > MAX_Y) return this.sky ? (15 << 4) : 0;
     const c = this.nb.get(x, z);
-    if (!c) return this.sky ? (15 << 4) : 0;
+    if (!c) return 0;
     return c.light[li(y, x - c.ox, z - c.oz)];
   }
 

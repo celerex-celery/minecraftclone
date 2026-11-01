@@ -356,7 +356,7 @@ export class ChunkMesher {
         if (!src) {
           this.padBiome[colBase] = 0;
           for (let py = 0; py < PY; py++) {
-            pl[colBase + py * PXW * PZW] = openSky;
+            pl[colBase + py * PXW * PZW] = 0;
           }
           continue;
         }
