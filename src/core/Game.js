@@ -642,6 +642,7 @@ this._bedsByDimension = {};
       seedText: opts.seedText || '',
       gameMode: opts.gameMode ?? 'survival',
       worldType: opts.worldType ?? 'default',
+      islandBiome: opts.islandBiome ?? null,
       difficulty: opts.difficulty ?? 'normal',
       bonusChest: opts.bonusChest === 'on',
       hardcore: opts.gameMode === 'hardcore',
@@ -696,6 +697,7 @@ this._bedsByDimension = {};
       name: record.name,
       gameMode: record.gameMode ?? 'survival',
       worldType: record.worldType ?? 'default',
+      islandBiome: record.islandBiome ?? null,
       difficulty: record.difficulty ?? 'normal',
       bonusChest: record.bonusChest,
       hardcore: record.hardcore,
@@ -743,6 +745,7 @@ this._bedsByDimension = {};
       saveData = null,
       gameMode = 'survival',
       worldType = 'default',
+      islandBiome = null,
       difficulty = 'normal',
       worldId = null,
       bonusChest = false,
@@ -763,6 +766,7 @@ this._bedsByDimension = {};
       saveData = null,
       gameMode = 'survival',
       worldType = 'default',
+      islandBiome = null,
       difficulty = 'normal',
       worldId = null,
       hardcore = false,
@@ -775,6 +779,7 @@ this._bedsByDimension = {};
 
     this._seed = seed >>> 0;
     this._worldType = worldType;
+    this._islandBiome = islandBiome;
     this._gravityDir = 'DOWN';
     this._gravityTimer = 0;
     this.worlds = {};
@@ -783,7 +788,7 @@ this._bedsByDimension = {};
     this._transition = 0;
     this._portalDelay = 0;
 
-    this._activateWorld(this._createDimensionWorld('overworld'), seed, worldType);
+    this._activateWorld(this._createDimensionWorld('overworld', this._islandBiome), seed, worldType);
     this.updateCameraRanges();
     log.info('World ready (seed %d, %s%s)', this._seed, worldType, saveData ? ', resumed from save' : ', new');
 
@@ -894,10 +899,10 @@ this._bedsByDimension = {};
    * one shared instance would drop a pile of sand into the Nether and let the
    * player pick up items through the floor.
    */
-  _createDimensionWorld(dimension) {
+  _createDimensionWorld(dimension, islandBiome = null) {
     const world = new World(
       this._seed ?? seedFromString(null), this.scene, this.atlas, this.materials,
-      this.mesher, this._worldType ?? 'default', dimension,
+      this.mesher, this._worldType ?? 'default', dimension, islandBiome,
     );
     // sand and gravel animate down rather than teleporting to the floor
     world.falling = new FallingBlocks(this.scene, {

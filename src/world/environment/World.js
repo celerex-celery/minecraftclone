@@ -42,7 +42,7 @@ export class World {
    *   their generator, in whether the sky lights them, and in how the sky and
    *   fog are drawn.
    */
-  constructor(seed, scene, atlas, materials, mesher, worldType = 'default', dimension = 'overworld') {
+  constructor(seed, scene, atlas, materials, mesher, worldType = 'default', dimension = 'overworld', islandBiome = null) {
     this.seed = seed >>> 0;
     this.scene = scene;
     this.atlas = atlas;
@@ -53,8 +53,9 @@ export class World {
       ? new NetherGen(this.seed)
       : dimension === 'end'
         ? new EndGen(this.seed)
-        : new WorldGen(this.seed, worldType);
+        : new WorldGen(this.seed, worldType, islandBiome);
     this.worldType = worldType;
+    this.islandBiome = islandBiome;
     /**
      * The Nether has no sky. The End has sky but it's a void sky.
      * Everything the light engine and the mesher would otherwise read as

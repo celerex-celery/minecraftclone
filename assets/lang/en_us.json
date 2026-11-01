@@ -170,6 +170,8 @@
   "create.more": "More",
   "create.less": "Less",
   "create.worldType": "World Type",
+  "create.islands": "Islands",
+  "create.customizeIslands": "Customize Islands?",
   "creative.items": "Creative Inventory",
   "creative.search": "Search items...",
   "creative.tab.building": "Building Blocks",

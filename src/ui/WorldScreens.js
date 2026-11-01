@@ -25,8 +25,23 @@ export const GAME_MODES = [
 export const WORLD_TYPES = [
   { id: 'default', icon: '' },
   { id: 'flat', icon: '' },
-   { id: 'amplified', icon: '' },
+  { id: 'amplified', icon: '' },
   { id: 'cursed', icon: '' },
+  { id: 'islands', icon: '' },
+];
+
+/** Biomes that can be the single biome of an Islands world. */
+export const ISLAND_BIOMES = [
+  { id: 'beach', label: 'Beach' },
+  { id: 'plains', label: 'Plains' },
+  { id: 'forest', label: 'Forest' },
+  { id: 'taiga', label: 'Taiga' },
+  { id: 'snowy_plains', label: 'Snowy Plains' },
+  { id: 'desert', label: 'Desert' },
+  { id: 'savanna', label: 'Savanna' },
+  { id: 'swamp', label: 'Swamp' },
+  { id: 'mountains', label: 'Mountains' },
+  { id: 'jungle', label: 'Jungle' },
 ];
 
 /**
@@ -75,6 +90,7 @@ const ICONS = {
   flat: 'white_wool',
   amplified: 'cobblestone',
   cursed: 'obsidian',
+  islands: 'sand',
   peaceful: 'poppy',
   easy: 'cooked_porkchop',
   normal: 'iron_sword',
@@ -455,11 +471,17 @@ export class CreateWorldScreen {
       wtMore.addEventListener('click', (e) => {
         e.stopPropagation();
         game.audio.click();
-        this.game.screens.worldType.show((id) => {
-          this.opts.worldType = id;
+        this.game.screens.worldType.show((result) => {
+          if (typeof result === 'object' && result.id === 'islands') {
+            this.opts.worldType = 'islands';
+            this.opts.islandBiome = result.islandBiome;
+          } else {
+            this.opts.worldType = result;
+            delete this.opts.islandBiome;
+          }
           // re-highlight the main row to match the popup pick
           for (const b of worldTypeRow.querySelectorAll('.wc-option')) {
-            b.classList.toggle('selected', b.dataset.id === id);
+            b.classList.toggle('selected', b.dataset.id === this.opts.worldType);
           }
         });
       });
@@ -591,9 +613,38 @@ export class WorldTypeScreen {
       b.addEventListener('click', (ev) => {
         ev.stopPropagation();
         this.game.audio.click();
+        if (opt.id === 'islands') {
+          this.hide();
+          this.showIslandsCustomize();
+          return;
+        }
         const pick = this._onPick;
         this.hide();
         if (pick) pick(opt.id);
+      });
+      this.grid.appendChild(b);
+    }
+    this.isOpen = true;
+    this.root.style.display = 'flex';
+  }
+
+  /** Show the "Customize Islands?" popup listing every biome to pick from. */
+  showIslandsCustomize() {
+    this.game.font.set(this.title, t('create.customizeIslands'), { scale: 2, color: COLORS.white });
+    this.grid.textContent = '';
+    for (const bio of ISLAND_BIOMES) {
+      const b = el('button', 'wc-option');
+      b.dataset.id = bio.id;
+      b.appendChild(iconCanvas(this.game, bio.id));
+      const cap = el('span', 'wc-option-caption');
+      this.game.font.set(cap, bio.label, { scale: 2, color: COLORS.white });
+      b.appendChild(cap);
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        this.game.audio.click();
+        this.hide();
+        const pick = this._onPick;
+        if (pick) pick({ id: 'islands', islandBiome: bio.id });
       });
       this.grid.appendChild(b);
     }

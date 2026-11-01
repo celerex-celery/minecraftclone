@@ -188,9 +188,10 @@ function oreDistribution(y, minY, maxY, band) {
 }
 
 export class WorldGen {
-  constructor(seed, worldType = 'default') {
+  constructor(seed, worldType = 'default', islandBiome = null) {
     this.seed = seed >>> 0;
     this.worldType = worldType;
+    this.islandBiome = islandBiome;
     /**
      * The one roll a tree competes on, bound here so every column asks the same
      * question.
@@ -284,6 +285,12 @@ export class WorldGen {
    */
   continentAt(wx, wz) {
     if (this.worldType === 'flat') return 1;
+    // islands: an infinite ocean with a few small land patches of the chosen biome
+    if (this.worldType === 'islands') {
+      // one island per ~200x200 block area, small and scattered
+      const c = this.nContinent.fbm2(wx * 0.0045, wz * 0.0045, 3, 2, 0.5);
+      return c - 0.75;   // nearly always below land threshold → ocean, rare islands
+    }
     const c = this.nContinent.fbm2(wx * 0.0011, wz * 0.0011, 4, 2, 0.5);
 
     // A second, much finer field, mixed in at the coast.
@@ -331,6 +338,12 @@ export class WorldGen {
       if (this._hCache.size > 200000) this._hCache.clear();
       return 4;
     }
+    // islands: ocean everywhere except the rare land patches from continentAt
+    if (this.worldType === 'islands') {
+      const cont = this.continentAt(wx, wz);
+      if (cont < -0.05) return CONFIG.SEA_LEVEL;   // ocean surface
+      return CONFIG.SEA_LEVEL + 2 + cont * 6;       // small island poking above water
+    }
     const key = (wx & 0x3fffff) * 4194304 + (wz & 0x3fffff);
     const hit = this._hCache.get(key);
     if (hit !== undefined) return hit;
@@ -373,6 +386,11 @@ export class WorldGen {
   }
 
   biomeAt(wx, wz, h) {
+    // islands: everything below the waves is ocean, the rare land is the chosen biome
+    if (this.worldType === 'islands') {
+      if (h < CONFIG.SEA_LEVEL - 2) return BIOME.ocean;
+      return this.islandBiome ? BIOME[this.islandBiome] ?? BIOME.plains : BIOME.plains;
+    }
     // Temperature and humidity decide the biome, so their scale is the scale of
     // the biomes.
     //
