@@ -282,17 +282,6 @@ class Builder {
   }
 }
 
-/** Pull `size` floats per vertex out of an interleaved buffer. */
-function gather(src, count, offset, size) {
-  const out = new Float32Array(count * size);
-  for (let i = 0; i < count; i++) {
-    const s = i * STRIDE + offset;
-    const d = i * size;
-    for (let k = 0; k < size; k++) out[d + k] = src[s + k];
-  }
-  return out;
-}
-
 function acquirePooledGeometry(type, count, indexCount) {
   const geo = geometryPool.acquire(type);
   return geo;
@@ -300,21 +289,35 @@ function acquirePooledGeometry(type, count, indexCount) {
 
 function updatePooledGeometry(geo, data, count, indexCount, indices) {
   if (!data || count === 0) return;
+  // Size attribute arrays to the actual vertex count instead of a fixed
+  // maximum, so a small chunk does not carry an oversized buffer.
+  geometryPool.fit(geo, count, indexCount);
+
   const posAttr = geo.getAttribute('position');
   const uvAttr = geo.getAttribute('uv');
   const alightAttr = geo.getAttribute('alight');
   const colorAttr = geo.getAttribute('color');
   const indexAttr = geo.getIndex();
 
-  const posSrc = gather(data, count, 0, 3);
-  const uvSrc = gather(data, count, 3, 2);
-  const alightSrc = gather(data, count, 5, 2);
-  const colorSrc = gather(data, count, 7, 3);
-
-  posAttr.array.set(posSrc);
-  uvAttr.array.set(uvSrc);
-  alightAttr.array.set(alightSrc);
-  colorAttr.array.set(colorSrc);
+  const pos = posAttr.array;
+  const uv = uvAttr.array;
+  const al = alightAttr.array;
+  const col = colorAttr.array;
+  for (let i = 0; i < count; i++) {
+    const s = i * STRIDE;
+    const d3 = i * 3;
+    const d2 = i * 2;
+    pos[d3] = data[s];
+    pos[d3 + 1] = data[s + 1];
+    pos[d3 + 2] = data[s + 2];
+    uv[d2] = data[s + 3];
+    uv[d2 + 1] = data[s + 4];
+    al[d2] = data[s + 5];
+    al[d2 + 1] = data[s + 6];
+    col[d3] = data[s + 7];
+    col[d3 + 1] = data[s + 8];
+    col[d3 + 2] = data[s + 9];
+  }
   indexAttr.array.set(indices.subarray(0, indexCount));
 
   posAttr.needsUpdate = true;
