@@ -25,7 +25,7 @@ export const SPAWNABLE_ON = new Set([
  */
 export const SPAWN_TABLE = [
   {
-    biomes: ['plains', 'forest', 'savanna'],
+    biomes: ['plains', 'forest', 'savanna', 'ocean'],
     chicken: { min: 2, max: 4, weight: 10 },
     pig: { min: 2, max: 4, weight: 10 },
   },
@@ -45,7 +45,7 @@ export const SPAWN_TABLE = [
     pig: null,
   },
   {
-    biomes: ['plains', 'forest', 'taiga', 'snowy_plains', 'desert', 'savanna', 'swamp', 'jungle', 'mountains', 'beach'],
+    biomes: ['plains', 'forest', 'taiga', 'snowy_plains', 'desert', 'savanna', 'swamp', 'jungle', 'mountains', 'beach', 'ocean'],
     creeper: { min: 1, max: 1, weight: 6 },
   },
   {

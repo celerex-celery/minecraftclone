@@ -340,7 +340,7 @@ export class WorldGen {
     // islands: a single island at spawn, ocean everywhere else
     if (this.worldType === 'islands') {
       const d = Math.sqrt(wx * wx + wz * wz);
-      if (d < 25) {
+      if (d < 15) {
         // island surface: grass-topped dirt, ~5 blocks above sea level
         return CONFIG.SEA_LEVEL + 5;
       }
@@ -392,7 +392,7 @@ export class WorldGen {
     // islands: a single island at spawn with plains biome, ocean everywhere else
     if (this.worldType === 'islands') {
       const d = Math.sqrt(wx * wx + wz * wz);
-      if (d < 25) return BIOME.plains;
+      if (d < 15) return BIOME.plains;
       return BIOME.ocean;
     }
     // Temperature and humidity decide the biome, so their scale is the scale of
@@ -1291,6 +1291,10 @@ let c = -1;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
           case BIOME.plains:
+            if (this.worldType === 'islands') {
+              this.groundCover(local, ground, x, surface, z, wx, wz, r);
+              break;
+            }
             if (r < 0.006 && growTree('oak')) break;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
@@ -1413,13 +1417,13 @@ let c = -1;
     const sea = CONFIG.SEA_LEVEL;
     // needs water over it, and enough of it to be water rather than a puddle
     const depth = sea - h;
-    if (depth < 3) return;
+    if (depth < 2) return;
     const ground = this.surfaceBlock(BIOME.ocean, h, wx, wz);
     if (ground !== this.B.sand && ground !== this.B.gravel) return;
 
     // a coarse patch field, so weed comes in beds with clear sand between them
     const patch = this.nSeagrass.fbm2(wx * 0.021, wz * 0.021, 2, 2, 0.5);
-    if (patch < 0.06) return;
+    if (patch < 0.10) return;
     // and within a bed, not every column: seagrass grows in tufts
     if (hash2(wx, wz, this.seed ^ 0x5ea9) > 0.30 + patch * 0.55) return;
 
@@ -1443,6 +1447,8 @@ let c = -1;
       && ground !== Blocks.id('dirt')) {
       return;
     }
+
+    if (this.worldType === 'islands') return;  // keep the island bare - just grass block on dirt
 
     if (pick < 0.45) local(x, y, z, Blocks.id('short_grass'));  // Reduced from 0.55
     else if (pick < 0.50) local(x, y, z, Blocks.id('fern'));  // Reduced from 0.07 to 0.05
