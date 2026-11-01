@@ -466,7 +466,7 @@ export const CONFIG = {
     MAX_GAP: 300,
   },
 
-  MESH_SLICE_MS: 2.5,
+  MESH_SLICE_MS: 1.5,
 
   USE_COOLDOWN: 0.25,
 
