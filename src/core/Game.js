@@ -84,7 +84,7 @@ function wailaTime(seconds) {
 }
 
 function crispPixelRatio() {
-  return Math.max(1, Math.floor(window.devicePixelRatio || 1));
+  return 1;
 }
 
 let MAX_ANISOTROPY = 1;
