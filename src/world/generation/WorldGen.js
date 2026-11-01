@@ -341,8 +341,8 @@ export class WorldGen {
     if (this.worldType === 'islands') {
       const d = Math.sqrt(wx * wx + wz * wz);
       if (d < 15) {
-        // island surface: grass-topped dirt, ~5 blocks above sea level
-        return CONFIG.SEA_LEVEL + 5;
+        // island surface: grass-topped dirt, ~2 blocks above sea level
+        return CONFIG.SEA_LEVEL + 2;
       }
       // ocean floor, room for water above
       return CONFIG.SEA_LEVEL - 3;
