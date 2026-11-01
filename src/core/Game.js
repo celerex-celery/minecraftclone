@@ -27,7 +27,7 @@ import { Boats } from '../world/entities/Boat.js';
 import { Beds } from '../world/structures/Beds.js';
 import { Chests, chestOwner } from '../world/structures/Chests.js';
 import { placeBonusChest } from '../world/structures/BonusChest.js';
-import { lightPortal, checkPortalNeighbours, findFrame, ignitePortal, findEndPortalFrame, activateEndPortal, playerInPortal, playerInEndPortal, portalNearby } from '../world/structures/Portal.js';
+import { lightPortal, checkPortalNeighbours, findFrame, ignitePortal, findEndPortalFrame, activateEndPortal, playerInPortal, playerInEndPortal, portalNearby, findPortalNear } from '../world/structures/Portal.js';
 import { seedFromString } from '../world/generation/Noise.js';
 import { Player } from '../player/Player.js';
 import { ViewModel } from '../player/ViewModel.js';
