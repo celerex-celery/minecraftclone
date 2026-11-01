@@ -1537,26 +1537,7 @@ const payload = {
 
       const now = performance.now();
       if (this.world && now - this._lastRenderDistanceChange > 3000) {
-        if (this.fps < 50) {
-          this._fpsLowStreak = (this._fpsLowStreak ?? 0) + 1;
-          this._fpsHighStreak = 0;
-          if (this._fpsLowStreak >= 2 && this.settings.renderDistance > this._renderDistanceFloor) {
-            this.applyRenderDistance(this.settings.renderDistance - 1);
-            this._fpsLowStreak = 0;
-            this._lastRenderDistanceChange = now;
-          }
-        } else if (this.fps > 60) {
-          this._fpsHighStreak = (this._fpsHighStreak ?? 0) + 1;
-          this._fpsLowStreak = 0;
-          if (this._fpsHighStreak >= 4 && this.settings.renderDistance < this._renderDistanceCeiling) {
-            this.applyRenderDistance(this.settings.renderDistance + 1);
-            this._fpsHighStreak = 0;
-            this._lastRenderDistanceChange = now;
-          }
-        } else {
-          this._fpsLowStreak = 0;
-          this._fpsHighStreak = 0;
-        }
+        // render distance is manual only; no adaptive adjustment
       }
     }
 
