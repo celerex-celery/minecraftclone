@@ -31,4 +31,9 @@ contextBridge.exposeInMainWorld('mcVoxel', {
   terminal: (level, line) => ipcRenderer.send('terminal-log', level, line),
   quit: () => ipcRenderer.invoke('app:quit'),
   gpuInfo: () => ipcRenderer.invoke('app:gpu-info'),
+  fullscreen: {
+    isFullscreen: () => ipcRenderer.invoke('app:get-fullscreen'),
+    setFullscreen: (on) => ipcRenderer.invoke('app:set-fullscreen', on),
+    toggle: () => ipcRenderer.invoke('app:toggle-fullscreen'),
+  },
 });

@@ -122,6 +122,18 @@ ipcMain.handle('app:gpu-info', async () => {
   }
 });
 
+ipcMain.handle('app:get-fullscreen', () => mainWin && mainWin.isFullScreen());
+
+ipcMain.handle('app:set-fullscreen', (_e, on) => {
+  if (!mainWin) return;
+  mainWin.setFullScreen(!!on);
+});
+
+ipcMain.handle('app:toggle-fullscreen', () => {
+  if (!mainWin) return;
+  mainWin.setFullScreen(!mainWin.isFullScreen());
+});
+
 let serveProc = null;
 let mainWin = null;
 

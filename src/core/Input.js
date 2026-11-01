@@ -174,7 +174,9 @@ export class Input {
 
       if (this._blocked.has(e.code) || this._isBoundKey(e.code)) e.preventDefault();
       if (e.code === 'F11' && !e.repeat) {
-        if (document.fullscreenElement) {
+        if (window.mcVoxel?.fullscreen) {
+          window.mcVoxel.fullscreen.toggle();
+        } else if (document.fullscreenElement) {
           document.exitFullscreen?.();
         } else {
           this.canvas.requestFullscreen?.();
