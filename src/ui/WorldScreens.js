@@ -412,6 +412,8 @@ export class CreateWorldScreen {
     this._seedInput.addEventListener('keydown', (e) => e.stopPropagation());
     const dice = el('button', 'mc-btn small');
     game.font.set(dice, t('create.randomSeed'), { scale: 2, color: COLORS.white });
+    dice.disabled = editing;
+    if (editing) dice.className = 'mc-btn small readonly';
     dice.addEventListener('click', () => {
       game.audio.click();
       this._seedInput.value = randomSeed();
