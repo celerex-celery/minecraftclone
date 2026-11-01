@@ -19,6 +19,7 @@ import { Items } from './world/blocks/Items.js';
 import { audio } from './audio/SoundEngine.js';
 import { randomSplash, SPLASHES } from './ui/Splashes.js';
 import { createLogger, recent } from './core/Logger.js';
+import { LoadingScreen } from './ui/LoadingScreen.js';
 
 // The source Vanilla prints for its own boot lines is `(Minecraft)`; ours is the
 // game's name, which says the same thing at a glance in a terminal mixed with
@@ -38,12 +39,22 @@ async function boot() {
 
   log.info('Starting Minexel');
 
+  // Show the loading screen for the whole boot sequence: assets, language,
+  // settings, version. It covers the canvas so nothing half-built is visible.
+  const loadingEl = document.getElementById('loading-screen');
+  loadingEl?.classList.remove('hidden');
+  const progressFill = document.getElementById('load-progress-fill');
+  const statusEl = document.getElementById('load-status');
+
   const assets = new Assets();
   await assets.load({
     blocks: blockTextureManifest(Blocks),
     items: itemTextureManifest(Items),
     font: 'assets/font/ascii.png',
     clouds: 'assets/textures/clouds.png',
+  }, (pct, label) => {
+    if (progressFill) progressFill.style.width = Math.round(pct * 100) + '%';
+    if (statusEl) statusEl.textContent = label;
   });
   log.info('Loaded textures and font');
 
@@ -55,18 +66,30 @@ async function boot() {
   // draws its splash from the same sheet the rest of the UI uses, so it cannot
   // appear before that sheet is loaded either.
 
+  // Switch from the raw DOM updates above to the LoadingScreen class now that
+  // the game (and its font) exist.
+  const loadingScreen = new LoadingScreen(game);
+
   // load the language file before anything renders text
+  loadingScreen.setProgress(0.85);
+  loadingScreen.setStatus('Loading language...');
   await game.initLanguage();
   log.info('Loaded language (%s)', game.settings.language ?? 'en_us');
 
   // restore the saved options before anything reads them
+  loadingScreen.setProgress(0.9);
+  loadingScreen.setStatus('Loading settings...');
   await game.loadSettings();
   log.info('Loaded settings');
 
   // the version comes out of package.json rather than a translated string, which
   // is how the title managed to say 1.2 while the game was at 1.4
+  loadingScreen.setProgress(0.95);
+  loadingScreen.setStatus('Loading version...');
   await game.loadVersion();
   log.info('Version %s', game.version ?? 'unknown');
+
+  loadingScreen.hide();
 
   // show the title screen
   // Check if running in Electron desktop app

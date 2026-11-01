@@ -116,6 +116,9 @@ for (const b of Blocks.list) {
   });
 }
 
+// hardcore world-creation icon; not placeable, not craftable, never in recipes
+Items.add('hardcore_full', { label: 'Hardcore Heart', texture: 'hardcore_full' });
+
 /* ================================================================
    Tools
    ================================================================ */
