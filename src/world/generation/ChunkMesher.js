@@ -823,18 +823,6 @@ export class ChunkMesher {
       builder.pushQuad();
     }
   }
-      a[5] = sky; a[6] = blk;
-      a[7] = col[0]; a[8] = col[1]; a[9] = col[2];
-    };
-
-    set(0, a0, 0, b0, 0); set(1, a1, 0, b1, 1);
-    set(2, a1, h, b1, 2); set(3, a0, h, b0, 3);
-    builder.pushQuad();
-
-    set(0, a1, 0, b0, 0); set(1, a0, 0, b1, 1);
-    set(2, a0, h, b1, 2); set(3, a1, h, b0, 3);
-    builder.pushQuad();
-  }
 
   emitLiquid(x, y, z, px, py, pz, def) {
 
