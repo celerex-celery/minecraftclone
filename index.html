@@ -159,13 +159,10 @@
     </div>
     <div class="title-buttons">
       <button class="mc-btn wide" data-action="play" data-i18n="menu.singleplayer">Singleplayer</button>
+      <button class="mc-btn wide" disabled data-i18n="menu.multiplayer">Multiplayer</button>
       <button class="mc-btn wide" data-action="options" data-i18n="menu.options">Options</button>
       <button class="mc-btn wide danger" data-action="quit" data-i18n="menu.quit">Quit Game</button>
     </div>
-    <!-- No data-i18n here on purpose: the number comes from package.json, and a
-         translated string carrying a hard-coded version drifts the moment the
-         version is bumped. Game fills this in once it has read the file. -->
-    <div id="title-version"></div>
   </div>
 </div>
 

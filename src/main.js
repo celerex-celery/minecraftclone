@@ -82,13 +82,6 @@ async function boot() {
   await game.loadSettings();
   log.info('Loaded settings');
 
-  // the version comes out of package.json rather than a translated string, which
-  // is how the title managed to say 1.2 while the game was at 1.4
-  loadingScreen.setProgress(0.95);
-  loadingScreen.setStatus('Loading version...');
-  await game.loadVersion();
-  log.info('Version %s', game.version ?? 'unknown');
-
   loadingScreen.hide();
 
   // show the title screen

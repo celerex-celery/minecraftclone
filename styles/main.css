@@ -225,6 +225,18 @@ canvas.mc-text,
   background: #d98d8d;
 }
 
+.mc-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+.mc-btn:disabled:hover {
+  background: var(--mc-btn-face);
+}
+.mc-btn:disabled:active {
+  border-color: #6f6f6f #2b2b2b #2b2b2b #6f6f6f;
+}
+
 .mc-btn.small {
   min-width: 90px;
   min-height: 24px;
@@ -562,18 +574,6 @@ canvas.mc-text,
   58%  { transform: rotate(-20deg) scale(1) translate(-1px, 1px); }
   62%  { transform: rotate(-20deg) scale(1) translate(0, 0); }
   100% { transform: rotate(-20deg) scale(1) translate(0, 0); }
-}
-
-#title-version {
-  position: fixed;
-  left: 8px;
-  bottom: 6px;
-  z-index: 3;
-  line-height: 0;
-  font-family: "Consolas", "DejaVu Sans Mono", monospace;
-  font-size: 12px;
-  color: #c8c8c8;
-  text-shadow: 1.5px 1.5px 0 rgba(0, 0, 0, 0.7);
 }
 
 .title-buttons {

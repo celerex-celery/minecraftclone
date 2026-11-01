@@ -479,45 +479,12 @@ this._bedsByDimension = {};
     this.refreshTranslations();
   }
 
-  /**
-   * Put the real version number on the title screen.
-   *
-   * It used to be a translated string, hard-coded in three language files, which
-   * is how the title came to say 1.2 while the game was at 1.4: two copies of a
-   * fact with nothing keeping them together. This reads the one copy, so it
-   * cannot drift.
-   *
-   * `package.json` sits at the project root, which the dev server serves. If the
-   * fetch fails - opened straight off the disk with a `file://` URL, say - the
-   * line is left empty rather than showing a version that is not the version.
-   */
-  async loadVersion() {
-    const el = document.getElementById('title-version');
-    try {
-      const res = await fetch('package.json', { cache: 'no-store' });
-      if (!res.ok) return;
-      const pkg = await res.json();
-      if (!pkg?.version || !el) return;
-      this.version = String(pkg.version);
-      el.textContent = t('menu.version', this.version);
-    } catch {
-      // no version rather than a wrong one
-    }
-  }
-
   /** Re-render every string that is currently on screen. */  refreshTranslations() {
     const font = this.font;
     // static markup buttons and headings
     lang.applyToDom((el, text) => {
       if (el.dataset.i18nPh !== undefined) {
         el.placeholder = text;
-        return;
-      }
-      if (el.id === 'title-version') {
-        // plain text, styled by CSS. Deliberately skipped: the version line is
-        // filled in by loadVersion() once it has read package.json, and letting
-        // lang overwrite it would put the number back to whatever a translation
-        // file happens to say.
         return;
       }
       if (el.classList.contains('mc-heading')) {
