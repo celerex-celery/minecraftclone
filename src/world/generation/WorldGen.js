@@ -1014,7 +1014,7 @@ let c = -1;
     // islands: grass on top of the dirt island, sand on the ocean floor
     if (this.worldType === 'islands') {
       if (h <= CONFIG.SEA_LEVEL) return Blocks.id('sand');
-      return Blocks.id('dirt');
+      return Blocks.id('grass_block');
     }
     if (h < CONFIG.SEA_LEVEL) {
       // sea floor
@@ -1038,6 +1038,10 @@ let c = -1;
   }
 
   subsurfaceBlock(biome, h, wx, wz, y) {
+    if (this.worldType === 'islands') {
+      if (h <= CONFIG.SEA_LEVEL) return Blocks.id('sand');
+      return Blocks.id('dirt');
+    }
     if (h < CONFIG.SEA_LEVEL) return Blocks.id('sand');
     if (biome === BIOME.desert) return y > h - 3 ? Blocks.id('sandstone') : Blocks.id('sand');
     if (biome === BIOME.mountains && h > CONFIG.SEA_LEVEL + 30) return Blocks.id('stone');
