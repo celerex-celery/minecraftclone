@@ -1013,7 +1013,7 @@ let c = -1;
   }
 
   groundCover(local, ground, x, y, z, wx, wz, r) {
-    if (r > 0.75) return;
+    if (r > 0.95) return;
     const pick = hash2(wx, wz, this.seed ^ 0x1eaf);
 
     if (ground === Blocks.id('sand') || ground === Blocks.id('red_sand')) {
