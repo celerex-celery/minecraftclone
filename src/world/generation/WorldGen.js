@@ -243,6 +243,8 @@ export class WorldGen {
     /** where seagrass grows on the sea floor, in beds rather than evenly */
     this.nSeagrass = new PerlinNoise(this.seed ^ 0x5ea1);
     this._hCache = new Map();
+    /** one oak tree placed at island spawn, so it only ever generates once */
+    this._islandTreePlaced = false;
 
     /** cave lattice, rebuilt per chunk */
     this.lTunnel = new Float32Array(LCOUNT);
@@ -1292,6 +1294,12 @@ let c = -1;
             break;
           case BIOME.plains:
             if (this.worldType === 'islands') {
+              // one oak tree at spawn, nowhere else on the island
+              if (wx === 0 && wz === 0 && !this._islandTreePlaced) {
+                this._islandTreePlaced = true;
+                this.tree(chunk, local, x, surface, z, 'oak', wx, wz);
+                break;
+              }
               this.groundCover(local, ground, x, surface, z, wx, wz, r);
               break;
             }
