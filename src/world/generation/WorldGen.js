@@ -288,8 +288,7 @@ export class WorldGen {
     // islands: a single island at spawn in an infinite ocean
     if (this.worldType === 'islands') {
       const d = Math.sqrt(wx * wx + wz * wz);
-      // island radius about 40 blocks around spawn
-      return d < 40 ? 1 : -1;
+      return d < 25 ? 1 : -1;
     }
     const c = this.nContinent.fbm2(wx * 0.0011, wz * 0.0011, 4, 2, 0.5);
 
@@ -341,7 +340,7 @@ export class WorldGen {
     // islands: a single island at spawn, ocean everywhere else
     if (this.worldType === 'islands') {
       const d = Math.sqrt(wx * wx + wz * wz);
-      if (d < 40) {
+      if (d < 25) {
         // island surface: grass-topped dirt, ~5 blocks above sea level
         return CONFIG.SEA_LEVEL + 5;
       }
@@ -393,7 +392,7 @@ export class WorldGen {
     // islands: a single island at spawn with plains biome, ocean everywhere else
     if (this.worldType === 'islands') {
       const d = Math.sqrt(wx * wx + wz * wz);
-      if (d < 40) return BIOME.plains;
+      if (d < 25) return BIOME.plains;
       return BIOME.ocean;
     }
     // Temperature and humidity decide the biome, so their scale is the scale of
