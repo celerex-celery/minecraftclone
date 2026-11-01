@@ -444,6 +444,13 @@ export class World {
     this.pumpLighting(lightDeadline);
     this.pumpMeshing(meshDeadline);
 
+    if (this._genQueue.length === 0 && this._lightQueue.length === 0 && this._meshQueue.length === 0) {
+      const remaining = meshDeadline - performance.now();
+      if (remaining > 0) {
+        this.pumpPregen(performance.now() + Math.min(2, remaining));
+      }
+    }
+
     if (this._settleBudget > 0 && this._genQueue.length === 0 && this._lightQueue.length === 0) {
       this._settleBudget--;
       this.rebuildQueues(ccx, ccz);
@@ -664,17 +671,26 @@ export class World {
     this._genQueue = [];
     this._lightQueue = [];
     this._meshQueue = [];
+    this._pregenQueue = [];
 
     const r = this.renderDistance;
     const g = r + 1;
     const meshR2 = (r + 0.5) * (r + 0.5);
+    const pregenR = g + CONFIG.PREGEN_EXTRA;
 
-    for (let dz = -g; dz <= g; dz++) {
-      for (let dx = -g; dx <= g; dx++) {
+    for (let dz = -pregenR; dz <= pregenR; dz++) {
+      for (let dx = -pregenR; dx <= pregenR; dx++) {
         const d2 = dx * dx + dz * dz;
         const cx = ccx + dx, cz = ccz + dz;
         const c = this.chunkAt(cx, cz);
-        if (!c) { this._genQueue.push([cx, cz, d2]); continue; }
+        if (!c) {
+          if (d2 <= meshR2) {
+            this._genQueue.push([cx, cz, d2]);
+          } else {
+            this._pregenQueue.push([cx, cz, d2]);
+          }
+          continue;
+        }
         if (!c.hasLight || c.dirtyLight) { this._lightQueue.push([cx, cz, d2]); continue; }
         if (d2 <= meshR2 && (!c.meshed || c.dirtyMesh)) this._meshQueue.push([cx, cz, d2]);
       }
@@ -683,6 +699,7 @@ export class World {
     this._genQueue.sort(byDist);
     this._lightQueue.sort(byDist);
     this._meshQueue.sort(byDist);
+    this._pregenQueue.sort(byDist);
   }
 
   invalidate() {
@@ -795,6 +812,18 @@ export class World {
       this._meshQueue.sort((a, b) => a[2] - b[2]);
       this._meshSortedLen = this._meshQueue.length;
     }
+  }
+
+  pumpPregen(deadline) {
+    let ops = 0;
+    while (this._pregenQueue.length && performance.now() < deadline) {
+      const [cx, cz] = this._pregenQueue.shift();
+      const c = this.chunkAt(cx, cz);
+      if (c && c.hasTerrain) continue;
+      this.ensureChunk(cx, cz);
+      ops++;
+    }
+    this.pregenOps = ops;
   }
 
   _meshStep(deadline) {
