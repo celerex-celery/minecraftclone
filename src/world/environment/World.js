@@ -585,15 +585,17 @@ export class World {
           const x = ox + dx;
           const z = oz + dz;
           for (let y = startY; y > MIN_Y + 1; y--) {
-            const here = Blocks.get(this.getBlock(x, y, z));
-            const above = Blocks.get(this.getBlock(x, y + 1, z));
-            const below = Blocks.get(this.getBlock(x, y - 1, z));
-            if (here.liquid || above.liquid) continue;
-            if (here.solid || above.solid) continue;
-            // leaves and logs are solid, so this rejects canopies and trunks
-            if (!below.solid || below.liquid) continue;
-            pos.set(x + 0.5, y, z + 0.5);
-            return true;
+          const here = Blocks.get(this.getBlock(x, y, z));
+          const above = Blocks.get(this.getBlock(x, y + 1, z));
+          const below = Blocks.get(this.getBlock(x, y - 1, z));
+          if (here.liquid || above.liquid) continue;
+          if (here.solid || above.solid) continue;
+          // require open sky above, so we never spawn inside a cave or ravine
+          const sky = Blocks.get(this.getBlock(x, y + 2, z));
+          if (sky.solid || sky.liquid) continue;
+          if (!below.solid || below.liquid) continue;
+          pos.set(x + 0.5, y, z + 0.5);
+          return true;
           }
         }
       }
