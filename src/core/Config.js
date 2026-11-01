@@ -386,7 +386,7 @@ export const CONFIG = {
 
     RIDE_HEIGHT: 0.12,
 
-    SEAT_HEIGHT: 0.55,
+    SEAT_HEIGHT: 0.35,
 
     HALF: { x: 0.5, y: 0.3, z: 0.95 },
 
