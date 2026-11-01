@@ -681,6 +681,20 @@ export class ChunkMesher {
     const n = FACE_DEFS[fi].n;
     const per = AO_OFFSETS[fi];
 
+    // Single light value for all corners: removes smooth-lighting gradient
+    // that bleeds light across face corners into dark caves.
+    let sky = 0, blk = 0, count = 0;
+    if (!this.isOpaqueAt(sx + n[0], sy + n[1], sz + n[2])) {
+      const l = this.padLight[pIdx(sx + n[0], sy + n[1], sz + n[2])];
+      sky += l >> 4; blk += l & 15; count++;
+    }
+    if (count === 0) {
+      const l = this.padLight[pIdx(sx + n[0], sy + n[1], sz + n[2])];
+      sky = l >> 4; blk = l & 15; count = 1;
+    }
+    const skyAvg = sky / count;
+    const blkAvg = blk / count;
+
     for (let c = 0; c < 4; c++) {
       const { o1, o2, oc } = per[c];
       const ax1 = n[0] + o1[0], ay1 = n[1] + o1[1], az1 = n[2] + o1[2];
@@ -691,31 +705,8 @@ export class ChunkMesher {
       const s2 = this.isOpaqueAt(sx + ax2, sy + ay2, sz + az2) ? 1 : 0;
       const s3 = this.isOpaqueAt(sx + ax3, sy + ay3, sz + az3) ? 1 : 0;
 
-      let sky = 0, blk = 0, count = 0;
-      if (!this.isOpaqueAt(sx + n[0], sy + n[1], sz + n[2])) {
-        const l = this.padLight[pIdx(sx + n[0], sy + n[1], sz + n[2])];
-        sky += l >> 4; blk += l & 15; count++;
-      }
-      if (!s1) {
-        const l = this.padLight[pIdx(sx + ax1, sy + ay1, sz + az1)];
-        sky += l >> 4; blk += l & 15; count++;
-      }
-      if (!s2) {
-        const l = this.padLight[pIdx(sx + ax2, sy + ay2, sz + az2)];
-        sky += l >> 4; blk += l & 15; count++;
-      }
-      if (!s3) {
-        const l = this.padLight[pIdx(sx + ax3, sy + ay3, sz + az3)];
-        sky += l >> 4; blk += l & 15; count++;
-      }
-
-      if (count === 0) {
-        const l = this.padLight[pIdx(sx + n[0], sy + n[1], sz + n[2])];
-        sky = l >> 4; blk = l & 15; count = 1;
-      }
-
-      CORNER_SKY[c] = sky / count;
-      CORNER_BLK[c] = blk / count;
+      CORNER_SKY[c] = skyAvg;
+      CORNER_BLK[c] = blkAvg;
       CORNER_AO[c] = (s1 && s2) ? 0 : 3 - (s1 + s2 + s3);
     }
   }
