@@ -53,8 +53,7 @@ export function itemIcon(name, size = 32, assets) {
   cv.height = size;
   cv.className = 'item-icon';
   const ctx = cv.getContext('2d');
-  ctx.imageSmoothingEnabled = size > 16;
-  ctx.imageSmoothingQuality = 'high';
+  ctx.imageSmoothingEnabled = false;
 
   const sprite = SPRITE_ICONS[name]?.(assets) ?? null;
   if (sprite) {

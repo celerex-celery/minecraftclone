@@ -445,9 +445,10 @@ export class CreateWorldScreen {
     const worldTypeRow = optionRow(game, t('create.worldType'), WORLD_TYPES, this.opts.worldType,
       (id) => { this.opts.worldType = id; }, editing);
     if (!editing) {
-      const wtMore = el('button', 'mc-btn small');
+      const wtMore = el('button', 'wc-option');
+      wtMore.dataset.id = 'more';
       wtMore.appendChild(iconCanvas(game, 'crafting_table'));
-      const moreText = el('span');
+      const moreText = el('span', 'wc-option-caption');
       game.font.set(moreText, t('create.more'), { scale: 2, color: COLORS.white });
       wtMore.appendChild(moreText);
       wtMore.style.marginLeft = '6px';
@@ -558,7 +559,6 @@ export class WorldTypeScreen {
     this.root.appendChild(this.panel);
 
     this.title = document.createElement('div');
-    this.game.font.set(this.title, t('create.worldType'), { scale: 2, color: COLORS.white });
     this.panel.appendChild(this.title);
 
     this.grid = document.createElement('div');
@@ -579,6 +579,7 @@ export class WorldTypeScreen {
 
   show(onPick) {
     this._onPick = onPick;
+    this.game.font.set(this.title, t('create.worldType'), { scale: 2, color: COLORS.white });
     this.grid.textContent = '';
     for (const opt of WORLD_TYPES) {
       const b = el('button', 'wc-option');
