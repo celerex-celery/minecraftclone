@@ -31,16 +31,7 @@ export const WORLD_TYPES = [
 
 /** Biomes that can be the single biome of an Islands world. */
 export const ISLAND_BIOMES = [
-  { id: 'beach', label: 'Beach', icon: 'sand' },
   { id: 'plains', label: 'Plains', icon: 'grass_block' },
-  { id: 'forest', label: 'Forest', icon: 'oak_leaves' },
-  { id: 'taiga', label: 'Taiga', icon: 'spruce_leaves' },
-  { id: 'snowy_plains', label: 'Snowy Plains', icon: 'ice' },
-  { id: 'desert', label: 'Desert', icon: 'sand' },
-  { id: 'savanna', label: 'Savanna', icon: 'grass_block' },
-  { id: 'swamp', label: 'Swamp', icon: 'mushroom_stew' },
-  { id: 'mountains', label: 'Mountains', icon: 'stone' },
-  { id: 'jungle', label: 'Jungle', icon: 'oak_leaves' },
 ];
 
 /**
