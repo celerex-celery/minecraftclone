@@ -101,6 +101,8 @@ tilde makes it absolute, so `/summon chicken 0 5 0` is five blocks up and
 
 ## World types
 
+![Select World UI](assets/images/SelectWorld.png)
+
 When you create a world you can pick one of four world types:
 
 | World type | What it is |
