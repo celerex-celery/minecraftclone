@@ -22,7 +22,7 @@
     "fs-extra": "^11.2.0"
   },
   "build": {
-    "appId": "com.yourname.minexel",
+    "appId": "celerex.minexel",
     "productName": "Minexel",
     "executableName": "Minexel",
     "directories": {
