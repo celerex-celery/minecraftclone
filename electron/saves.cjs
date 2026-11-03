@@ -1,20 +1,17 @@
 /**
  * Save files on disk.
  *
- * Worlds live as plain JSON files in %APPDATA%\Minexel\worlds, one
- * file per world, so they can be inspected and backed up without digging
- * through the Electron profile's IndexedDB.
+ * Worlds live one-per-folder in %APPDATA%\Minexel\worlds, mirroring Minecraft's
+ * saves/<world>/layout. Each world folder contains:
  *
- * Two things keep a save from being lost to a crash mid-write:
+ *   level.dat     the world record (JSON, indented so it can be read by hand)
+ *   level.dat.bak the previous version - the last one known to parse
  *
- *   <id>.json        the world
- *   <id>.json.bak    the previous version - the last one known to parse
- *
- * A write goes to <id>.json.tmp first and is flushed to disk before it is
- * renamed over <id>.json. A rename is atomic, so the file on disk is always
- * either the whole old world or the whole new one, never a half-written mix
- * of the two. The old file is copied to the .bak before the rename, so if the
- * new one turns out to be damaged there is still a version to fall back to.
+ * A write goes to level.dat.tmp first and is flushed to disk before it is
+ * renamed over level.dat. A rename is atomic, so the file on disk is always
+ * either the whole old world or the whole new one, never a half-written mix.
+ * The old file is copied to the .bak before the rename, so if the new one
+ * turns out to be damaged there is still a version to fall back to.
  *
  * This lives apart from main.cjs so it can be exercised without starting
  * Electron - see tools/save-test.mjs.
@@ -25,41 +22,51 @@ const fsp = require('node:fs/promises');
 const path = require('node:path');
 
 /**
- * The file a world lives in.
+ * Sanitize a world name into a filesystem-safe folder id.
+ * Illegal Windows characters are replaced, whitespace collapsed, length capped.
+ */
+function sanitizeWorldName(name) {
+  return String(name)
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/\s+/g, ' ')
+    .replace(/^\.+$/, '_')
+    .slice(0, 64)
+    .replace(/^\s+|\s+$/, '') || 'world';
+}
+
+/**
+ * The folder a world lives in.
  *
- * The id becomes a filename, so it must not be able to point anywhere else:
+ * The id becomes a folder name, so it must not be able to point anywhere else:
  * no path separators, no parent directory, no drive letter.
  *
  * @param {string} dir the worlds folder
  * @param {string} id
  * @returns {string}
  */
-function worldFile(dir, id) {
+function worldDir(dir, id) {
   if (typeof id !== 'string' || !id || id.length > 128) {
     throw new Error(`invalid world id: ${id}`);
   }
   if (/[\\/]/.test(id) || id.includes('..') || /^[A-Za-z]:/.test(id)) {
     throw new Error(`invalid world id: ${id}`);
   }
-  return path.join(dir, `${id}.json`);
+  return path.join(dir, id);
 }
 
 /**
- * The names in the worlds folder that are worlds, rather than the temporary
- * and backup files that sit alongside them.
+ * The level.dat file inside a world folder.
+ * @param {string} dir the worlds folder
+ * @param {string} id
+ * @returns {string}
  */
-function isWorldFile(name) {
-  return name.endsWith('.json')
-    && !name.endsWith('.json.tmp')
-    && !name.endsWith('.json.bak');
+function levelFile(dir, id) {
+  return path.join(worldDir(dir, id), 'level.dat');
 }
 
 /**
  * Read one JSON file and say what happened.
- *
- * The old version of this swallowed every failure into the same null, so a
- * world truncated by a power cut read as "no such world" and the player was
- * never told the difference. The reason is reported instead.
  *
  * @param {string} file
  * @returns {Promise<{ok: true, value: any}
@@ -91,7 +98,9 @@ async function readJsonFile(file) {
  * @param {any} value
  */
 async function writeJsonAtomic(file, value) {
-  const text = JSON.stringify(value);
+  const text = JSON.stringify(value, null, 2);
+  const dir = path.dirname(file);
+  await fsp.mkdir(dir, { recursive: true });
   const tmp = `${file}.tmp`;
   const bak = `${file}.bak`;
 
@@ -186,29 +195,41 @@ function createSaves({ dir, settingsFile, log }) {
      */
     async list() {
       const folder = worldsDir();
+      let entries;
+      try {
+        entries = await fsp.readdir(folder, { withFileTypes: true });
+      } catch (err) {
+        if (err.code === 'ENOENT') return [];
+        throw err;
+      }
       const out = [];
-      for (const name of await fsp.readdir(folder)) {
-        if (!isWorldFile(name)) continue;
-        const file = path.join(folder, name);
-        const stat = await fsp.stat(file).catch(() => null);
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const id = entry.name;
+        const file = levelFile(folder, id);
         const { value, damaged, recovered } = await readJsonWithBackup(file);
         if (value) {
-          out.push({ ...value, size: stat?.size ?? 0, damaged, recovered });
+          let size = 0;
+          try {
+            const stat = await fsp.stat(file);
+            size = stat.size;
+          } catch { /* ignore */ }
+          out.push({ ...value, size, damaged, recovered });
         } else if (damaged) {
-          // The file is on disk but unreadable and there is no backup to fall
-          // back on. It is listed anyway so the player can see that it is
-          // there and delete it, rather than it vanishing with no
-          // explanation.
-          const id = name.slice(0, -'.json'.length);
+          let size = 0;
+          try {
+            const stat = await fsp.stat(file);
+            size = stat.size;
+          } catch { /* ignore */ }
           out.push({
             id,
             name: id,
-            size: stat?.size ?? 0,
             gameMode: 'survival',
             worldType: 'default',
             difficulty: 'normal',
-            created: stat?.birthtimeMs ?? stat?.mtimeMs ?? 0,
-            lastPlayed: stat?.mtimeMs ?? 0,
+            created: 0,
+            lastPlayed: 0,
+            size,
             damaged: true,
             recovered: false,
           });
@@ -221,7 +242,7 @@ function createSaves({ dir, settingsFile, log }) {
      * @returns {Promise<{record: any, damaged: boolean, recovered: boolean}>}
      */
     async get(id) {
-      const { value, damaged, recovered } = await readJsonWithBackup(worldFile(worldsDir(), id));
+      const { value, damaged, recovered } = await readJsonWithBackup(levelFile(worldsDir(), id));
       return { record: value, damaged, recovered };
     },
 
@@ -229,21 +250,18 @@ function createSaves({ dir, settingsFile, log }) {
       if (!record || typeof record !== 'object' || typeof record.id !== 'string') {
         throw new Error('save record has no id');
       }
-      await writeJsonAtomic(worldFile(worldsDir(), record.id), record);
+      const folder = worldDir(worldsDir(), record.id);
+      await fsp.mkdir(folder, { recursive: true });
+      await writeJsonAtomic(levelFile(worldsDir(), record.id), record);
       return record;
     },
 
     async remove(id) {
-      const file = worldFile(worldsDir(), id);
-      // The backup and any half-written temporary go with it, so a deleted
-      // world cannot come back from the fallback the next time the folder is
-      // read.
-      for (const p of [file, `${file}.bak`, `${file}.tmp`]) {
-        try {
-          await fsp.rm(p, { force: true });
-        } catch {
-          /* already gone */
-        }
+      const folder = worldDir(worldsDir(), id);
+      try {
+        await fsp.rm(folder, { recursive: true, force: true });
+      } catch {
+        /* already gone */
       }
       return true;
     },
@@ -251,10 +269,18 @@ function createSaves({ dir, settingsFile, log }) {
     async usage() {
       const folder = worldsDir();
       let total = 0;
-      for (const name of await fsp.readdir(folder)) {
-        if (!isWorldFile(name)) continue;
+      let entries;
+      try {
+        entries = await fsp.readdir(folder, { withFileTypes: true });
+      } catch (err) {
+        if (err.code === 'ENOENT') return 0;
+        throw err;
+      }
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const file = levelFile(folder, entry.name);
         try {
-          total += (await fsp.stat(path.join(folder, name))).size;
+          total += (await fsp.stat(file)).size;
         } catch {
           /* ignore */
         }
@@ -265,8 +291,6 @@ function createSaves({ dir, settingsFile, log }) {
     async getSettings() {
       const { value, damaged } = await readJsonWithBackup(settingsFile());
       if (damaged) {
-        // Settings are not worth failing over - the defaults are fine - but the
-        // player should know their keybinds did not come back.
         log('WARN', 'settings were damaged; falling back to defaults');
       }
       return value ?? null;
@@ -279,4 +303,4 @@ function createSaves({ dir, settingsFile, log }) {
   };
 }
 
-module.exports = { createSaves, writeJsonAtomic, readJsonFile, worldFile };
+module.exports = { createSaves, writeJsonAtomic, readJsonFile, worldDir, levelFile, sanitizeWorldName };

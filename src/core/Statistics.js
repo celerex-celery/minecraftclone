@@ -35,9 +35,6 @@ function blank() {
 
     foodsEaten: [],
 
-    steps: 0,
-    stepsGoal: 10000,
-    stepsRewardGiven: false,
   };
 }
 
@@ -106,20 +103,6 @@ export class Statistics {
         this.data.distance.walked += cm * 100;
         if (player.sprinting) this.data.distance.sprinted += cm * 100;
 
-        this._stepAccum = (this._stepAccum ?? 0) + horizontal;
-        const STEP_DISTANCE = 0.6;
-        while (this._stepAccum >= STEP_DISTANCE) {
-          this._stepAccum -= STEP_DISTANCE;
-          this.data.steps++;
-          const goal = this.data.stepsGoal;
-          if (!this.data.stepsRewardGiven && this.data.steps >= goal) {
-            this.data.stepsRewardGiven = true;
-            const inventory = this.game?.inventory;
-            if (inventory) inventory.add('compass', 1);
-            const toastMsg = t('toast.step_goal', goal);
-            this.game?.hud?.toast(toastMsg, 'reward');
-          }
-        }
       } else {
         this._stepAccum = 0;
         if (player.flying) {

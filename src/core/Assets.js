@@ -139,11 +139,6 @@ export class Assets {
       this.clouds = await Assets.loadImage(manifest.clouds);
     } catch {   }
 
-    step(0.98, 'Loading seasons...');
-    try {
-      this.seasonIcons = await Assets.loadImage(`${GUI_DIR}${CONFIG.SEASON.ICON_SHEET}.png`);
-    } catch {   }
-
     step(1, 'Ready');
     return this;
   }

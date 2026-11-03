@@ -43,7 +43,6 @@ import { ScreenManager } from '../ui/Screens.js';
 import { Advancements } from '../ui/Advancements.js';
 import { AdvancementScreen } from '../ui/AdvancementScreen.js';
 import { StatisticsScreen } from '../ui/StatisticsScreen.js';
-import { StepsScreen } from '../ui/StepsScreen.js';
 import { Statistics } from './Statistics.js';
 import { PixelFont, COLORS } from '../ui/PixelFont.js';
 import { audio } from '../audio/SoundEngine.js';
@@ -85,6 +84,20 @@ function wailaTime(seconds) {
 
 function crispPixelRatio() {
   return 1;
+}
+
+/**
+ * Sanitize a world name into a filesystem-safe folder id.
+ * Mirrors electron/saves.cjs so ids match the on-disk folder names.
+ */
+function sanitizeWorldName(name) {
+  return String(name)
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, '_')
+    .replace(/\s+/g, ' ')
+    .replace(/^\.+$/, '_')
+    .slice(0, 64)
+    .replace(/^\s+|\s+$/, '') || 'world';
 }
 
 let MAX_ANISOTROPY = 1;
@@ -198,7 +211,6 @@ this._bedsByDimension = {};
     this.screens.advancements = new AdvancementScreen(this);
     this.statistics = new Statistics(this);
     this.screens.statistics = new StatisticsScreen(this);
-    this.screens.steps = new StepsScreen(this);
 
     this.inventory = new Inventory();
     this.craftGrid = [];
@@ -420,10 +432,15 @@ this._bedsByDimension = {};
   }
 
   async createWorldRecord(opts) {
-    const id = `w${Date.now().toString(36)}${Math.floor(Math.random() * 1e4).toString(36)}`;
+    const baseName = opts.name || t('menu.newWorld');
+    let id = sanitizeWorldName(baseName);
+    let counter = 1;
+    while ((await this.saveGame.get(id)).record) {
+      id = `${sanitizeWorldName(baseName)} ${counter++}`;
+    }
     const record = {
       id,
-      name: opts.name || t('menu.newWorld'),
+      name: baseName,
       seed: opts.seed,
       seedText: opts.seedText || '',
       gameMode: opts.gameMode ?? 'survival',
@@ -1570,7 +1587,6 @@ const payload = {
     if (input.pressed('pause')) {
       if (this.screens.languages.isOpen) this.screens.languages.hide();
       else if (this.screens.options.isOpen) this.screens.options.hide();
-      else if (this.screens.steps?.isOpen) { this.screens.steps.hide(); if (this.state === STATE.PLAYING) this.input.requestLock(); }
       else if (this.screens.advancements?.isOpen) { this.screens.advancements.hide(); this.pause(); }
       else if (this.screens.statistics?.isOpen) { this.screens.statistics.hide(); this.pause(); }
       else if (this.screen) this.closeScreen();
@@ -1586,21 +1602,13 @@ const payload = {
       return;
     }
 
-    if (this.state !== STATE.PLAYING || this.screen || this.screens.steps?.isOpen) return;
+    if (this.state !== STATE.PLAYING || this.screen) return;
 
     if (input.pressed('inventory')) this.openScreen('inventory', null);
     if (input.pressed('creativeInventory') && this.gameMode === 'creative') this.openScreen('creative', null);
 
     if (input.pressed('chat')) this.chat.open('');
     if (input.pressed('command')) this.chat.open('/');
-
-    if (input.pressed('steps')) {
-      if (this.screens.steps?.isOpen) {
-        this.screens.steps.hide();
-        if (this.state === STATE.PLAYING) this.input.requestLock();
-      }
-      else this.screens.steps?.show();
-    }
 
     if (input.pressed('dropItem')) this.interaction?.dropStack(input.down('sprint'));
 
@@ -1685,8 +1693,7 @@ const payload = {
     const padLooking = !!this.input.pad?.connected;
     if (input.locked || padLooking) {
 
-      const sens = this.settings.sensitivity / CONFIG.LOOK_SENSITIVITY_MIDDLE;
-      const s = sens * CONFIG.LOOK_DEGREES_PER_COUNT * (Math.PI / 180);
+      const s = (this.settings.sensitivity / 100) * CONFIG.LOOK_DEGREES_PER_COUNT * (Math.PI / 180);
       player.yaw -= input.mouse.dx * s;
       player.pitch -= input.mouse.dy * s;
 
@@ -1926,7 +1933,7 @@ const payload = {
     const pz = Math.floor(player.position.z);
 
     const skyLight = world.getSky(px, py, pz);
-    const buried = world.hasSky && !under && skyLight <= 4;
+    const buried = world.hasSky && !under && skyLight === 0;
 
     this._portalNearAt = (this._portalNearAt ?? 0) - dt;
     if (this._portalNearAt <= 0) {
@@ -1949,7 +1956,6 @@ const payload = {
     }
 
     this.hud.update(dt);
-    this.screens?.steps?.update(dt);
     this.showMusicToast();
 
     if (!this._saving && this._saveShownAt !== undefined && this._saveIndicatorDone()) {
@@ -2076,9 +2082,9 @@ const payload = {
     let bobX = 0;
     if (this.settings.viewBobbing && mode === 0 && !player.flying && !player.spectator) {
       const amount = player.bobAmount * (player.crouching ? 0.3 : 1);
-      const sprintMult = player.sprinting ? 1.3 : 1.0;
+      const sprintMult = player.sprinting ? 1.15 : 1.0;
       bobY = Math.sin(player.bobPhase * 2) * 0.06 * amount * sprintMult;
-      bobX = Math.cos(player.bobPhase) * 0.05 * amount * sprintMult;
+      bobX = Math.cos(player.bobPhase) * 0.035 * amount * sprintMult;
     }
 
     if (mode === 0) {
@@ -2116,15 +2122,15 @@ const payload = {
     const tilt = this.survival?.hurtTilt ?? 0;
     if (tilt > 0.001) {
       const e = tilt * tilt;
-      camera.rotation.z = -this.survival.tiltSign * e * 0.28;
-      camera.rotation.x -= e * 0.10;
+      camera.rotation.z = -this.survival.tiltSign * e * 0.15;
+      camera.rotation.x -= e * 0.06;
     }
 
     const shake = this.survival?.hurtShake ?? 0;
     if (shake > 0.001) {
-      camera.position.x += (Math.random() - 0.5) * shake * 0.15;
-      camera.position.y += (Math.random() - 0.5) * shake * 0.15;
-      camera.position.z += (Math.random() - 0.5) * shake * 0.15;
+      camera.position.x += (Math.random() - 0.5) * shake * 0.08;
+      camera.position.y += (Math.random() - 0.5) * shake * 0.08;
+      camera.position.z += (Math.random() - 0.5) * shake * 0.08;
     }
   }
 
@@ -2166,7 +2172,7 @@ const payload = {
       world.scene.fog.far = range.far * reach;
 
       if (this.player?.headInWater) {
-        world.scene.fog.color.setHex(0x050533);
+        world.scene.fog.color.setHex(0x0a1a3a);
         world.scene.fog.near = 0;
         world.scene.fog.far = 96;
       }

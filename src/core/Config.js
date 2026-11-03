@@ -221,7 +221,6 @@ export const CONFIG = {
   SPRINT_FOV_SCALE: 1.1,
 
   LOOK_DEGREES_PER_COUNT: 0.15,
-  LOOK_SENSITIVITY_MIDDLE: 3,
 
   BED_BOUNCE: 3.4,
   BED_LAND_BOUNCE: 4.2,
@@ -245,40 +244,6 @@ export const CONFIG = {
   DAY_TICKS: 24000,
   START_TIME: 1000,
 
-  SEASON: {
-
-    NAMES: [
-      'hud.season.spring',
-      'hud.season.summer',
-      'hud.season.autumn',
-      'hud.season.winter',
-    ],
-
-    EPOCH_YEAR: 2000,
-
-    EPOCH_WEEKDAY: 0,
-
-    ICON_SHEET: 'season_icons',
-    ICON_COLS: 2,
-    ICON_ROWS: 2,
-
-    SNOW: {
-
-      ACCUMULATE_RATE: 12,
-
-      ACCUMULATE_CHANCE: 0.22,
-
-      THAW_RATE: 18,
-
-      THAW_CHANCE: 0.3,
-
-      MAX_PER_FRAME: 12,
-
-      SEASON_THAW_MULTIPLIER: 6,
-      SEASON_THAW_DAYS: 8,
-    },
-  },
-
   SAPLING: {
 
     SCAN_RATE: 3,
@@ -295,9 +260,9 @@ export const CONFIG = {
     ],
 
     TREES: {
-      oak: { grow: 75, seasons: [0] },
-      birch: { grow: 75, seasons: [0] },
-      spruce: { grow: 55, seasons: [0, 1, 2, 3], snowFactor: 0.5 },
+      oak: { grow: 75 },
+      birch: { grow: 75 },
+      spruce: { grow: 55 },
     },
   },
 
@@ -549,7 +514,6 @@ export const KEYBINDS = [
   { action: 'perspective', code: 'F5' },
   { action: 'screenshot', code: 'F2' },
   { action: 'pause', code: 'Escape' },
-  { action: 'steps', code: 'KeyM' },
 ];
 
 export const ACTIONS = KEYBINDS.map((b) => b.action);
@@ -578,7 +542,7 @@ export { MODIFIERS };
 export const DEFAULTS = {
   renderDistance: CONFIG.RENDER_DISTANCE,
   fov: CONFIG.FOV,
-  sensitivity: 7,
+  sensitivity: 100,
   brightness: 0.0,
   volume: 0.7,
   musicVolume: 0.45,
@@ -589,6 +553,7 @@ export const DEFAULTS = {
   smoothLighting: true,
 
   showFps: true,
+  showTime: true,
 
   waila: true,
 

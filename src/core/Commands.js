@@ -94,6 +94,7 @@ function stripNamespace(name) {
 
 export function resolveItemId(name) {
   const id = stripNamespace(name.toLowerCase());
+  if (id === 'water' || id === 'lava') return null;
   if (Blocks.has(id) && Blocks.get(Blocks.id(id)).placeable) return id;
   if (Items.has(id)) return id;
   return null;
