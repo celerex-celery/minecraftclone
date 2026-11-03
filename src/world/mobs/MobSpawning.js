@@ -32,6 +32,10 @@ export const SPAWN_TABLE = [
     creeper: { min: 1, max: 1, weight: 6 },
   },
   {
+    biomes: ['plains', 'forest', 'taiga', 'snowy_plains', 'desert', 'savanna', 'swamp', 'jungle', 'mountains', 'beach'],
+    zombie: { min: 1, max: 2, weight: 4 },
+  },
+  {
     biomes: ['the_end'],
     enderman: { min: 2, max: 4, weight: 20 },
   },

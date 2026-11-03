@@ -17,11 +17,7 @@ function canSeeEntity(mob, target, world) {
 
   if (!lineOfSight(mob, target, world)) return false;
 
-  const mx = Math.floor(tp.x);
-  const my = Math.floor(tp.y + 0.5);
-  const mz = Math.floor(tp.z);
-  const lightLevel = world.getEffectiveBrightness(mx, my, mz);
-  return lightLevel > 0.5;
+  return true;
 }
 
 function lineOfSight(mob, target, world) {
@@ -54,6 +50,11 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
   const v = mob.variant;
   let speed = 0;
 
+  if (mob.game?.survival?.difficulty === 'peaceful') {
+    mob.kill();
+    return 0;
+  }
+
   let target = null;
   let targetDist = v.followRange;
 
@@ -63,20 +64,12 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
   }
 
   mob.attackCooldown = (mob.attackCooldown ?? 0) - dt;
-  mob.pathRecalcTimer = (mob.pathRecalcTimer ?? 0) - dt;
 
   if (target) {
     const tx = target.position.x - mob.pos.x;
     const tz = target.position.z - mob.pos.z;
     const tyaw = yawToward(tx, tz);
     mob.yaw = tyaw;
-
-    mob.raiseArmTicks = (mob.raiseArmTicks ?? 0) + dt * 20;
-    if (mob.raiseArmTicks >= 5 && mob.attackCooldown < 10) {
-      mob.aggressive = true;
-    } else {
-      mob.aggressive = false;
-    }
 
     if (targetDist < 2.0) {
       speed = 0;
@@ -91,29 +84,17 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
         target.velocity.x += -Math.sin(mob.yaw) * kb;
         target.velocity.z += -Math.cos(mob.yaw) * kb;
         target.velocity.y = Math.max(target.velocity.y, 0.3);
-        mob.raiseArmTicks = 0;
+        mob.attackAnimTimer = 0.5;
       }
     } else {
-      if (mob.pathRecalcTimer <= 0) {
-        mob.pathRecalcTimer = (4 + Math.random() * 7) / 20;
-      }
       speed = v.speed;
       mob.resting = false;
     }
   } else {
-
-    mob.wander -= dt;
+    mob.wander = (mob.wander ?? 0) - dt;
     if (mob.wander <= 0) {
       mob.wander = 4 + Math.random() * 8;
-      let tries = 0;
-      let ground;
-      do {
-        mob.yaw = Math.random() * Math.PI * 2;
-        const wx = mob.pos.x + Math.sin(mob.yaw) * 10;
-        const wz = mob.pos.z + Math.cos(mob.yaw) * 10;
-        ground = defAt(Math.floor(wx), Math.floor(mob.pos.y), Math.floor(wz));
-        tries++;
-      } while (tries < 10 && (ground.liquid || !ground.solid));
+      mob.yaw = Math.random() * Math.PI * 2;
       mob.resting = false;
     }
 
@@ -122,28 +103,6 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     } else {
       speed = 0;
       mob.resting = true;
-    }
-  }
-
-  if (v.canBreakDoors && speed > 0) {
-    mob.doorBreakTimer = (mob.doorBreakTimer ?? 0) - dt;
-    if (mob.doorBreakTimer <= 0) {
-      for (const [ox, oz] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-        const nx = Math.floor(mob.pos.x + ox);
-        const nz = Math.floor(mob.pos.z + oz);
-        const doorBlock = world.getBlock(nx, Math.floor(mob.pos.y), nz);
-        const doorDef = Blocks.get(doorBlock);
-        if (doorDef.name && doorDef.name.endsWith('_door')) {
-          world.setBlock(nx, Math.floor(mob.pos.y), nz, Blocks.id('air'));
-          const topBlock = world.getBlock(nx, Math.floor(mob.pos.y) + 1, nz);
-          const topDef = Blocks.get(topBlock);
-          if (topDef.name && topDef.name.endsWith('_door')) {
-            world.setBlock(nx, Math.floor(mob.pos.y) + 1, nz, Blocks.id('air'));
-          }
-          mob.doorBreakTimer = 2.0;
-          break;
-        }
-      }
     }
   }
 
@@ -161,56 +120,9 @@ export function updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, d
     }
   }
 
-  if (mob.fire > 0) {
-    mob.fire -= dt;
-    mob.fireTime += dt;
-    if (mob.fireTime >= 0.5) {
-      mob.hurt(1, null, 1);
-      mob.fireTime = 0;
-    }
-    if (gain > 0) audio.zombieFire(1);
-  } else if (!underwater && !inWater) {
-    const raining = world.weather?.rainAmount > 0.01;
-    if (!raining) {
-      const mx = Math.floor(mob.pos.x);
-      const my = Math.floor(mob.pos.y + mob.variant.height * 0.5);
-      const mz = Math.floor(mob.pos.z);
-      const skyLight = world.getSky(mx, my, mz);
-      const blockLight = world.getBlockLight(mx, my, mz);
-      const canSeeSky = skyLight > blockLight;
-      const lightLevel = Math.max(skyLight, blockLight);
-      if (canSeeSky && lightLevel > 7) {
-        const br = lightLevel / 15;
-        const burnChance = (br - 0.4) * 2 / 30;
-        if (Math.random() < burnChance) {
-          mob.fire = 8;
-          mob.fireTime = 0;
-        }
-      }
-    }
-  }
-
-  if (inWater && !mob.convertingToDrowned) {
-    mob.inWaterTime = (mob.inWaterTime ?? 0) + dt;
-    if (mob.inWaterTime >= 30) {
-      mob.convertingToDrowned = true;
-      mob.conversionTime = 15;
-    }
-  } else if (!inWater) {
-    mob.inWaterTime = 0;
-  }
-
-  if (mob.convertingToDrowned) {
-    mob.conversionTime -= dt;
-    if (mob.conversionTime <= 0) {
-      mob.convertingToDrowned = false;
-      mob.inWaterTime = 0;
-    }
-  }
-
   mob.zombieSoundTimer = (mob.zombieSoundTimer ?? 0) - dt;
   if (mob.zombieSoundTimer <= 0) {
-    mob.zombieSoundTimer = 5 + Math.random() * 15;
+    mob.zombieSoundTimer = 4.0 + Math.random() * 3.0;
     if (gain > 0) v.idle(gain);
   }
 

@@ -177,6 +177,8 @@ Items.add('ender_pearl', { stack: 16, rarity: 'uncommon', tool: { throwable: 'en
 
 Items.add('ender_eye', { stack: 16, float: 0.8 });
 
+Items.add('rotten_flesh', { float: 0.8 });
+
   Items.add('oak_boat', { label: 'Oak Boat', stack: 1, vehicle: { kind: 'boat' } });
 
   Items.add('bed', { label: 'Bed', stack: 16 });
@@ -306,6 +308,7 @@ export function creativeEntries() {
 
   for (const b of Blocks.list) {
     if (b.name === 'air' || !b.placeable) continue;
+    if (b.name === 'water' || b.name === 'lava') continue;
     add(b.name, true);
   }
   for (const def of Items.map.values()) add(def.name, false);

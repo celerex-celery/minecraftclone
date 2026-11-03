@@ -50,6 +50,7 @@ export const PIG_SKIN = 'assets/textures/entity/pig/pig_temperate.png';
 export const PIG_BABY_SKIN = 'assets/textures/entity/pig/pig_temperate_baby.png';
 export const ENDERMAN_SKIN = 'assets/textures/entity/enderman/enderman.png';
 export const CREEPER_SKIN = 'assets/textures/entity/creeper/creeper.png';
+export const ZOMBIE_SKIN = 'assets/textures/entity/zombie/zombie.png';
 
 export const VARIANTS = {
   chicken: {
@@ -249,6 +250,42 @@ export const VARIANTS = {
     fireImmune: true,
     waterSensitive: true,
   },
+  zombie: {
+    id: 'zombie',
+    species: 'zombie',
+    label: 'Zombie',
+    model: 'assets/models/zombie.glb',
+    skin: 'assets/textures/entity/zombie/zombie.png',
+    sheet: [64, 64],
+    boxes: false,
+    width: 0.6,
+    height: 1.8,
+    health: 20,
+    speed: WALK * 0.9,
+    lays: false,
+    grows: false,
+    legs: ['bipedRightLeg', 'bipedLeftLeg'],
+    wings: [],
+    arms: ['bipedRightArm', 'bipedLeftArm'],
+    spawn: { category: 'monster' },
+    drops: (drop, pos) => {
+      drop('rotten_flesh', 0 + Math.floor(Math.random() * 2), pos);
+    },
+    idle: (gain = 1) => audio.zombieIdle?.(gain),
+    hurt: (gain = 1) => audio.zombieHurt?.(gain),
+    death: (gain = 1) => audio.zombieDeath?.(gain),
+    step: (gain = 1) => audio.zombieStep?.(gain),
+    range: 16,
+    followRange: 16,
+    attackDamage: 4,
+    attackCooldown: 1.0,
+    waterSensitive: false,
+    flammable: false,
+    fireImmune: false,
+    canBreakDoors: false,
+    undead: true,
+    despawnOnPeaceful: true,
+  },
 };
 
 export const VARIANT_ALIASES = {
@@ -267,6 +304,7 @@ export const VARIANT_ALIASES = {
   igniter: 'igniter',
   firecreeper: 'igniter',
   fire_creeper: 'igniter',
+  zombie: 'zombie',
 };
 
 export function resolveVariant(name) {
