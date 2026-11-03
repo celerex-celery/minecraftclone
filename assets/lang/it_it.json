@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Attesa della primavera",
   "hud.dropped": "Hai lasciato cadere %s",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventario pieno",
   "hud.levelUp": "Livello %s raggiunto",
   "hud.pickedBlock": "Blocco raccolto: %s",
@@ -496,6 +497,7 @@
   "options.soundVolume": "Volume sonoro",
   "options.toggleSneak": "Attiva/disattiva accovacciamento",
   "options.toggleSprint": "Attiva/disattiva corsa",
+  "options.showTime": "Show Time",
   "options.title": "Opzioni",
   "options.video": "Video",
   "options.viewBobbing": "Movimento della telecamera",
@@ -542,14 +544,4 @@
   "tooltip.burns": "Brucia per %ss",
   "tooltip.durability": "Durata %s / %s",
   "tooltip.miningSpeed": "%sx velocita di estrazione",
-  "tooltip.restores": "Ripristina %s fame",
-  "steps.title": "Passi",
-  "steps.steps": "%s passi",
-  "steps.goal": "Obiettivo: %s passi",
-  "steps.progress": "%s%% completato",
-  "steps.remaining": "%s passi rimanenti",
-  "steps.done": "Obiettivo raggiunto!",
-  "steps.reward_claimed": "Ricompensa ricevuta: Bussola",
-  "steps.reward_pending": "Raggiungi %s passi per una ricompensa!",
-  "toast.step_goal": "%s passi raggiunti! Controlla il tuo inventario per una ricompensa."
-}
+  "tooltip.restores": "Ripristina %s fame"}

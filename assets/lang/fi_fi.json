@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Odottaa kevata",
   "hud.dropped": "Pudotit %s",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventti taysi",
   "hud.levelUp": "Taso %s saavutettu",
   "hud.pickedBlock": "Poimittu lohko: %s",
@@ -496,6 +497,7 @@
   "options.soundVolume": "Aanenvoimakkuus",
   "options.toggleSneak": "Hiippailu paalle/pois",
   "options.toggleSprint": "Juoksu paalle/pois",
+  "options.showTime": "Show Time",
   "options.title": "Asetukset",
   "options.video": "Video",
   "options.viewBobbing": "Kameran heilunta",
@@ -542,14 +544,4 @@
   "tooltip.burns": "Paloo %ss",
   "tooltip.durability": "Kestavyys %s / %s",
   "tooltip.miningSpeed": "%sx kaivamisnopeus",
-  "tooltip.restores": "Palauttaa %s nalkaa",
-  "steps.title": "Askeleet",
-  "steps.steps": "%s askelta",
-  "steps.goal": "Tavoite: %s askelta",
-  "steps.progress": "%s%% valmis",
-  "steps.remaining": "%s askelta jaljella",
-  "steps.done": "Tavoite saavutettu!",
-  "steps.reward_claimed": "Palkinto lunastettu: Kompassi",
-  "steps.reward_pending": "Saavuta %s askelta palkintoa varten!",
-  "toast.step_goal": "Saavutit %s askelta! Tarkista inventtisi palkintoa varten."
-}
+  "tooltip.restores": "Palauttaa %s nalkaa"}

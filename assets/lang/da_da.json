@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Venter pa foraret",
   "hud.dropped": "Du tabte %s",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventar fuld",
   "hud.levelUp": "Niveau %s naet",
   "hud.pickedBlock": "Klodse plukket: %s",
@@ -494,6 +495,7 @@
   "options.soundVolume": "Lydstyrke",
   "options.toggleSneak": "Skift snigen",
   "options.toggleSprint": "Skift lob",
+  "options.showTime": "Show Time",
   "options.title": "Indstillinger",
   "options.video": "Video",
   "options.viewBobbing": "Kamera vippen",
@@ -540,14 +542,4 @@
   "tooltip.burns": "Braender i %ss",
   "tooltip.durability": "Holdbarhed %s / %s",
   "tooltip.miningSpeed": "%sx mine hastighed",
-  "tooltip.restores": "Genopretter %s sult",
-  "steps.title": "Skridt",
-  "steps.steps": "%s skridt",
-  "steps.goal": "Mal: %s skridt",
-  "steps.progress": "%s%% faerdig",
-  "steps.remaining": "%s skridt tilbage",
-  "steps.done": "Mal naet!",
-  "steps.reward_claimed": "Belonning modtaget: Kompas",
-  "steps.reward_pending": "Na %s skridt for en belonning!",
-  "toast.step_goal": "Naede %s skridt! Tjek dit inventar for en belonning."
-}
+  "tooltip.restores": "Genopretter %s sult"}

@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Vantar pa varen",
   "hud.dropped": "Du tappade %s",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Forrad fullt",
   "hud.levelUp": "Niva %s uppnadd",
   "hud.pickedBlock": "Plockat block: %s",
@@ -494,6 +495,7 @@
   "options.soundVolume": "Ljud volym",
   "options.toggleSneak": "Vaxla smyga",
   "options.toggleSprint": "Vaxla springa",
+  "options.showTime": "Show Time",
   "options.title": "Installningar",
   "options.video": "Video",
   "options.viewBobbing": "Kamera svangning",
@@ -540,14 +542,4 @@
   "tooltip.burns": "Brinner i %ss",
   "tooltip.durability": "Hallfasthet %s / %s",
   "tooltip.miningSpeed": "%sx gruvning hastighet",
-  "tooltip.restores": "Aterstaller %s hunger",
-  "steps.title": "Steg",
-  "steps.steps": "%s steg",
-  "steps.goal": "Mal: %s steg",
-  "steps.progress": "%s%% klart",
-  "steps.remaining": "%s steg kvar",
-  "steps.done": "Mal uppnatt!",
-  "steps.reward_claimed": "Beloning tagen: Kompass",
-  "steps.reward_pending": "Na %s steg for en beloning!",
-  "toast.step_goal": "Nadde %s steg! Kolla ditt forrad for en beloning."
-}
+  "tooltip.restores": "Aterstaller %s hunger"}

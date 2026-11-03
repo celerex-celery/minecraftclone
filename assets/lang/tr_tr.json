@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Bahar icin bekleniyor",
   "hud.dropped": "%s'yi biraktin",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Envanter Dolu",
   "hud.levelUp": "Seviye %s! Artik seviye %s'esindesin",
   "hud.pickedBlock": "Alinan Blok: %s",
@@ -496,6 +497,7 @@
   "options.soundVolume": "Ses Seviyesi",
   "options.toggleSneak": "Sirtlanma Degitirilebilir",
   "options.toggleSprint": "Koma Degitirilebilir",
+  "options.showTime": "Show Time",
   "options.title": "Ayarlar",
   "options.video": "Video",
   "options.viewBobbing": "Kamera Sallanmasi",
@@ -542,14 +544,4 @@
   "tooltip.burns": "%ss boyunca yaniyor",
   "tooltip.durability": "Dayaniklilik %s / %s",
   "tooltip.miningSpeed": "%sx kazma hizi",
-  "tooltip.restores": "%s aclik geri yukler",
-  "steps.title": "Adimlar",
-  "steps.steps": "%s adimlar",
-  "steps.goal": "Hedef: %s adimlar",
-  "steps.progress": "%s%% tamamlandi",
-  "steps.remaining": "%s adim kaldi",
-  "steps.done": "Hedefe ulaildi!",
-  "steps.reward_claimed": "Odul alindi: Pusula",
-  "steps.reward_pending": "Odul icin %s adima ulain!",
-  "toast.step_goal": "%s adimina ulatin! Odul icin envanterini kontrol et."
-}
+  "tooltip.restores": "%s aclik geri yukler"}

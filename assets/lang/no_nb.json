@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Venter pa var",
   "hud.dropped": "Du slapp %s",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventar fullt",
   "hud.levelUp": "Niva %s oppnadd",
   "hud.pickedBlock": "Blokk plukket: %s",
@@ -496,6 +497,7 @@
   "options.soundVolume": "Lydstyrke",
   "options.toggleSneak": "Sla av/pa sniking",
   "options.toggleSprint": "Sla av/pa lop",
+  "options.showTime": "Show Time",
   "options.title": "Innstillinger",
   "options.video": "Video",
   "options.viewBobbing": "Kamera vipping",
@@ -542,14 +544,4 @@
   "tooltip.burns": "Brenner i %ss",
   "tooltip.durability": "Holdbarhet %s / %s",
   "tooltip.miningSpeed": "%sx grave hastighet",
-  "tooltip.restores": "Gjenoppretter %s sult",
-  "steps.title": "Skritt",
-  "steps.steps": "%s skritt",
-  "steps.goal": "Mal: %s skritt",
-  "steps.progress": "%s%% ferdig",
-  "steps.remaining": "%s skritt igjen",
-  "steps.done": "Mal oppnadd!",
-  "steps.reward_claimed": "Belonning mottatt: Kompass",
-  "steps.reward_pending": "Na %s skritt for en belonning!",
-  "toast.step_goal": "Nadde %s skritt! Sjekk inventaret ditt for en belonning."
-}
+  "tooltip.restores": "Gjenoppretter %s sult"}

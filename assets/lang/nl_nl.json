@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Wachten op lente",
   "hud.dropped": "Je liet %s vallen",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventaris vol",
   "hud.levelUp": "Niveau %s bereikt",
   "hud.pickedBlock": "Blok opgepakt: %s",
@@ -496,6 +497,7 @@
   "options.soundVolume": "Geluidsvolume",
   "options.toggleSneak": "Sluipen in/uitschakelen",
   "options.toggleSprint": "Sprinten in/uitschakelen",
+  "options.showTime": "Show Time",
   "options.title": "Opties",
   "options.video": "Video",
   "options.viewBobbing": "Camera schudden",
@@ -542,14 +544,4 @@
   "tooltip.burns": "Brandt %ss",
   "tooltip.durability": "Duurzaamheid %s / %s",
   "tooltip.miningSpeed": "%sx mijnsnelheid",
-  "tooltip.restores": "Herstelt %s honger",
-  "steps.title": "Stappen",
-  "steps.steps": "%s stappen",
-  "steps.goal": "Doel: %s stappen",
-  "steps.progress": "%s%% voltooid",
-  "steps.remaining": "%s stappen over",
-  "steps.done": "Doel bereikt!",
-  "steps.reward_claimed": "Beloning ontvangen: Kompas",
-  "steps.reward_pending": "Bereik %s stappen voor een beloning!",
-  "toast.step_goal": "%s stappen bereikt! Controleer je inventaris voor een beloning."
-}
+  "tooltip.restores": "Herstelt %s honger"}

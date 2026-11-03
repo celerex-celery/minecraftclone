@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Waiting for spring",
   "hud.dropped": "Dropped %s",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventory full",
   "hud.levelUp": "Level up! You are now level %s",
   "hud.pickedBlock": "Picked block: %s",
@@ -414,6 +415,7 @@
   "options.soundVolume": "Sound Volume",
   "options.toggleSneak": "Toggle Sneak",
   "options.toggleSprint": "Toggle Sprint",
+  "options.showTime": "Show Time",
   "options.title": "Options",
   "options.video": "Video",
   "options.viewBobbing": "View Bobbing",
@@ -460,14 +462,5 @@
   "tooltip.burns": "Burns for %ss",
   "tooltip.durability": "Durability %s / %s",
   "tooltip.miningSpeed": "%sx mining speed",
-  "tooltip.restores": "Restores %s hunger",
-  "steps.title": "Steps",
-  "steps.steps": "%s steps",
-  "steps.goal": "Goal: %s steps",
-  "steps.progress": "%s% complete",
-  "steps.remaining": "%s more to go",
-  "steps.done": "Goal reached!",
-  "steps.reward_claimed": "Reward claimed: Compass",
-  "steps.reward_pending": "Reach %s steps for a reward!",
-  "toast.step_goal": "Reached %s steps! Check your inventory for a reward."
+  "tooltip.restores": "Restores %s hunger"
 }

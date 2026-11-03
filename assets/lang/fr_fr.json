@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Attente du printemps",
   "hud.dropped": "Vous avez lache %s",
   "hud.fps": "FPS : %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventaire plein",
   "hud.levelUp": "Niveau %s atteint",
   "hud.pickedBlock": "Bloc pris : %s",
@@ -496,6 +497,7 @@
   "options.soundVolume": "Volume des sons",
   "options.toggleSneak": "Accroupissement basculable",
   "options.toggleSprint": "Sprint basculable",
+  "options.showTime": "Show Time",
   "options.title": "Options",
   "options.video": "Video",
   "options.viewBobbing": "Mouvement de camera",
@@ -542,14 +544,4 @@
   "tooltip.burns": "Brule pendant %ss",
   "tooltip.durability": "Durabilite %s / %s",
   "tooltip.miningSpeed": "Vitesse de minage %sx",
-  "tooltip.restores": "Restaure %s de faim",
-  "steps.title": "Etapes",
-  "steps.steps": "%s etapes",
-  "steps.goal": "Objectif : %s etapes",
-  "steps.progress": "%s%% termine",
-  "steps.remaining": "%s etapes de plus a faire",
-  "steps.done": "Objectif atteint !",
-  "steps.reward_claimed": "Recompense reclamee : Boussole",
-  "steps.reward_pending": "Atteignez %s etapes pour une recompense !",
-  "toast.step_goal": "%s etapes atteintes ! Verifiez votre inventaire pour une recompense."
-}
+  "tooltip.restores": "Restaure %s de faim"}

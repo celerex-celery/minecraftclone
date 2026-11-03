@@ -254,6 +254,7 @@
   "hud.saplingWaiting": "Warte auf den Fruhling",
   "hud.dropped": "Du hast %s fallen lassen",
   "hud.fps": "FPS: %s",
+  "hud.time": "Day %s, %s:%s",
   "hud.inventoryFull": "Inventar voll",
   "hud.levelUp": "Level auf! Du bist jetzt Level %s",
   "hud.pickedBlock": "Block aufgehoben: %s",
@@ -496,6 +497,7 @@
   "options.soundVolume": "Soundlautstarke",
   "options.toggleSneak": "Schleichen umschalten",
   "options.toggleSprint": "Sprinten umschalten",
+  "options.showTime": "Show Time",
   "options.title": "Optionen",
   "options.video": "Video",
   "options.viewBobbing": "Kameraschaukeln",
@@ -542,14 +544,4 @@
   "tooltip.burns": "Brennt fur %ss",
   "tooltip.durability": "Haltbarkeit %s / %s",
   "tooltip.miningSpeed": "%sx Abbaugeschwindigkeit",
-  "tooltip.restores": "Stellt %s Hunger wieder her",
-  "steps.title": "Schritte",
-  "steps.steps": "%s Schritte",
-  "steps.goal": "Ziel: %s Schritte",
-  "steps.progress": "%s%% vollstandig",
-  "steps.remaining": "%s Schritte ubrig",
-  "steps.done": "Ziel erreicht!",
-  "steps.reward_claimed": "Belohnung erhalten: Kompass",
-  "steps.reward_pending": "Erreiche %s Schritte fur eine Belohnung!",
-  "toast.step_goal": "%s Schritte erreicht! Uberprufe dein Inventar auf eine Belohnung."
-}
+  "tooltip.restores": "Stellt %s Hunger wieder her"}

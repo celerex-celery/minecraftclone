@@ -13,8 +13,12 @@ Thumbs.db
 *.swp
 .vscode/
 .idea/
-
+.kilo
 # The Minecraft client asset pack is the upstream source the extracted
 # assets/ were pulled from. It is large and it is not this project's code.
 # This project is Minexel (formerly Minecraft Voxel).
 minecraft-assets-*/
+minecraft-26.4-snapshot-6-extracted/
+minecraft-26.4-snapshot-6.zip
+Release-1.0.0-Revamped-master/
+minecraft-26.4-snapshot-6/
