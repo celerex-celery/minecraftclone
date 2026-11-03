@@ -46,6 +46,7 @@ const NONE = 0;
 let atlasData = null;
 let blockDefs = null;
 let config = null;
+let torchWallId = null;
 
 function tileForBlock(def, face, facing = 0) {
   const t = def.tiles;
@@ -143,10 +144,13 @@ function emitFace(buffers, group, px, py, pz, face, def, id, shade, biomeColor, 
   const t0Axis = fd.t0;
   const t1Axis = fd.t1;
 
+  // Liquid blocks only fill up to liquidTop (e.g. 8/9 of a block)
+  const liquidTop = def.liquidTop !== undefined ? def.liquidTop : 1;
+
   for (let c = 0; c < 4; c++) {
     const [t0, t1] = tan[c];
     let vx = px - 1 + (t0Axis === 0 ? t0 : t0Axis === 1 ? t1 : t0Axis === 2 ? (face === 2 ? 1 : 0) : 0);
-    let vy = py - 1 + (t0Axis === 1 ? t0 : t1Axis === 1 ? t1 : t0Axis === 2 ? (face === 2 ? 1 : 0) : 0);
+    let vy = py - 1 + (t0Axis === 1 ? t0 : t1Axis === 1 ? t1 : t1Axis === 2 ? (face === 2 ? liquidTop : 0) : 0);
     let vz = pz - 1 + (t0Axis === 2 ? t0 : t1Axis === 2 ? t1 : t0Axis === 0 ? (face === 4 ? 1 : 0) : 0);
 
     positions[baseIdx * 3 + c * 3 + 0] = vx;
@@ -211,6 +215,7 @@ function meshChunk(chunkData) {
 
         const isFullCube = def.shape === 'cube';
         const isTransparent = def.opaque === false || def.shape === 'liquid' || def.shape === 'cross';
+        const isWallTorch = id === torchWallId;
 
         for (let face = 0; face < 6; face++) {
           const nx = px + FACE_DEFS[face].n[0];
@@ -221,7 +226,13 @@ function meshChunk(chunkData) {
           let shouldEmit = false;
           let group = 'opaque';
 
-          if (neighborId === 0) {
+          // Wall torch only renders on air-facing sides (not through the wall it's attached to)
+          if (isWallTorch) {
+            if (neighborId === 0) {
+              shouldEmit = true;
+              group = 'cutout';
+            }
+          } else if (neighborId === 0) {
             shouldEmit = true;
           } else if (isTransparent && !isOpaque(neighborId)) {
             shouldEmit = true;
@@ -251,7 +262,7 @@ function meshChunk(chunkData) {
           const faceAtlasUV = getFaceAtlasUV(tileName, face);
           const shade = shadeTable[face];
 
-          emitFace(buffers, group, px, py, pz, face, def, id, shade, 0, faceAtlasUV, 0, cache, lightCache, biomeCache);
+          emitFace(buffers, group, px, py, pz, face, def, id, shade, 0, faceAtlasUV, face, cache, lightCache, biomeCache);
         }
       }
     }
@@ -278,6 +289,7 @@ self.onmessage = function(e) {
     atlasData = msg.atlasData;
     blockDefs = msg.blockDefs;
     config = msg.config;
+    torchWallId = blockDefs ? blockDefs.torch?.id ?? null : null;
     self.postMessage({ type: 'ready' });
   } else if (msg.type === 'mesh') {
     const result = meshChunk(msg);

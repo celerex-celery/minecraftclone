@@ -181,13 +181,12 @@ export class LightEngine {
           for (let y = MAX_Y; y >= MIN_Y; y--) {
             const def = list[blocks[lay(y, col)]];
             if (def.opacity > 0) {
-
               level -= def.opacity;
-              if (level <= 0) break;
-            } else if (y < CONFIG.SEA_LEVEL) {
-              level--; // sky light fades below sea level
+              if (level <= 0) {
+                level = 0;
+                break;
+              }
             }
-            if (level <= 0) break;
             light[lay(y, col)] |= level << 4;
           }
         }

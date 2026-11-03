@@ -906,7 +906,7 @@ let c = -1;
         switch (biome) {
           case BIOME.forest:
 
-            if (r < 0.022 && growTree('oak')) break;
+            if (r < 0.018 && growTree('oak')) break;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
           case BIOME.plains:
@@ -920,21 +920,21 @@ let c = -1;
               this.groundCover(local, ground, x, surface, z, wx, wz, r);
               break;
             }
-            if (r < 0.006 && growTree('oak')) break;
+            if (r < 0.004 && growTree('oak')) break;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
           case BIOME.taiga:
 
-            if (r < 0.045 && growTree('spruce')) break;
-            if (r < 0.062 && growTree('birch')) break;
+            if (r < 0.025 && growTree('spruce')) break;
+            if (r < 0.012 && growTree('birch')) break;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
           case BIOME.snowy_plains:
-            if (r < 0.014 && growTree('spruce')) break;
+            if (r < 0.008 && growTree('spruce')) break;
             if (r < 0.30) local(x, surface, z, Blocks.id('short_grass'));
             break;
           case BIOME.mountains:
-            if (r < 0.010 && h < CONFIG.SEA_LEVEL + 46 && growTree('spruce')) break;
+            if (r < 0.006 && h < CONFIG.SEA_LEVEL + 46 && growTree('spruce')) break;
             if (r < 0.16) local(x, surface, z, Blocks.id('short_grass'));
             break;
           case BIOME.desert:
@@ -956,15 +956,15 @@ let c = -1;
             break;
           case BIOME.savanna:
 
-            if (r < 0.004 && growTree('oak')) break;
+            if (r < 0.008 && growTree('acacia')) break;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
           case BIOME.swamp:
-            if (r < 0.030 && growTree('oak')) break;
+            if (r < 0.025 && growTree('oak')) break;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
           case BIOME.jungle:
-            if (r < 0.055 && growTree('oak')) break;
+            if (r < 0.040 && growTree('jungle')) break;
             this.groundCover(local, ground, x, surface, z, wx, wz, r);
             break;
           case BIOME.beach:
@@ -1053,7 +1053,7 @@ let c = -1;
 
   tree(chunk, local, lx, ly, lz, kind, wx, wz) {
     const rand = hash2(wx, wz, this.seed ^ (kind.charCodeAt(0) * 7919));
-    const height = treeHeight(rand);
+    const height = treeHeight(kind, rand);
 
     if (this.B.rootedDirt >= 0) {
       const roots = hash3(wx, 7, wz, this.seed);

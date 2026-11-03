@@ -210,7 +210,7 @@ export class World {
 
     const FIRE = this._fireId ?? (this._fireId = Blocks.id('fire'));
     if (old === FIRE && id !== FIRE) this.extinguish(x, y, z);
-    else if (id === FIRE && old !== FIRE) this.startFire(x, y, z);
+    else if (id === FIRE && old !== FIRE && !Blocks.get(old).liquid) this.startFire(x, y, z);
 
     this.onBlockChanged?.(x, y, z, old, id);
 

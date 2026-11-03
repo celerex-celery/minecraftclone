@@ -260,6 +260,10 @@ const woodVariants = [
   ['oak', 'Oak'],
   ['birch', 'Birch'],
   ['spruce', 'Spruce'],
+  ['jungle', 'Jungle'],
+  ['acacia', 'Acacia'],
+  ['dark_oak', 'Dark Oak'],
+  ['pale_oak', 'Pale Oak'],
 ];
 for (const [key, label] of woodVariants) {
   Blocks.add(`${key}_log`, {
@@ -401,13 +405,7 @@ const NEEDS_SUPPORT = ['short_grass', 'fern', 'dead_bush', 'poppy', 'dandelion',
 
 Blocks.add('torch', {
   tiles: 'torch', hardness: 0, light: 14, solid: false, opaque: false,
-  shape: 'cross', cutout: true, placeable: true,
-  crossWidth: 0.34, crossHeight: 1.0,
-});
-Blocks.add('wall_torch', {
-  tiles: 'wall_torch', hardness: 0, light: 14, solid: false, opaque: false,
-  shape: 'cross', cutout: true, placeable: true,
-  crossWidth: 0.34, crossHeight: 1.0,
+  shape: 'torch_wall', cutout: true, placeable: true,
 });
 Blocks.add('short_grass', {
   label: 'Grass', tiles: 'short_grass', hardness: 0, solid: false, opaque: false,
@@ -451,7 +449,7 @@ Blocks.add('cornflower', {
 Blocks.add('oxeye_daisy', {
   tiles: 'oxeye_daisy', hardness: 0, solid: false, opaque: false, shape: 'cross', cutout: true, replaceable: true, flammable: true, igniteOdds: 60, burnOdds: 100,
 });
-for (const key of ['oak', 'birch', 'spruce']) {
+for (const key of ['oak', 'birch', 'spruce', 'jungle', 'acacia', 'dark_oak', 'pale_oak']) {
   Blocks.add(`${key}_sapling`, {
     label: `${titleCase(key)} Sapling`,
     tiles: `${key}_sapling`, hardness: 0, solid: false, opaque: false, shape: 'cross',

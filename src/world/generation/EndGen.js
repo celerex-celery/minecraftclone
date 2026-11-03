@@ -50,7 +50,7 @@ export class EndGen {
     this.B = {};
     for (const n of [
       'end_stone', 'obsidian', 'bedrock', 'end_portal', 'end_portal_frame',
-      'end_rod', 'end_crystal', 'air', 'wall_torch'
+      'end_rod', 'end_crystal', 'air', 'torch'
     ]) this.B[n] = Blocks.id(n);
 
     this.portalBaseY = this.islandHeight(0, 0);
@@ -224,7 +224,7 @@ export class EndGen {
           const x = dx, z = dz;
           if (x >= 0 && x < SX && z >= 0 && z < SZ) {
             const i = idx(x, torchY, z);
-            if (blocks[i] === 0) blocks[i] = B.wall_torch;
+            if (blocks[i] === 0) blocks[i] = B.torch;
           }
         }
       }

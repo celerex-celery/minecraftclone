@@ -1,8 +1,5 @@
 import * as THREE from 'three';
 import { CONFIG } from '../../core/Config.js';
-import { seasonOf } from './Seasons.js';
-
-const WINTER = 3;
 
 export const WEATHER = {
   clear: { id: 'clear', overcast: 0, rain: 0, snow: 0, thunder: 0 },
@@ -19,18 +16,9 @@ function hash01(n, salt) {
 
 export function weatherForDay(day) {
   const d = Math.max(0, Math.floor(day) || 0);
-  const winter = seasonOf(d).index === WINTER;
   const roll = hash01(d, 1);
   const wet = hash01(d, 2);
   const rough = hash01(d, 3);
-
-  if (winter) {
-    if (roll < 0.34) return WEATHER.clear;
-    if (roll < 0.62) return WEATHER.cloudy;
-
-    if (rough < 0.18) return WEATHER.snow;
-    return WEATHER.snow;
-  }
 
   if (roll < 0.34) return WEATHER.clear;
   if (roll < 0.58) return WEATHER.cloudy;

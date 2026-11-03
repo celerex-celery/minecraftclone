@@ -330,6 +330,7 @@ export class ChunkMesher {
       else if (shape === 'stairs') this._shapeHandlers[id] = 9;
       else if (shape === 'post') this._shapeHandlers[id] = 10;
       else if (shape === 'layer') this._shapeHandlers[id] = 11;
+      else if (shape === 'torch_wall') this._shapeHandlers[id] = 12;
       else this._shapeHandlers[id] = 4;
       this._opacityCache[id] = def.opaque ? 1 : 0;
     }
@@ -451,7 +452,9 @@ export class ChunkMesher {
           const handler = handlers[id] ?? 4;
 
           if (handler === 0) continue;
-          if (handler === 1) { this.emitCross(x, y, z, px, py, pz, def); continue; }
+          if (handler === 1) {
+            this.emitCross(x, y, z, px, py, pz, def); continue;
+          }
           if (handler === 2) { this.emitLiquid(x, y, z, px, py, pz, def); continue; }
           if (handler === 3) {
             const defName = def.name;
@@ -471,6 +474,51 @@ export class ChunkMesher {
             const isFullBlock = (def.layerHeight ?? 0.125) >= 1.0;
             const mask = isFullBlock ? 0 : (FACE_PX | FACE_NX | FACE_NY | FACE_PZ | FACE_NZ);
             this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, def.layerHeight ?? 0.125, 1, mask);
+            continue;
+          }
+          if (handler === 12) {
+            // Wall torch: 3D stick mounted on the wall face it's attached to
+            // matching Minecraft template_torch_wall.json proportions
+            if (!def.faceUVs) {
+              const t = this.atlas.get('torch');
+              const tw = t[2] - t[0], th = t[3] - t[1];
+              def.faceUVs = {
+                2: [t[0] + 7 / 16 * tw, t[1] + 6 / 16 * th, t[0] + 9 / 16 * tw, t[1] + 8 / 16 * th], // top
+                0: [t[0] + 7 / 16 * tw, t[1] + 6 / 16 * th, t[0] + 9 / 16 * tw, t[1] + 1 * th],     // east
+                1: [t[0] + 7 / 16 * tw, t[1] + 6 / 16 * th, t[0] + 9 / 16 * tw, t[1] + 1 * th],     // west
+                4: [t[0] + 7 / 16 * tw, t[1] + 6 / 16 * th, t[0] + 9 / 16 * tw, t[1] + 1 * th],     // south
+                5: [t[0] + 7 / 16 * tw, t[1] + 6 / 16 * th, t[0] + 9 / 16 * tw, t[1] + 1 * th],     // north
+              };
+            }
+            let wx = x, wz = z;
+            let faceAxis = 1;
+            const checks = [
+              [1, 0, 0, 0],   // +X east
+              [-1, 0, 0, 1],  // -X west
+              [0, 0, 1, 2],   // +Z south
+              [0, 0, -1, 3],  // -Z north
+            ];
+            for (const [dx, dy, dz, dir] of checks) {
+              const nb = this.padGet(px + dx, py + dy, pz + dz);
+              const nd = Blocks.get(nb);
+              if (nb >= 0 && nd && nd.solid) {
+                if (dx !== 0) { faceAxis = 0; wx = dir === 0 ? 1 : 0; }
+                if (dz !== 0) { faceAxis = 2; wz = dir === 2 ? 1 : 0; }
+                break;
+              }
+            }
+            const halfDepth = 0.0625;
+            if (faceAxis === 0) {
+              const minX = wx === 1 ? 1 - halfDepth : 0;
+              const maxX = wx === 1 ? 1 : halfDepth;
+              this.emitBox(x, y, z, px, py, pz, def, id, minX, 0.21875, 0.4375, maxX, 0.84375, 0.5625, 0);
+            } else if (faceAxis === 2) {
+              const minZ = wz === 1 ? 1 - halfDepth : 0;
+              const maxZ = wz === 1 ? 1 : halfDepth;
+              this.emitBox(x, y, z, px, py, pz, def, id, 0.4375, 0.21875, minZ, 0.5625, 0.84375, maxZ, 0);
+            } else {
+              this.emitBox(x, y, z, px, py, pz, def, id, 0.4375, 0.21875, 0.4375, 0.5625, 0.84375, 0.5625, 0);
+            }
             continue;
           }
           this.emitBox(x, y, z, px, py, pz, def, id, 0, 0, 0, 1, 1, 1, 0);
@@ -563,7 +611,9 @@ export class ChunkMesher {
         if (nb === id && !def.opaque) continue;
       }
 
-      const uvr = atlas.get(Blocks.tile(def, fi, facing));
+      const uvr = def.faceUVs && def.faceUVs[fi] !== undefined
+        ? def.faceUVs[fi]
+        : atlas.get(Blocks.tile(def, fi, facing));
       const du = uvr[2] - uvr[0];
       const dv = uvr[3] - uvr[1];
       const useTint = tintMode === 2 || (tintMode === 1 && fi === FACE.PY);
@@ -681,32 +731,25 @@ export class ChunkMesher {
     const n = FACE_DEFS[fi].n;
     const per = AO_OFFSETS[fi];
 
-    // Single light value for all corners: removes smooth-lighting gradient
-    // that bleeds light across face corners into dark caves.
-    let sky = 0, blk = 0, count = 0;
-    if (!this.isOpaqueAt(sx + n[0], sy + n[1], sz + n[2])) {
-      const l = this.padLight[pIdx(sx + n[0], sy + n[1], sz + n[2])];
-      sky += l >> 4; blk += l & 15; count++;
-    }
-    if (count === 0) {
-      const l = this.padLight[pIdx(sx + n[0], sy + n[1], sz + n[2])];
-      sky = l >> 4; blk = l & 15; count = 1;
-    }
-    const skyAvg = sky / count;
-    const blkAvg = blk / count;
-
+    // Per-corner light sampling like Minecraft: each corner samples light
+    // from its own position, creating smooth lighting gradients instead of
+    // flat per-face values.
     for (let c = 0; c < 4; c++) {
       const { o1, o2, oc } = per[c];
       const ax1 = n[0] + o1[0], ay1 = n[1] + o1[1], az1 = n[2] + o1[2];
       const ax2 = n[0] + o2[0], ay2 = n[1] + o2[1], az2 = n[2] + o2[2];
       const ax3 = n[0] + oc[0], ay3 = n[1] + oc[1], az3 = n[2] + oc[2];
 
+      // Sample sky light at the corner position
+      const cx1 = sx + n[0] + o1[0], cy1 = sy + n[1] + o1[1], cz1 = sz + n[2] + o1[2];
+      const l1 = this.padLight[pIdx(cx1, cy1, cz1)];
+
       const s1 = this.isOpaqueAt(sx + ax1, sy + ay1, sz + az1) ? 1 : 0;
       const s2 = this.isOpaqueAt(sx + ax2, sy + ay2, sz + az2) ? 1 : 0;
       const s3 = this.isOpaqueAt(sx + ax3, sy + ay3, sz + az3) ? 1 : 0;
 
-      CORNER_SKY[c] = skyAvg;
-      CORNER_BLK[c] = blkAvg;
+      CORNER_SKY[c] = l1 >> 4;
+      CORNER_BLK[c] = l1 & 15;
       CORNER_AO[c] = (s1 && s2) ? 0 : 3 - (s1 + s2 + s3);
     }
   }
@@ -757,8 +800,31 @@ export class ChunkMesher {
     const jx = (((j & 255) / 255) - 0.5) * 0.16;
     const jz = ((((j >> 8) & 255) / 255) - 0.5) * 0.16;
 
-    const a0 = x + o + jx, a1 = x + 1 - o + jx;
-    const b0 = z + o + jz, b1 = z + 1 - o + jz;
+    // Torch: determine which face it's attached to by finding a solid neighbor
+    let wx = x, wz = z;
+    let faceAxis = 1, faceDir = 0; // default: stand on top (Y axis)
+    if (def.name === 'torch') {
+      const checks = [
+        [1, 0, 0, 0],   // +X east
+        [-1, 0, 0, 1],  // -X west
+        [0, 0, 1, 2],   // +Z south
+        [0, 0, -1, 3],  // -Z north
+      ];
+      for (const [dx, dy, dz, dir] of checks) {
+        const nb = this.padGet(px + dx, py + dy, pz + dz);
+        const nd = Blocks.get(nb);
+        if (nb >= 0 && nd && nd.solid) {
+          faceAxis = dx !== 0 ? 0 : 2;
+          faceDir = dir;
+          if (dx !== 0) wx = dir === 0 ? x + 1 - 0.0625 : x + 0.0625;
+          if (dz !== 0) wz = dir === 2 ? z + 1 - 0.0625 : z + 0.0625;
+          break;
+        }
+      }
+    }
+
+    const a0 = wx + o + jx, a1 = wx + 1 - o + jx;
+    const b0 = wz + o + jz, b1 = wz + 1 - o + jz;
     const du = uvr ? uvr[2] - uvr[0] : 0;
     const dv = uvr ? uvr[3] - uvr[1] : 0;
 
@@ -779,13 +845,40 @@ export class ChunkMesher {
       a[7] = col[0]; a[8] = col[1]; a[9] = col[2];
     };
 
-    set(0, a0, 0, b0, 0); set(1, a1, 0, b1, 1);
-    set(2, a1, h, b1, 2); set(3, a0, h, b0, 3);
-    builder.pushQuad();
+    // For torches on vertical faces, render the cross flush against that face
+    if (def.name === 'torch' && faceAxis !== 1) {
+      const hw = w * 0.5;
+      const cz = z + 0.5 + jz;
+      const cx = x + 0.5 + jx;
+      if (faceAxis === 0) {
+        // X face: cross in YZ plane at x = wx
+        set(0, wx, 0, cz - hw, 0); set(1, wx, 0, cz + hw, 1);
+        set(2, wx, h, cz + hw, 2); set(3, wx, h, cz - hw, 3);
+        builder.pushQuad();
 
-    set(0, a1, 0, b0, 0); set(1, a0, 0, b1, 1);
-    set(2, a0, h, b1, 2); set(3, a1, h, b0, 3);
-    builder.pushQuad();
+        set(0, wx, 0, cz + hw, 0); set(1, wx, 0, cz - hw, 1);
+        set(2, wx, h, cz - hw, 2); set(3, wx, h, cz + hw, 3);
+        builder.pushQuad();
+      } else if (faceAxis === 2) {
+        // Z face: cross in XY plane at z = wz
+        set(0, cx - hw, 0, wz, 0); set(1, cx + hw, 0, wz, 1);
+        set(2, cx + hw, h, wz, 2); set(3, cx - hw, h, wz, 3);
+        builder.pushQuad();
+
+        set(0, cx + hw, 0, wz, 0); set(1, cx - hw, 0, wz, 1);
+        set(2, cx - hw, h, wz, 2); set(3, cx + hw, h, wz, 3);
+        builder.pushQuad();
+      }
+    } else {
+      // Standing torch (or no wall found): flat cross on XZ plane
+      set(0, a0, 0, b0, 0); set(1, a1, 0, b1, 1);
+      set(2, a1, h, b1, 2); set(3, a0, h, b0, 3);
+      builder.pushQuad();
+
+      set(0, a1, 0, b0, 0); set(1, a0, 0, b1, 1);
+      set(2, a0, h, b1, 2); set(3, a1, h, b0, 3);
+      builder.pushQuad();
+    }
   }
 
   emitLiquid(x, y, z, px, py, pz, def) {

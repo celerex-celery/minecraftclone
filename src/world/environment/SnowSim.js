@@ -1,13 +1,16 @@
 import { CONFIG } from '../../core/Config.js';
 import { Blocks } from '../blocks/Blocks.js';
-import { seasonOf } from './Seasons.js';
 import * as weatherModule from './Weather.js';
-
-const WINTER = 3;
 
 const NO_GROUND = -1;
 
-const SNOW = CONFIG.SEASON.SNOW;
+const SNOW = {
+  ACCUMULATE_RATE: 12,
+  ACCUMULATE_CHANCE: 0.22,
+  THAW_RATE: 18,
+  THAW_CHANCE: 0.3,
+  MAX_PER_FRAME: 12,
+};
 
 class ChunkPicker {
   constructor(world) {
@@ -81,35 +84,16 @@ export class SnowSim {
     const loaded = this._loaded;
     if (!loaded) return;
 
-    const day = this.world.dayCount;
-    const winter = seasonOf(day).index === WINTER;
-
-    if (winter) this._lastWinterDay = day;
-
     const wx = this.world.weather?.current;
 
-    const snowing = winter && wx && wx.snow > 0.05;
+    const snowing = wx && wx.snow > 0.05;
 
     if (snowing) {
       this._accumulate(dt, loaded);
       return;
     }
 
-    if (!winter) {
-
-      const daysSince = day - this._lastWinterDay;
-      const thawingOut = daysSince >= 0 && daysSince <= SNOW.SEASON_THAW_DAYS;
-      const rate = thawingOut ? SNOW.THAW_RATE * SNOW.SEASON_THAW_MULTIPLIER : SNOW.THAW_RATE;
-
-      const chance = thawingOut
-        ? Math.min(0.95, SNOW.THAW_CHANCE * SNOW.SEASON_THAW_MULTIPLIER)
-        : SNOW.THAW_CHANCE;
-      this._melt(dt, rate * loaded, chance);
-    } else if (wx && wx.overcast < 0.5) {
-
-      this._melt(dt, SNOW.THAW_RATE * loaded, SNOW.THAW_CHANCE);
-    }
-
+    this._melt(dt, SNOW.THAW_RATE * loaded, SNOW.THAW_CHANCE);
   }
 
   _budget(accumulator, rate, dt) {

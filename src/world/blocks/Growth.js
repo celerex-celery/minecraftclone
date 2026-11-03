@@ -1,6 +1,5 @@
 import { CONFIG } from '../../core/Config.js';
 import { Blocks } from './Blocks.js';
-import { seasonOf } from '../environment/Seasons.js';
 import { buildTree, treeHeight } from './TreeShapes.js';
 
 const SAP = CONFIG.SAPLING;
@@ -45,10 +44,6 @@ export class SaplingSim {
 
   kindOf(id) {
     return SAPLINGS.get(id) ?? null;
-  }
-
-  static allowedIn(kind, season) {
-    return SAP.TREES[kind]?.seasons.includes(season) ?? false;
   }
 
   _needFor(kind, groundId) {
@@ -124,7 +119,6 @@ export class SaplingSim {
 
   _advance(dt) {
     if (this.pending.size === 0) return;
-    const season = seasonOf(this.world.dayCount).index;
 
     for (const [key, s] of this.pending) {
       const [x, y, z] = key.split(',').map(Number);
@@ -133,8 +127,6 @@ export class SaplingSim {
         this.pending.delete(key);
         continue;
       }
-
-      if (!SaplingSim.allowedIn(s.kind, season)) continue;
 
       s.done += dt;
       if (s.done < s.need) continue;
@@ -161,9 +153,7 @@ export class SaplingSim {
     if (!kind) return null;
     const tracked = this.pending.get(`${x},${y},${z}`);
     if (!tracked || !this._canGrow(x, y, z, kind)) return 'waiting';
-    return SaplingSim.allowedIn(kind, seasonOf(this.world.dayCount).index)
-      ? 'growing'
-      : 'waiting';
+    return 'growing';
   }
 
   progressAt(x, y, z) {
@@ -173,7 +163,6 @@ export class SaplingSim {
     if (this.kindOf(this.world.getBlock(x, y, z)) !== tracked.kind) return null;
 
     if (!this._canGrow(x, y, z, tracked.kind)) return null;
-    if (!SaplingSim.allowedIn(tracked.kind, seasonOf(this.world.dayCount).index)) return null;
     return Math.max(0, tracked.need - tracked.done);
   }
 

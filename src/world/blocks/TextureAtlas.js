@@ -60,8 +60,8 @@ export class TextureAtlas {
     this.canvas = canvas;
     this.texture = new THREE.CanvasTexture(canvas);
     this.texture.magFilter = THREE.NearestFilter;
-    this.texture.minFilter = THREE.NearestMipmapLinearFilter;
-    this.texture.generateMipmaps = true;
+    this.texture.minFilter = THREE.NearestFilter;
+    this.texture.generateMipmaps = false;
     this.texture.wrapS = THREE.ClampToEdgeWrapping;
     this.texture.wrapT = THREE.ClampToEdgeWrapping;
     this.texture.colorSpace = THREE.SRGBColorSpace;

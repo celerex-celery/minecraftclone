@@ -16,6 +16,9 @@ export const MAX_FLOW_LEVEL = 8;
 
 const BUDGET = 24;
 
+const WATER_TICK_DELAY = 3;
+const LAVA_TICK_DELAY = 5;
+
 const key = (x, y, z) => `${x},${y},${z}`;
 
 export class FluidSim {
@@ -28,6 +31,18 @@ export class FluidSim {
     this.queue = new Set();
 
     this.dirtySinceSave = false;
+
+    this._tick = 0;
+  }
+
+  tick() {
+    this._tick++;
+  }
+
+  shouldSpread(id) {
+    const isLava = id === 'lava';
+    const delay = isLava ? LAVA_TICK_DELAY : WATER_TICK_DELAY;
+    return (this._tick % delay) === 0;
   }
 
   levelAt(x, y, z) {
@@ -76,6 +91,7 @@ export class FluidSim {
 
   update() {
     if (this.queue.size === 0) return;
+    this.tick();
     let n = BUDGET;
     for (const k of this.queue) {
       if (n-- <= 0) break;
@@ -89,7 +105,13 @@ export class FluidSim {
     const w = this.world;
     const id = w.getBlock(x, y, z);
     const def = Blocks.get(id);
-    if (!def.liquid) return;
+    const k = key(x, y, z);
+    if (!def.liquid) {
+      this.queue.delete(k);
+      return;
+    }
+    if (!this.shouldSpread(id)) return;
+    this.queue.delete(k);
     this.spread(x, y, z, id);
   }
 
@@ -107,14 +129,14 @@ export class FluidSim {
 
       for (const d of DOWN_AND_HORIZONTAL) {
         const nx = x + d[0], ny = y + d[1], nz = z + d[2];
-        if (this.canFlowInto(nx, ny, nz, id)) this.place(nx, ny, nz, id, 1);
+        if (this.canFlowInto(nx, ny, nz, id)) this.place(nx, ny, nz, id, 1, true);
       }
       return;
     }
 
     if (y > this.world.constants.MIN_Y && this.canFlowInto(x, y - 1, z, id)) {
       this.remove(x, y, z);
-      this.place(x, y - 1, z, id, 1);
+      this.place(x, y - 1, z, id, 1, false);
       return;
     }
 
@@ -124,7 +146,7 @@ export class FluidSim {
       if (!this.canFlowInto(nx, ny, nz, id)) continue;
       const want = level + 1;
 
-      if (this.levelAt(nx, ny, nz) <= want) this.place(nx, ny, nz, id, want);
+      if (this.levelAt(nx, ny, nz) <= want) this.place(nx, ny, nz, id, want, false);
     }
 
     this.retreat(x, y, z, id, level);
@@ -160,26 +182,49 @@ export class FluidSim {
     return def.replaceable;
   }
 
-  place(x, y, z, id, level) {
+  place(x, y, z, id, level, incomingIsSource = false) {
     const w = this.world;
     const here = Blocks.get(w.getBlock(x, y, z));
     if (here.liquid && here.name !== Blocks.get(id).name) {
-      this.solidify(x, y, z, here, Blocks.get(id));
+      this.solidify(x, y, z, here, Blocks.get(id), level, incomingIsSource);
       return;
     }
     if (w.getBlock(x, y, z) !== id) w.setBlock(x, y, z, id);
     this.dirtySinceSave = true;
-    this.setLevel(x, y, z, level);
+
+    // Infinite water sources: two adjacent water sources create a new source
+    let finalLevel = level;
+    if (id === 'water') {
+      let sourceNeighbors = 0;
+      for (const d of HORIZONTAL) {
+        const nx = x + d[0], ny = y + d[1], nz = z + d[2];
+        if (w.getBlock(nx, ny, nz) === id && this.levelAt(nx, ny, nz) === 0) {
+          sourceNeighbors++;
+        }
+      }
+      if (sourceNeighbors >= 2) finalLevel = 0;
+    }
+
+    this.setLevel(x, y, z, finalLevel);
   }
 
-  solidify(x, y, z, existing, incoming) {
+  solidify(x, y, z, existing, incoming, level, incomingIsSource) {
     const w = this.world;
-    const lavaIsSource = this.levelAt(x, y, z) === 0;
+    const existingIsSource = this.levelAt(x, y, z) === 0;
 
-    const isLava = existing.name === 'lava' ? existing : incoming;
-    const result = (isLava.name === 'lava' && lavaIsSource)
-      ? Blocks.id('stone')
-      : Blocks.id('cobblestone');
+    const existingIsLava = existing.name === 'lava';
+    const existingIsWater = existing.name === 'water';
+    const incomingIsLava = incoming.name === 'lava';
+    const incomingIsWater = incoming.name === 'water';
+
+    // Obsidian forms when water meets lava source, or lava meets water source
+    // (Minecraft: water source over lava source = obsidian; flowing water over
+    // lava source = cobblestone; lava source over water source = obsidian)
+    const makesObsidian =
+      (existingIsLava && existingIsSource && incomingIsWater && incomingIsSource) ||
+      (existingIsWater && existingIsSource && incomingIsLava && incomingIsSource);
+
+    const result = makesObsidian ? Blocks.id('obsidian') : Blocks.id('cobblestone');
     this.levels.delete(key(x, y, z));
     w.setBlock(x, y, z, result);
     this.dirtySinceSave = true;
