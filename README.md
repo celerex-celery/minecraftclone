@@ -1,335 +1,206 @@
 # Minexel
 
-![Minexel title screen](assets/images/Main.png)
+A voxel survival game in the browser, built with three.js and real Minecraft assets. Runs in the Electron desktop app or your browser.
 
-**Asset notice:** All original Minecraft textures, sounds, music, models and
-other assets belong to Mojang/Microsoft and are extracted from the Minecraft
-client asset pack (`minecraft-assets-26.3/`). They are used strictly for
-non-commercial, educational purposes. See LICENSE.md.
-
-A Minexel voxel **survival** game running in the browser, built with
-three.js and the real Minecraft asset pack (textures, GUI sprites, bitmap font,
-sound effects and music). Packaged as an Electron desktop app; three.js is
-vendored so it works fully offline.
-
-![build](https://img.shields.io/badge/build-1.11-55ff55)
-![tests](https://img.shields.io/badge/tests-headless-yellow)
-![deps](https://img.shields.io/badge/dependencies-none-blue)
+**Asset notice:** Textures, sounds, music, and models are extracted from the Minecraft client asset pack and belong to Mojang/Microsoft. Used for non-commercial, educational purposes. See LICENSE.md.
 
 ---
 
-```bash
+## Getting started
+
+Electron (recommended):
+
+```
 npm run electron
 ```
+
+Browser: open `index.html` in Chrome/Edge/Firefox. Save progress only works in Electron.
 
 ---
 
 ## Controls
 
-Every key below is rebindable in **Options → Controls**.
+Rebindable in Options → Controls.
 
 | Key | Action |
-| --- | --- |
-| `W` `A` `S` `D` | Move |
-| `Space` | Jump / swim up (double-tap toggles creative flight) |
-| `Shift` | Sneak (won't walk off ledges) |
-| `Ctrl` | Sprint, or `Ctrl`+`Q` to drop the whole stack |
+|-----|--------|
+| W A S D | Move |
+| Space | Jump / swim up (double-tap toggles creative flight) |
+| Shift | Sneak (won't walk off ledges) |
+| Ctrl | Sprint, or Ctrl+Q to drop the whole stack |
 | Mouse | Look |
 | Left click | Mine (hold) |
 | Right click | Place / open block / hold to eat |
-| Middle click | Pick Block — copies what you are looking at into the hotbar |
-| `1`–`9`, scroll | Select hotbar slot (scroll only while the pointer is locked) |
-| `E` | Inventory + 2×2 crafting |
-| `I` | Creative inventory |
-| `Q` | Drop held item on the ground |
-| `T` | Chat |
-| `/` | Chat, with the command slash already typed |
-| `F1` | Hide the HUD |
-| `F3` | Debug overlay |
-| `F3`+`C` | Copy your coordinates to the clipboard |
-| `F5` | Cycle camera: first → third → front |
-| `F2` | Screenshot |
-| `Esc` | Pause menu |
+| Middle click | Pick Block |
+| 1–9 | Select hotbar slot |
+| E | Inventory + 2×2 crafting |
+| I | Creative inventory |
+| Q | Drop held item |
+| T | Chat |
+| / | Chat with slash already typed |
+| F1 | Hide HUD |
+| F3 | Debug overlay |
+| F3 C | Copy coordinates |
+| F5 | Cycle camera (first → third → front) |
+| F2 | Screenshot |
+| Esc | Pause menu |
 
-Sprinting and sneaking can be latched rather than held — **Options → Gameplay →
-Toggle Sprint / Toggle Sneak**. With the toggle on, one press of the key turns
-it on and the next turns it off, instead of the key having to stay down.
+Sprinting and sneaking can be toggled (Options → Gameplay → Toggle Sprint / Toggle Sneak).
 
-Mouse in the inventory: **left click** pick up / drop, **right click** half,
-**shift + click** quick move, **shift + click a result** craft repeatedly.
+---
 
 ## Controller
 
-A gamepad on the standard (Xbox-style) mapping works out of the box — plug it in
-and play. The game polls the controller each frame, so there is nothing to
-configure. The browser pops up a small message when a controller connects or
-disconnects.
+Standard Xbox-style gamepad works out of the box. Nothing to configure.
 
 | Control | Action |
-| --- | --- |
+|---------|--------|
 | Left stick | Move |
-| Right stick | Look around |
+| Right stick | Look |
 | A | Jump |
 | B | Sneak |
 | RT | Mine (hold) |
-| LT | Place / eat / use item (hold) |
-| X | Pick Block — copies what you are looking at into the hotbar |
+| LT | Place / eat / use item |
+| X | Pick Block |
 | Y | Inventory / Creative inventory |
 | Start | Pause menu |
-| Right stick click | Cycle camera: first → third → front |
+| Right stick click | Cycle camera |
 | D-pad right | Open chat |
-| D-pad down | Drop the held item stack |
+| D-pad down | Drop held item stack |
 
-Typing chat and commands still uses the keyboard: the game opens an on-screen
-keyboard when a controller opens the chat box.
+Chat still uses the keyboard.
 
-Type `/help` in chat for slash commands.
-
-### Commands
-
-`/help` `/give` `/gamemode` `/clear` `/time` `/say` `/kill` `/list` `/seed`
-`/teleport` (`/tp`) `/summon` `/difficulty` `/experience` (`/xp`)
-
-Coordinates follow the real rule: a bare number is relative to the player and a
-tilde makes it absolute, so `/summon chicken 0 5 0` is five blocks up and
-`/summon chicken ~ ~ ~` is exactly where you stand. Summon a creeper with
-`/summon creeper` or some TNT with `/give tnt`.
-
-- `/experience <add|set|query> <targets> <amount> [levels|points]` — set or add
-  levels or XP points, or query your current level and progress (`/xp` is the
-  short form).
+---
 
 ## World types
 
-![Select World UI](assets/images/SelectWorld.png)
+**Default** — infinite terrain, caves, ores, trees, 11 biomes.
 
-When you create a world you can pick one of four world types:
+**Flat** — bedrock, stone, dirt, grass cap. No caves or trees.
 
-| World type | What it is |
-| --- | --- |
-| **Default** | Normal infinite terrain with caves, ores, trees, and all 11 biomes. |
-| **Flat** | A clean superflat plane: bedrock at the bottom, stone, dirt, and a grass cap on top. No caves, ravines, ores, trees, or decoration — just flat ground down to the void below `y = 0`. Good for building and redstone testing. |
-| **Amplified** | Extreme terrain: noise scale turned up so mountains punch much higher and valleys cut much deeper than default. |
-| **Cursed** | The chaos mode. Gravity picks a random direction (UP, DOWN, NORTH, SOUTH, EAST, WEST) and pulls you that way every few seconds, with a toast announcing each change. Above `y = 188` the sky ceiling deals damage. Diamond ore can spawn next to coal. Terrain is slightly more jagged. |
+**Amplified** — extreme terrain, taller mountains and deeper valleys.
+
+**Cursed** — gravity pulls a random direction every few seconds. Sky ceiling deals damage above y = 188.
 
 ---
 
 ## World
 
-![Create New World UI](assets/images/CreateNewWorldUI.png)
-
-- **Infinite chunked terrain**, 16 × 128 × 16, streamed around the player with
-  distance-based unloading that keeps your edits alive.
-- **Block shapes**: cubes, half-height slabs (bottom and top), stairs, fences,
-  glass panes, thin walls and posts, all with ambient occlusion and smooth
-  lighting. Fences, panes and walls connect to neighbours automatically. Slab
-  and fence textures are derived from plain block sheets at load time.
-- **Procedural generation** from layered noise: continentalness, erosion, ridge
-  and detail fields produce **11 biomes** (plains, forest, taiga, snowy
-  plains, desert, savanna, swamp, mountains, jungle, beach, ocean) with
-  biome-tinted grass and foliage.
-- **Caves** from two intersecting ridged 3D noise fields (long tunnels) plus
-  rare deep chambers. Ore veins (coal, iron, copper, gold, redstone, lapis,
-  emerald, diamond) placed by depth with 3D noise.
-- **Oak, birch and spruce trees** with proper canopies. Decoration is evaluated
-  over a 5-block margin and is deterministic in world space, so a tree
-  straddling a chunk border rebuilds identically on both sides.
-- **Surface-aware decoration** — grass, ferns and flowers grow on grass-like
-  soil, while sand carries only dead bushes and cacti.
-- Sand and gravel **fall** when unsupported.
+- Infinite chunked terrain (16×128×16 chunks) streamed around the player
+- Block shapes: cubes, slabs, stairs, fences, glass panes, walls, posts
+- 11 biomes: plains, forest, taiga, snowy plains, desert, savanna, swamp, mountains, jungle, beach, ocean
+- Caves from intersecting noise fields; ore veins placed by depth
+- Oak, birch, spruce trees
+- Sand and gravel fall when unsupported
+- Grass, ferns, flowers grow on grass-like soil
 
 ---
 
 ## Lighting
 
-A real two-channel voxel light engine:
+Two-channel voxel light engine:
 
-- **Sky light** seeded from the top, falling straight down at full strength and
-  spreading sideways losing one level per step.
-- **Block light** from torches (14), glowstone and lava (15).
-- Full **removal** propagation — mining out a torch genuinely darkens the room,
-  and re-sealing a hole re-lights it.
-- Cross-chunk flood fill with a 3×3 chunk cache on integer maths.
-- Per-vertex **ambient occlusion** and **smooth lighting**, combined in the
-  shader with a Minecraft-style light curve and a warm torch tint.
+- **Sky light** — seeds from the top, loses one level per step sideways
+- **Block light** — torches (14), glowstone and lava (15)
+- Removal propagation — mining out a torch darkens the room
+- Ambient occlusion and smooth lighting with Minecraft-style light curve
 
 ---
 
 ## Survival
 
-- Health (20), hunger (20), saturation, exhaustion, air and XP levels on the
-  vanilla curve.
-- Exhaustion from sprinting, jumping, walking and mining; burns saturation then
-  hunger; natural regen only at 18+ hunger; starvation at zero.
-- Fall damage past 3 blocks, drowning with an air meter, cactus and lava
-  contact damage, armour damage reduction (4% per point, capped at 80%).
-- **Item drops** — broken blocks and `Q` spawn real dropped stacks that fall
-  with gravity, settle on the ground, bob, merge into piles, and are picked up
-  again by walking over them.
-- Death drops your entire inventory — the stakes are real.
-
----
-
-## Saves
-
-Worlds are plain JSON files in `%APPDATA%\Minexel\worlds`, one per
-world, so they can be inspected, backed up or moved like any other folder.
-
-- **Writes are atomic.** A save goes to a temporary file, is flushed to disk,
-  and is then renamed over the world file. A rename is atomic, so the file on
-  disk is always either the whole old world or the whole new one — never a
-  half-written mix of the two.
-- **Every world keeps a backup.** The previous version is kept beside it as
-  `<id>.json.bak`. If a world file is ever damaged for any reason, the last
-  version that parsed is read back instead, and the world list says so.
-- **Damage is reported, not hidden.** A world that will not parse is listed
-  with a warning rather than quietly disappearing, and the error is written to
-  the log.
-
-Only the desktop app saves. In a plain browser the game runs but nothing
-persists after the tab closes.
+- Health (20), hunger (20), saturation, exhaustion, air, XP on the vanilla curve
+- Exhaustion from sprinting, jumping, walking, mining; burns saturation then hunger
+- Natural regen at 18+ hunger; starvation at zero
+- Fall damage past 3 blocks, drowning, cactus and lava contact damage
+- Armour damage reduction (4% per point, capped at 80%)
+- Item drops — broken blocks and Q spawn real dropped stacks that fall with gravity, settle, bob, merge, and are picked up by walking over them
+- Death drops your entire inventory
 
 ---
 
 ## The Nether
 
-A second dimension reached through a portal you build yourself out of obsidian
-and light with flint and steel:
+Reach it through an obsidian portal lit with flint and steel:
 
-- **Terrain** from four noise fields — a netherrack ceiling hung with glowstone
-  patches, a floor of lava at `y = 21`, bedrock pillars, and **basalt deltas**
-  on the floor of the low ground. A crust of solid netherrack sits over the
-  caverns so the ceiling is not the only solid thing.
-- **No sky at all** — no sun, moon, stars or clouds, a fixed dark red dome, and
-  its own ambient light. Everything you can see is lit by lava, glowstone or
-  magma.
-- **Fire is a block** — it burns out on its own, water puts it out, and it
-  spreads across netherrack and nothing else. Netherrack is fireproof.
-- **Portals** are real sheets of `nether_portal` blocks that only exist where
-  the frame is at least 2 wide and 3 tall, hum when you are near one, and all
-  die together when the frame is broken. Travel scales 1:8 in x/z and half in
-  y, with a five-second cooldown on arrival.
-- Its own music: *Lethal Nether Land*, credited in the music panel.
+- Netherrack ceiling with glowstone patches, lava floor at y = 21, bedrock pillars, basalt deltas
+- No sky — fixed dark red dome, lit only by lava, glowstone, or magma
+- Fire is a block — burns out on its own, water puts it out, spreads on netherrack only
+- Portals are real sheets of nether_portal blocks (frame at least 2×3). Travel scales 1:8 in x/z and half in y
 
 ---
 
 ## Life & progression
 
-- **Chicken** — the vanilla model unwrapped from the pack's own 64×32 skin,
-  with all nine of its sounds from the pack. It wanders, flutters, clucks, runs
-  from you, falls when there is nothing under it, and drops one chicken and
-  zero to two feathers, read straight out of the pack's loot table.
-- **Creeper** (1.10) — spawns in overworld land biomes at night, stalks the
-  player, lights its fuse when close, and explodes. Back away to defuse it.
-  Drops gunpowder when killed by the player; nothing if it detonates itself.
-- **Thrown ender pearls** — projectiles, not dropped items.
-- **Three game modes** — survival, creative (flight, no mining, no hunger) and
-  spectator (no hitbox, passes through terrain).
-- **Advancements** — a tree of conditions grouped into tabs, with a toast the
-  moment one is earned.
-- **Statistics** — distance walked, blocks mined and placed, deaths, time
-  played, per-item breakdowns.
-- **Bedrock autosave indicator** top right while a write is in flight.
+- **Chicken** — wanders, flutters, clucks, runs from you, drops chicken and feathers
+- **Zombie** — spawns at night, burns in daylight, attacks at close range, drops rotten flesh
+- **Creeper** — stalks the player, fuses when close, explodes; drops gunpowder when killed by the player
+- **Enderman** — teleports, avoids water, picks up blocks
+- **Igniter** — nether fire creeper, explodes with fire
+- Three game modes: survival, creative (flight, no mining, no hunger), spectator
+- Advancements tree with toasts
+- Statistics: distance walked, blocks mined/placed, deaths, time played, per-item breakdowns
 
 ---
 
 ## Items & crafting
 
-- 9 hotbar + 27 main + 4 armour slots, stack sizes, tool durability bars.
-- **~60 crafting recipes** — shaped (matched anywhere in the grid) and shapeless,
-  covering planks, sticks, crafting table, furnace, chest, torches, bowls,
-  buckets, all four tool tiers, three armour sets, mineral block
-  compression/decompression, and more.
-- **Furnace** tile entities with fuel values, smelting time and a live flame /
-  progress display. Smelts ore to ingots, sand to glass, clay to brick, logs to
-  charcoal, and cooks meat.
-- **Mining** uses the exact vanilla break-time formula:
-  `seconds = hardness * (canHarvest ? 1.5 : 5) / speed`, where a tool only
-  contributes its speed when its *type* matches the block, and drops are gated
-  by harvest level.
-- **TNT** (1.10) — a breakable block primed by flint and steel or fire. It
-  burns down a 4-second fuse, then explodes with power 4: blocks are destroyed
-  by blast resistance, TNT in the blast is primed for a chain reaction, players
-  and mobs take distance-based damage and knockback, and destroyed blocks spill
-  loot.
-- **Block breaking animation** — the ten `destroy_stage` sheets multiply over
-  the block as cumulative masks, so cracks spread as the block breaks and the
-  block stays visible the whole time.
+- 9 hotbar + 27 main + 4 armour slots, stack sizes, tool durability bars
+- ~60 crafting recipes — shaped and shapeless, covering planks, sticks, crafting table, furnace, chest, torches, buckets, all four tool tiers, three armour sets, mineral blocks
+- Furnace with fuel values, smelting time, live flame/progress display
+- Mining uses the vanilla break-time formula
+- TNT — primed by flint and steel or fire, 4-second fuse, power 4 explosion
+- Block breaking animation with ten destroy_stage sheets
 
 ---
 
 ## UI
 
-![Options screen](assets/images/Options.png)
-
-- **One texture atlas** for all block geometry; four draw groups per chunk
-  (opaque, alpha-cutout, water, lava).
-- **Localisation** — UI strings, item names, block names, splash texts and the
-  version come from JSON files in `assets/lang/`. Ships with English (US),
-  English (UK) and Spanish. Switching language re-renders everything on screen,
-  and a partial translation falls back to English per key.
-- **Options with categories** (Video / Audio / Gameplay / Controls) in the real
-  Minecraft bitmap font, with automatic GUI scale, render distance (up to 32),
-  FOV, brightness, cloud height, view bobbing and volumes.
-- **Rebindable controls** — the Controls tab lists every action and its key.
-  Click a key to rebind, right click to reset one row, Escape to cancel,
-  Backspace to unbind. Colliding bindings clear each other. Attack and Use Item
-  are fixed to the mouse. Bindings are saved with settings.
-- **Real Minecraft bitmap font** — text rasterised from `assets/font/ascii.png`
-  into canvases with measured per-glyph advance widths, cached by string.
-- **Isometric item icons** — blocks drawn as shaded 3-face cubes, items as
-  sprites, exactly like vanilla.
-- **Day/night cycle** — gradient sky dome, sun, moon, 900 stars, fog colour
-  tracking the horizon. Cloud height is an option.
-- Break particles sampling the actual block texture; destroy-stage crack
-  overlay; swing and view-bob animations; first-person held-item view model
-  rendered in its own pass so it never clips into terrain.
-- Underwater tint, damage flash, vignette, toasts, item-name popups.
-- **Loading screen with a splash**, drawn in the game's bitmap font above the
-  progress bar, and a **crash screen** with a copyable error report.
+- One texture atlas for all block geometry; four draw groups per chunk
+- Localisation — UI strings, item names, block names from JSON files in assets/lang/
+- Options with categories (Video / Audio / Gameplay / Controls) in Minecraft bitmap font
+- Rebindable controls — click a key to rebind, right click to reset, Escape to cancel
+- Isometric item icons — blocks as shaded 3-face cubes, items as sprites
+- Day/night cycle — gradient sky dome, sun, moon, 900 stars, fog colour tracking the horizon
+- Break particles, destroy-stage cracks, swing and view-bob animations
+- Underwater tint, damage flash, vignette, toasts, item-name popups
+- Loading screen with splash and crash screen with copyable error report
 
 ---
 
 ## Audio
 
-The **real Minecraft sound files**, not synthesis:
+Real Minecraft sound files, not synthesis:
 
-- Per-material dig, break, place and footstep sounds with randomised variants
-  and slight pitch jitter, decoded once and replayed through a source pool.
-- Player hurt, fall, eat, drink, level up, crafting, pickup, splash, swim,
-  chest, bubbles and UI clicks.
-- **Ambient cave drones** and **underwater ambience** cross-faded by where you
-  are, with music ducked underwater.
-- **Music**: main menu theme plus a shuffled in-game playlist.
-- **1.10 additions** — fuse hiss and explosion booms for TNT and creepers,
-  plus creeper idle/hurt/death sounds from the asset pack.
+- Per-material dig, break, place and footstep sounds with randomised variants and pitch jitter
+- Player hurt, fall, eat, drink, level up, crafting, pickup, splash, swim, chest, bubbles, UI clicks
+- Ambient cave drones and underwater ambience, with music ducked underwater
+- Music: main menu theme plus shuffled in-game playlist
+- Creeper idle/hurt/death, fuse hiss and explosion, TNT explosion
 
 ---
 
-## Asset provenance
+## Commands
 
-Textures, GUI sprites, sounds and music come from the Minecraft client asset
-pack present in this folder (`minecraft-assets-26.3/`, version 26.3).
-`tools/copy-assets.ps1` and `tools/copy-audio.ps1` extract exactly the subset
-the game uses into `assets/`, so the game folder is self-contained. All game
-code, shaders, UI and systems are original.
+`/help` `/give` `/gamemode` `/clear` `/time` `/say` `/kill` `/list` `/seed` `/teleport` (`/tp`) `/summon` `/difficulty` `/experience` (`/xp`)
 
-**All original Minecraft assets belong to Mojang/Microsoft and are used
-strictly for non-commercial, educational purposes.** See LICENSE.md.
+Coordinates: bare number is relative to the player; tilde makes it absolute. `/summon chicken 0 5 0` is five blocks up; `/summon chicken ~ ~ ~` is exactly where you stand.
 
 ---
 
 ## Performance notes
 
-The frame loop bounds chunk work by wall-clock time and adapts that budget to
-the measured frame time, so a slow machine streams more gently instead of
-stuttering. Two fixes mattered most:
+Frame loop bounds chunk work by wall-clock time and adapts the budget to measured frame time. Two fixes mattered most:
 
-- The light engine runs on a 3×3 chunk cache of integer indices. Going through
-  the world's string-keyed chunk map cost ~20 ms per chunk; it is now ~2 ms.
-- Chunks are only re-meshed when their light actually *changed*. A previous
-  version re-queued chunks for relighting from the mesher, creating a
-  light → mesh → light loop that ran 68 light passes per chunk.
+- Light engine runs on a 3×3 chunk cache of integer indices (~2 ms per chunk instead of ~20 ms)
+- Chunks are only re-meshed when their light actually changed
 
-Typical numbers at render distance 7 (289 chunks, 1.1M triangles):
-initial load ≈ 4 s, then ~0 ms of chunk work per frame.
+Typical numbers at render distance 7 (289 chunks, 1.1M triangles): initial load ≈ 4 s, then ~0 ms of chunk work per frame.
+
+---
+
+## Saves
+
+Worlds are plain JSON files in `%APPDATA%\Minexel\worlds`, one per world. Writes are atomic (temp file → flush → rename). Every world keeps a backup (`.json.bak`). Damaged worlds are listed with a warning rather than quietly disappearing.
+
+Only the desktop app saves. In a plain browser nothing persists after the tab closes.
