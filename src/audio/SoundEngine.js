@@ -82,7 +82,7 @@ const MANIFEST = {
     explode: ['random/explode1', 'random/explode2'],
     zombieIdle: ['mob/zombie/idle1', 'mob/zombie/idle2', 'mob/zombie/idle3'],
     zombieHurt: ['mob/zombie/hurt1', 'mob/zombie/hurt2'],
-    zombieDeath: ['mob/zombie/death1', 'mob/zombie/death2'],
+    zombieDeath: ['mob/zombie/death'],
     zombieStep: ['mob/zombie/step1', 'mob/zombie/step2', 'mob/zombie/step3', 'mob/zombie/step4', 'mob/zombie/step5'],
 
     zombieFire: ['mob/zombie/fire1', 'mob/zombie/fire2'],
