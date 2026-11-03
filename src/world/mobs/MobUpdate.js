@@ -14,10 +14,12 @@ import { buildMobMesh, MODELS, getModelState } from './ModelLoader.js';
 const GRAVITY = 16;
 const TURN = 1.1;
 const WALK = 0.05;
+const PATH_REPATH = 1.0;
+const PATH_WAYPOINT_REACHED = 0.9;
 
 export function updateMob(mob, dt, world, player, drop, adults) {
   if (mob.dead) {
-    if (mob.dying) updateDeath(mob, dt);
+    if (mob.dying) updateDeath(mob, dt, drop);
     return;
   }
 
@@ -55,14 +57,15 @@ export function updateMob(mob, dt, world, player, drop, adults) {
 
   if (mob.fire > 0) {
     mob.fire -= dt;
-    mob.fireTime += dt;
+    mob.fireTime = (mob.fireTime ?? 0) + dt;
     if (mob.fireTime >= 0.5) {
       mob.hurt(1, null, 1);
       mob.fireTime = 0;
     }
-    if (mob.fireTime >= 0.2) {
-      mob.fireTime = 0;
-      audio.zombieFire(1);
+    mob._fireParticleTimer = (mob._fireParticleTimer ?? 0) + dt;
+    if (mob._fireParticleTimer >= 0.1 && mob.game?.particles) {
+      mob._fireParticleTimer = 0;
+      mob.game.particles.spawnFire(mob.pos.x, mob.pos.y + mob.variant.height * 0.5, mob.pos.z);
     }
   } else if (mob.variant.flammable && !mob.variant.fireImmune) {
     const feet = defAt(Math.floor(mob.pos.x), Math.floor(mob.pos.y), Math.floor(mob.pos.z));
@@ -91,9 +94,32 @@ export function updateMob(mob, dt, world, player, drop, adults) {
     }
   }
 
-  if (mob.variant.waterSensitive && inWater) {
-    mob.hurt(1, null, 0);
-  }
+    if (mob.variant.waterSensitive && inWater) {
+      mob.hurt(1, null, 0);
+    }
+
+    if (mob.variant.undead && !inWater && !mob.underwater) {
+      const raining = world.weather?.rainAmount > 0.01;
+      if (!raining) {
+        const mx = Math.floor(mob.pos.x);
+        const my = Math.floor(mob.pos.y + mob.variant.height * 0.5);
+        const mz = Math.floor(mob.pos.z);
+        const skyLight = world.getSky(mx, my, mz);
+        const blockLight = world.getBlockLight(mx, my, mz);
+        const canSeeSky = skyLight > blockLight;
+        const time = world.time ?? 0;
+        const dayProgress = (time / 24000) % 1;
+        const isDay = dayProgress >= 2 / 24 && dayProgress <= 13 / 24;
+        if (isDay && canSeeSky && skyLight > 7) {
+          const br = skyLight / 15;
+          const burnChance = (br - 0.4) * 2 / 30;
+          if (Math.random() < burnChance) {
+            mob.fire = 8;
+            mob.fireTime = 0;
+          }
+        }
+      }
+    }
 
   const ear = player.eyePosition ?? player.position;
   const gain = mob.hearingGain(ear, mob.variant.range);
@@ -121,6 +147,8 @@ export function updateMob(mob, dt, world, player, drop, adults) {
       speed = updateCreeperAI(mob, dt, world, player, away, dx, dz, gain);
     } else if (v.id === 'igniter') {
       speed = updateIgniterAI(mob, dt, world, player, away, dx, dz, gain);
+    } else if (v.id === 'zombie') {
+      speed = updateZombieAI(mob, dt, world, player, solid, defAt, away, dx, dz, gain, inWater, mob.underwater);
     } else if (v.spawn?.category === CATEGORY.monster) {
 
       const creativePlayer = mob.game?.player?.creative || mob.game?.player?.spectator;
@@ -145,6 +173,43 @@ export function updateMob(mob, dt, world, player, drop, adults) {
   }
 
   if (facing !== null && !mob.resting) mob.yaw = facing;
+
+  // Pathfinding: monster mobs chasing a player find a path around obstacles
+  if (speed > 0 && facing !== null && mob.variant.spawn?.category === CATEGORY.monster && !inWater && mob.game?.mobs) {
+    const moveX = -Math.sin(mob.yaw);
+    const moveZ = -Math.cos(mob.yaw);
+    const directBlocked = blockedAt(mob, mob.pos.x + moveX * 0.7, mob.pos.z + moveZ * 0.7, solid);
+
+    if (directBlocked) {
+      mob._pathTimer = (mob._pathTimer ?? 0) + dt;
+      if (mob._pathTimer >= PATH_REPATH || !mob._path || mob._pathIndex >= (mob._path?.points?.length ?? 0)) {
+        mob._pathTimer = 0;
+        mob._path = mob.game.mobs.findPath(mob.pos, player.position, {
+          headroom: Math.ceil(mob.variant.height),
+          maxRange: CONFIG.PATHFINDING.MAX_RANGE,
+        });
+        mob._pathIndex = 0;
+      }
+
+      if (mob._path?.points && mob._pathIndex < mob._path.points.length) {
+        const wp = mob._path.points[mob._pathIndex];
+        const wpDist = Math.hypot(wp[0] + 0.5 - mob.pos.x, wp[2] + 0.5 - mob.pos.z);
+        if (wpDist < PATH_WAYPOINT_REACHED) {
+          mob._pathIndex++;
+        } else {
+          mob.yaw = yawToward(wp[0] + 0.5 - mob.pos.x, wp[2] + 0.5 - mob.pos.z);
+        }
+      }
+    } else {
+      mob._path = null;
+      mob._pathIndex = 0;
+      mob._pathTimer = 0;
+    }
+  } else {
+    mob._path = null;
+    mob._pathIndex = 0;
+    mob._pathTimer = 0;
+  }
 
   if (inWater) speed *= CONFIG.MOB.SWIM_SPEED_FACTOR;
 
@@ -308,6 +373,43 @@ function updateAnimation(mob, dt, speed, gain, inWater) {
     return;
   }
 
+  if (v.id === 'zombie') {
+    mob.flap += dt * (moving ? 12 : 0);
+
+    const group = mob.mesh.group;
+    group.position.set(mob.pos.x, mob.pos.y, mob.pos.z);
+    group.rotation.y = mob.yaw;
+
+    const legNames = ['bipedRightLeg', 'bipedLeftLeg', 'right_leg', 'left_leg', 'leg1', 'leg2', 'leg3', 'leg4'];
+    const armNames = ['bipedRightArm', 'bipedLeftArm', 'right_arm', 'left_arm'];
+    const legPivots = legNames.filter(n => mob.mesh.parts[n]);
+    const armPivots = armNames.filter(n => mob.mesh.parts[n]);
+
+    const legSwing = moving ? Math.sin(mob.flap) * 0.4 : 0;
+    for (const legName of legPivots) {
+      mob.mesh.parts[legName].rotation.x = legSwing;
+    }
+
+    const attackAnimTimer = Math.max(0, (mob.attackAnimTimer ?? 0) - dt);
+    const striking = attackAnimTimer > 0;
+
+    const attackArm = Math.PI * 0.35;
+    for (const armName of armPivots) {
+      mob.mesh.parts[armName].rotation.x = attackArm + (striking ? Math.PI * 0.3 : 0);
+      mob.mesh.parts[armName].rotation.z = 0;
+    }
+
+    if (mob.onGround && moving) {
+      mob.stepTimer = (mob.stepTimer ?? 0) - dt;
+      if (mob.stepTimer <= 0) {
+        mob.stepTimer = 0.5;
+        if (gain > 0) v.step(gain);
+      }
+    }
+
+    return;
+  }
+
   mob.flap += dt * (moving ? 15 : 3.5);
   const swing = moving ? Math.sin(mob.flap) : 0;
   const bob = moving ? Math.abs(Math.sin(mob.flap)) * 0.035 : 0;
@@ -410,11 +512,12 @@ function flashSourceMap(group) {
   return map;
 }
 
-function updateDeath(mob, dt) {
+function updateDeath(mob, dt, drop) {
   mob.deathTimer -= dt;
   if (mob.deathTimer <= 0) {
     mob.deathTimer = 0;
     mob.dying = false;
+    if (drop) mob.variant.drops(drop, mob.pos);
     return;
   }
   const t = 1 - mob.deathTimer / CONFIG.MOB.DEATH_TIME;

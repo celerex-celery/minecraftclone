@@ -238,6 +238,36 @@ export class Particles {
     this.geo.instanceCount = this.count;
   }
 
+  spawnFire(x, y, z) {
+    const def = Blocks.get(Blocks.id('fire'));
+    const uv = this.atlas?.get(def.particle ?? 'fire');
+    if (!uv) return;
+
+    const n = 4;
+    for (let i = 0; i < n; i++) {
+      if (this.count >= MAX_PARTICLES) break;
+      const idx = this.count++;
+      const o = idx * 3;
+
+      this.offset[o] = x + (Math.random() - 0.5) * 0.6;
+      this.offset[o + 1] = y + Math.random() * 1.2;
+      this.offset[o + 2] = z + (Math.random() - 0.5) * 0.6;
+
+      this.vel[o] = (Math.random() - 0.5) * 0.4;
+      this.vel[o + 1] = Math.random() * 0.8 + 0.2;
+      this.vel[o + 2] = (Math.random() - 0.5) * 0.4;
+
+      const r = idx * 4;
+      this.rect[r] = uv[0]; this.rect[r + 1] = uv[1];
+      this.rect[r + 2] = uv[2]; this.rect[r + 3] = uv[3];
+
+      const life = 0.4 + Math.random() * 0.4;
+      this.life[idx] = life;
+      this.maxLife[idx] = life;
+      this.scale[idx] = 0.08 + Math.random() * 0.04;
+    }
+  }
+
   update(dt, world) {
     if (this.count === 0) return;
     let alive = 0;
