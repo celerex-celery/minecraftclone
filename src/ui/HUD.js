@@ -3,7 +3,6 @@ import { Items } from '../world/blocks/Items.js';
 import { Blocks } from '../world/blocks/Blocks.js';
 import { iconCanvas } from './ItemIcons.js';
 import { advancementIcon, advancementDesc, advancementTitle } from './Advancements.js';
-import { seasonOf, seasonIcon, formatDate } from '../world/environment/Seasons.js';
 import { COLORS } from './PixelFont.js';
 import { t } from './Lang.js';
 
@@ -145,8 +144,8 @@ export class HUD {
       itemNameArea: document.getElementById('item-name-area'),
       musicToast: document.getElementById('music-toast'),
        autosave: document.getElementById('autosave'),
-      season: document.getElementById('season-panel'),
       fps: document.getElementById('fps-counter'),
+      time: document.getElementById('time-counter'),
       gravity: document.getElementById('gravity-indicator'),
     };
 
@@ -166,8 +165,8 @@ export class HUD {
     this._itemNameMsg = null;
     this._debugCache = new Map();
 
-    this._seasonKey = '';
     this._gravityKey = '';
+    this._timeKey = '';
 
     this._gpu = 'n/a';
     this._fetchGpu();
@@ -335,6 +334,32 @@ export class HUD {
     this._fpsTimer = 0.25;
 
     this.font.set(this.el.fps, t('hud.fps', this.game.fps), {
+      scale: 2,
+      color: COLORS.white,
+    });
+  }
+
+  _renderTime() {
+    const on = this.game.settings.showTime !== false;
+    if (!this.debugVisible) this.el.time?.classList.toggle('hidden', !on);
+    if (!on || this.debugVisible) return;
+
+    const world = this.game.world;
+    if (!world) return;
+
+    const mcTime = world.time % CONFIG.DAY_TICKS;
+    const mcHour = Math.floor((mcTime + 6000) / 1000) % 24;
+    const mcMinute = Math.floor(((mcTime + 6000) % 1000) * 0.06);
+    const day = world.dayCount;
+
+    const key = `${day}:${mcHour}:${mcMinute}`;
+    if (key === this._timeKey) return;
+    this._timeKey = key;
+
+    const hourStr = String(mcHour).padStart(2, '0');
+    const minStr = String(mcMinute).padStart(2, '0');
+
+    this.font.set(this.el.time, t('hud.time', day, hourStr, minStr), {
       scale: 2,
       color: COLORS.white,
     });
@@ -589,7 +614,7 @@ export class HUD {
 
     const hidden = this.debugVisible;
     this.el.fps.style.display = hidden ? 'none' : '';
-    this.el.season.style.display = hidden ? 'none' : '';
+    this.el.time.style.display = hidden ? 'none' : '';
 
     if (hidden) this._fetchGpu();
 
@@ -695,10 +720,6 @@ export class HUD {
       t(`debug.dimension.${g.dimension ?? w.dimension}`),
       t('debug.light', w.getSky(bx, by + 1, bz), w.getBlockLight(bx, by + 1, bz)),
       t('debug.time', (w.time / 1000).toFixed(1), t(w.isNight ? 'debug.night' : 'debug.day')),
-
-      t('debug.season', seasonOf(w.dayCount).name,
-        `${seasonOf(w.dayCount).dayInSeason}/${seasonOf(w.dayCount).daysInSeason}`),
-      t('debug.date', formatDate(w.dayCount)),
       t('debug.seed', w.seed),
       target
         ? t('debug.target', Blocks.name(target.id), target.x, target.y, target.z)
@@ -810,64 +831,13 @@ export class HUD {
     }
   }
 
-  _renderSeason() {
-    const world = this.game.world;
-    if (!world || !this.el.season) return;
-
-    if (world.dimension === 'nether' || world.dimension === 'end') {
-      this.el.season.style.display = 'none';
-      return;
-    }
-
-    if (this.debugVisible) {
-      this.el.season.style.display = 'none';
-      return;
-    }
-    this.el.season.style.display = '';
-
-    const day = world.dayCount;
-    const season = seasonOf(day);
-    const key = `${season.index}:${season.dayInSeason}:${day}`;
-    if (key === this._seasonKey) return;
-    this._seasonKey = key;
-    const panel = this.el.season;
-    panel.textContent = '';
-
-    const icon = seasonIcon(this.game.assets?.seasonIcons, season.index);
-    if (icon) panel.appendChild(icon);
-
-    const text = document.createElement('div');
-    text.className = 'season-text';
-
-    const nameRow = document.createElement('div');
-    nameRow.className = 'season-name-row';
-    const name = document.createElement('div');
-    name.className = 'season-name';
-    this.font.set(name, season.name, { scale: 2, color: COLORS.white });
-    nameRow.appendChild(name);
-    const progress = document.createElement('div');
-    progress.className = 'season-progress';
-    this.font.set(progress, t('hud.season.progress', season.dayInSeason, season.daysInSeason),
-      { scale: 1, color: '#b4b4b4' });
-    nameRow.appendChild(progress);
-    text.appendChild(nameRow);
-
-    const date = document.createElement('div');
-    date.className = 'season-day';
-
-    this.font.set(date, formatDate(day), { scale: 1, color: '#dcdcdc' });
-    text.appendChild(date);
-
-    panel.appendChild(text);
-  }
-
   update(dt) {
     this._lastDt = dt;
     const inv = this.game.inventory;
     this._updateAdvToast(dt);
     this._applyGameMode();
     this._renderFps();
-    this._renderSeason();
+    this._renderTime();
     if (inv.version !== this._invVersion) {
       this._invVersion = inv.version;
       this._renderHotbar();

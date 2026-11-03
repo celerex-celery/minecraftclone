@@ -17,8 +17,8 @@
   --mc-green: #55ff55;
   --mc-red: #ff5555;
   --mc-yellow: #ffff55;
-  /* Fixed normal GUI scale */
-  --gui: 3;
+  /* Normal GUI scale */
+  --gui: 2;
 }
 
 * {

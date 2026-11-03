@@ -583,8 +583,10 @@ export class Interaction {
     world.setBlock(px, py, pz, liquid);
 
     world.fluid.setLevel(px, py, pz, 0);
-    inv.slots[slot] = makeStack('bucket', 1);
-    inv.touch();
+    if (!player.creative) {
+      inv.slots[slot] = makeStack('bucket', 1);
+      inv.touch();
+    }
     audio.place(Blocks.get(liquid));
     this.game.particles.spawnPlace(px, py, pz, liquid);
     return true;
@@ -623,6 +625,25 @@ export class Interaction {
     const cell = this._placementCell();
     if (!cell) return false;
     const { px, py, pz, hitDef } = cell;
+
+    // Wall torch: only place on side faces, offset to stick out from wall
+    if (bdef.shape === 'torch_wall') {
+      if (t.face === 2 || t.face === 3) return false; // can't place on top/bottom
+      const tx = cell.px;
+      const ty = cell.py;
+      const tz = cell.pz;
+      if (!world.isReplaceable(tx, ty, tz)) return false;
+      world.setBlock(tx, ty, tz, blockId);
+      world.fluid.setLevel(tx, ty, tz, 0);
+      if (!player.creative) {
+        inv.slots[slot] = makeStack(stack.name, stack.count - 1);
+        if (inv.slots[slot].count <= 0) inv.slots[slot] = null;
+        inv.touch();
+      }
+      audio.place(bdef);
+      viewModel.triggerSwing();
+      return true;
+    }
 
     if (bdef.shape === 'cross' && !this.canPlaceCross(t, hitDef)) return false;
 
@@ -745,7 +766,7 @@ export class Interaction {
   canPlaceCross(target, hitDef) {
     const held = this.game.inventory.held;
     const heldDef = held ? Blocks.get(Blocks.id(held.name)) : null;
-    const isTorch = heldDef && (heldDef.name === 'torch' || heldDef.name === 'wall_torch');
+    const isTorch = heldDef && heldDef.name === 'torch';
 
     if (isTorch) {
       return hitDef.opaque || hitDef.solid;

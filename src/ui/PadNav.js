@@ -79,7 +79,6 @@ export class PadNav {
   _syncRoot() {
 
     const extras = [
-      this.game.screens?.steps?.root,
       this.game.chat?.root,
       this.game.onScreenKeyboard?.root,
     ];

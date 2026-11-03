@@ -378,11 +378,12 @@ export class OptionsScreen {
 
       R('caveAmbience', this._toggle(() => s.caveAmbience ?? false, (v) => { s.caveAmbience = v; }));
     } else if (this.category === 'gameplay') {
-      R('sensitivity', this._slider(1, 15, 0.5, () => s.sensitivity, (v) => { s.sensitivity = v; }));
+      R('sensitivity', this._slider(0, 200, 5, () => s.sensitivity, (v) => { s.sensitivity = v; }));
       R('waila', this._toggle(() => s.waila !== false, (v) => { s.waila = v; }));
 
       R('toggleSprint', this._toggle(() => s.toggleSprint !== false, (v) => { s.toggleSprint = v; }));
       R('toggleSneak', this._toggle(() => s.toggleSneak !== false, (v) => { s.toggleSneak = v; }));
+      R('showTime', this._toggle(() => s.showTime !== false, (v) => { s.showTime = v !== false; }));
 
     } else {
       this._buildControls();

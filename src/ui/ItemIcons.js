@@ -60,6 +60,7 @@ export function iconImage(name, assets) {
 export function isFlatItem(name) {
 
   if (name === 'snowball') return true;
+  if (name === 'torch') return true;
   if (!Blocks.has(name)) return true;
   const def = Blocks.get(Blocks.id(name));
   return def.shape === 'cross' || !def.placeable;

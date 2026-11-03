@@ -67,8 +67,7 @@
   height: 30px;
   transform: translate(-50%, -50%) scale(calc(var(--gui) * 0.5));
   transform-origin: 50% 50%;
-  opacity: 0.9;
-  mix-blend-mode: difference;
+  opacity: 0.6;
 }
 
 #crosshair {
