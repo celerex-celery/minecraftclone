@@ -1,9 +1,32 @@
 import { CONFIG } from '../../core/Config.js';
 import { Blocks } from '../blocks/Blocks.js';
 
-const GRAVITY = 16;
 const TURN = 1.1;
 const CORNERS = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+
+export function applyGravity(mob, dt, solid, inWater) {
+  if (inWater) {
+    swim(mob, dt);
+  } else {
+    mob.vel.y -= CONFIG.GRAVITY * dt;
+    let ny = mob.pos.y + mob.vel.y * dt;
+    if (mob.vel.y <= 0) {
+      if (solid(mob.pos.x, ny - 0.05, mob.pos.z)) {
+        ny = Math.ceil(ny - 0.05);
+        mob.fallDistance = 0;
+        mob.vel.y = 0;
+        mob.onGround = true;
+      } else {
+        mob.onGround = false;
+        mob.fallDistance += Math.max(0, mob.pos.y - ny);
+      }
+    } else {
+      mob.onGround = false;
+      mob.fallDistance = 0;
+    }
+    mob.pos.y = ny;
+  }
+}
 
 export function waterSurface(mob, defAt) {
   const x = Math.floor(mob.pos.x);
@@ -67,7 +90,7 @@ export function blockedAt(mob, x, z, solid) {
 }
 
 export function fleeJump(mob, dt) {
-  const isChasing = (mob.variant.id === 'zombie' || mob.variant.id === 'enderman') && !mob.resting;
+  const isChasing = mob.variant.id === 'zombie' || mob.variant.id === 'enderman';
   if (mob.panic <= 0 && !isChasing) return;
   if (mob.inWater) return;
   if (!mob.onGround) return;
@@ -89,13 +112,15 @@ export function applyMovement(mob, dt, stepX, stepZ, solid, world) {
     moved = true;
   } else {
     const feetY = Math.floor(mob.pos.y);
-    const targetY = feetY + stepHeight;
+    const targetY = feetY + Math.floor(stepHeight);
 
-    const atTarget = world.getBlock(Math.floor(mob.pos.x + stepX), targetY, Math.floor(mob.pos.z + stepZ));
-    const atTargetDef = Blocks.get(atTarget);
+    // Is there a solid block at foot level ahead to step onto?
+    const stepBlock = world.getBlock(Math.floor(mob.pos.x + stepX), feetY, Math.floor(mob.pos.z + stepZ));
+    const stepDef = Blocks.get(stepBlock);
 
-    const bodyY = targetY + 1;
-    const headY = targetY + 2;
+    // Is the space above the step clear (body + head)?
+    const bodyY = feetY + 1;
+    const headY = feetY + 2;
     const atBody = world.getBlock(Math.floor(mob.pos.x + stepX), bodyY, Math.floor(mob.pos.z + stepZ));
     const atBodyDef = Blocks.get(atBody);
     const atHead = world.getBlock(Math.floor(mob.pos.x + stepX), headY, Math.floor(mob.pos.z + stepZ));
@@ -104,12 +129,12 @@ export function applyMovement(mob, dt, stepX, stepZ, solid, world) {
     const extraCheck = mob.variant.height > 2.5;
     let atExtraDef = { solid: false };
     if (extraCheck) {
-      const extraY = targetY + 3;
+      const extraY = feetY + 3;
       const atExtra = world.getBlock(Math.floor(mob.pos.x + stepX), extraY, Math.floor(mob.pos.z + stepZ));
       atExtraDef = Blocks.get(atExtra);
     }
 
-    if (!atTargetDef.solid && !atBodyDef.solid && !atHeadDef.solid && !atExtraDef.solid) {
+    if (stepDef.solid && !atBodyDef.solid && !atHeadDef.solid && !atExtraDef.solid) {
       mob.pos.x += stepX;
       mob.pos.z += stepZ;
       mob.pos.y += stepHeight;
@@ -123,37 +148,13 @@ export function applyMovement(mob, dt, stepX, stepZ, solid, world) {
     if (isChasing || mob.panic > 0) {
       fleeJump(mob, dt);
     }
-    mob.yaw += (mob.onGround ? TURN : TURN * 2) * dt;
+    mob.yaw += TURN * dt;
     mob.vel.x = 0;
     mob.vel.z = 0;
   }
 
   if (Math.abs(mob.vel.x) < 0.01) mob.vel.x = 0;
   if (Math.abs(mob.vel.z) < 0.01) mob.vel.z = 0;
-}
-
-export function applyGravity(mob, dt, solid, inWater) {
-  if (inWater) {
-    swim(mob, dt);
-  } else {
-    mob.vel.y -= GRAVITY * dt;
-    let ny = mob.pos.y + mob.vel.y * dt;
-    if (mob.vel.y <= 0) {
-      if (solid(mob.pos.x, ny - 0.05, mob.pos.z)) {
-        ny = Math.ceil(ny - 0.05);
-        mob.fallDistance = 0;
-        mob.vel.y = 0;
-        mob.onGround = true;
-      } else {
-        mob.onGround = false;
-        mob.fallDistance += Math.max(0, mob.pos.y - ny);
-      }
-    } else {
-      mob.onGround = false;
-      mob.fallDistance = 0;
-    }
-    mob.pos.y = ny;
-  }
 }
 
 export function applyVelocity(mob, dt, speed) {
