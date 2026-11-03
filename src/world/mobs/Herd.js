@@ -4,6 +4,7 @@ import { Mob } from './Mob.js';
 import { VARIANTS, BABY_CHANCE, CATEGORY, swingCooldownFor } from './Variants.js';
 import { biomeSpawnsFor, babyOf, rayBox, SPAWNABLE_ON } from './MobSpawning.js';
 import { blockedAt } from './MobPhysics.js';
+import { Pathfinder } from '../entities/Pathfinding.js';
 
 export const MAX_MOBS = 128;
 export const REACH = 3.2;
@@ -24,6 +25,7 @@ export class Mobs {
     this._spawn = 0;
     this.picked = null;
     this.pickedDist = Infinity;
+    this.pathfinder = new Pathfinder(world);
   }
 
   get count() {
@@ -224,6 +226,10 @@ export class Mobs {
       if (t !== null && t < bestDist) { bestDist = t; best = c; }
     }
     return best ? { mob: best, dist: bestDist } : null;
+  }
+
+  findPath(start, goal, opts = {}) {
+    return this.pathfinder.find(start, goal, opts);
   }
 
   update(dt, player, attacking, drop, onSwing, weapon) {
