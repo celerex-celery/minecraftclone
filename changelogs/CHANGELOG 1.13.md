@@ -1,0 +1,76 @@
+# Changelog 1.13
+
+## Fixes & changes
+- Creative worlds no longer start you flying automatically.
+- Inventory crafting: result output now uses an arrow indicator and has a border around the output slot.
+- Removed the unused GUI scale setting; GUI now always renders at normal scale.
+  - Removed guiScale default from settings (Config.js).
+  - Removed applyGuiScale() method and its call sites from Game.js.
+  - Removed the GUI Scale row from the video settings screen (Screens.js).
+  - Fixed --gui CSS variable to normal scale (styles/main.css).
+  - Removed options.guiScale translation entries from en_us, en_gb, and es_es.
+- Fixed broken accented characters in Spanish translations (es_es.json).
+- Recipe Book text now translates in all languages; added missing container.recipeBook and recipeBook.* keys to en_gb and es_es.
+- Added two new language variants: English (Canada) en_ca.json and Spanish (Mexican) es_mx.json.
+- Registered en_ca and es_mx in Lang.js LANGUAGES list and updated languages maps in all language files.
+- Added six more language variants: German (Germany) de_de.json, French (France) fr_fr.json, Italian (Italy) it_it.json, Turkish (Turkey) tr_tr.json, Danish (Denmark) da_da.json, Swedish (Sweden) sv_se.json.
+- Registered de_de, fr_fr, it_it, tr_tr, da_da, sv_se in Lang.js LANGUAGES list and updated languages maps in all language files.
+- Added four more language variants: Norwegian Bokmål (Norway) no_nb.json, Portuguese (Brazil) pt_br.json, Dutch (Netherlands) nl_nl.json, Finnish (Finland) fi_fi.json.
+- Registered no_nb, pt_br, nl_nl, fi_fi in Lang.js LANGUAGES list and updated languages maps in all language files.
+- Stripped accented characters from all translations; the bitmap font (ascii.png) only renders ASCII codes 32-126, so accented glyphs would not display.
+- Improved camera and player movement to feel more like Minecraft:
+  - Ground movement now uses friction-then-acceleration (slide on release, gradual accel) instead of instant speed interpolation.
+  - Air movement now preserves momentum with air friction and steerable acceleration.
+  - Ground friction set to Minecraft's 0.6; added GROUND_ACCEL (10) and AIR_ACCEL (3).
+  - Camera walk/sprint bob slightly more pronounced; sprint increases bob amplitude.
+- Improved terrain noise to match Minecraft:
+  - Added erosion noise (flattens plains/beaches) and peaks/valleys noise (dramatic mountain terrain).
+  - Continentalness now separated into continentalness + erosion + peaks components.
+  - Added ridged noise for sharp mountain peaks and craters.
+  - Added erosion-based height smoothing for more natural terrain transitions.
+- Improved camera and impact feel:
+  - Sprint FOV scales from 70° to ~74° while sprinting (vanilla Minecraft behavior).
+  - Sprint bobbing increases slightly in amplitude and frequency (matching vanilla).
+  - Reduced hurt camera tilt/shake to match vanilla Minecraft.
+- Fixed camera look sensitivity to match Minecraft: now a percentage slider (0-200%, default 100%) instead of 1-15 steps; 100% = vanilla sensitivity × 0.15° per mouse count.
+- Sky, sun, moon, stars, and clouds are now hidden only when completely underground (sky light === 0), not at sky light <= 4; cave ambience now matches (no "cave" ambience just from being under a tree or overhang at light 1-4).
+- Settings now save to %APPDATA%\Minecraft Voxel\settings.json with indentation (one key per line) instead of a single minified line, so the file is easy to read and edit by hand.
+- World saves now use a folder per world like Minecraft: %APPDATA%\Minecraft Voxel\worlds\<world name>\level.dat instead of flat <random letters>.json files. World IDs are sanitized world names (duplicate names get a number suffix); renaming a world changes its display name but keeps the same folder.
+- Crosshair is now semi-transparent (like vanilla Minecraft) instead of opaque with difference blend mode.
+- Tree generation now matches Minecraft per wood type: oak branches with irregular canopy, spruce conical canopy, birch thin tall canopy, jungle tall/bush variants, acacia diagonal trunk with flat canopy, dark oak 2x2 thick trunk with mushroom canopy, pale oak layered canopy.
+- Biome-specific trees: jungle now spawns jungle trees, savanna spawns acacia, taiga spawns spruce and birch, snowy plains/mountains spawn spruce, swamp/forest/plains spawn oak.
+- Tree heights vary per wood type (oak 4-6, spruce 5-12, birch 5-8, jungle 6-15, acacia 4-6, dark oak 6-8, pale oak 5-7) instead of flat 4-6 for all.
+- Added jungle, acacia, dark oak, and pale oak wood blocks (log, planks, leaves, sapling) with textures from Minecraft 26.4 snapshot.
+- Water is now tinted dark blue and underwater fog is darker; water texture no longer stretches oddly on sloped surfaces.
+- Water extinguishes fire (including flint and steel fire) when it flows over a fire block; fire cannot start on water.
+- Infinite water sources: placing two adjacent water source blocks creates new source blocks between them (2x2 pool trick works).
+- Water over lava source creates obsidian; water over flowing lava or flowing water over lava source creates cobblestone (was always stone before).
+- Water and lava now flow-animate their textures instead of being static; flowing water/lava renders at liquid-top height so large pools no longer stretch the texture.
+- Lava texture no longer looks squished/small; lava now animates its flow like water.
+- Water and lava no longer spread instantly — fluid spread is now tick-based (water every ~3 ticks, lava every ~5 ticks) so it gradually flows to adjacent blocks like vanilla Minecraft.
+- Lava now renders translucent (matching water) instead of opaque, fixing the squished/distorted look.
+- Fixed obsidian and cobblestone generation when water and lava collide: water source over lava source = obsidian, flowing water over lava source = cobblestone (was never generating before).
+- Water and lava source blocks removed from creative inventory and /give command — buckets (water_bucket, lava_bucket) remain available in both.
+- In creative mode, using a water or lava bucket is infinite — the bucket is not consumed when placing.
+- Removed seasons entirely — no more winter snow, season-gated tree growth, seasonal weather, or the seasons HUD panel. Saplings grow in all biomes year-round; snow only accumulates from weather events, not season.
+- Day/night cycle uses Minecraft's standard 20-minute cycle.
+- Added time UI below FPS showing Minecraft time (Day X, HH:MM format) — toggle in Gameplay settings (all languages).
+- Removed step counter / steps feature (no more KeyM steps screen, steps reward, or step tracking statistics).
+- Fixed texture rendering: block atlas now uses NearestFilter (no mipmap bleeding between tiles) and water textures now tile properly with RepeatWrapping.
+- Fixed top face Y position — block tops now render at the top of the block instead of the bottom.
+- Fixed block face direction — wall-mounted blocks now use the correct face index for texture orientation instead of always facing the same direction.
+- Torches now only exist as wall-mounted 3D models sticking out from the block face they're placed on - matching Minecraft's wall torch behavior.
+- Torches held in hand render as flat item sprites (matching Minecraft) instead of 3D block cubes.
+- Fixed lighting: sky light now propagates by -1 per air block instead of subtracting block opacity, and no longer fades below sea level (matching vanilla behavior).
+- Fixed smooth lighting: each mesh corner now samples light from its own position instead of a single averaged face value, creating proper light gradients in caves and around torches like Minecraft.
+- Added Zombie mob:
+  - Spawns in surface biomes at night, health 20, damage 4, slow walk speed
+  - Burns in daylight (sky light > 7), takes 1 damage per 0.5s while burning
+  - Arms raised at halfway chest level, raises higher when attacking
+  - Drops 0-2 rotten flesh on death
+  - Navigates around obstacles using pathfinding
+  - Jumps to get unstuck when blocked against walls
+  - Despawns on peaceful difficulty
+  - Sounds: idle every ~4s, hurt on damage, death on kill
+- Added rotten flesh item dropped by zombies
+- Added fire particle effects for burning mobs
