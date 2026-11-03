@@ -11,7 +11,7 @@ export const sharedUniforms = {
   uTime: { value: 0 },
   uUnderwater: { value: 0 },
 
-  uAmbient: { value: 0.06 },
+  uAmbient: { value: 0.02 },
   uAmbientTint: { value: new THREE.Color(1, 1, 1) },
 
   uFlicker: { value: 1.0 },
@@ -162,7 +162,12 @@ export class ChunkMaterials {
 
       side: THREE.FrontSide,
       fog: true,
+      color: new THREE.Color(0x1a4a8a),
     }), 'water');
+    for (const tex of liquidTex.water ?? []) {
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+    }
     for (const tex of liquidTex.water ?? []) {
       tex.wrapS = THREE.RepeatWrapping;
       tex.wrapT = THREE.RepeatWrapping;
@@ -171,9 +176,15 @@ export class ChunkMaterials {
     this.lava = patchLightShader(new THREE.MeshBasicMaterial({
       map: liquidTex.lava?.[0] ?? atlasTex,
       vertexColors: true,
-      side: THREE.DoubleSide,
+      transparent: true,
+      opacity: 0.9,
+      side: THREE.FrontSide,
       fog: true,
     }), 'lava');
+    for (const tex of liquidTex.lava ?? []) {
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+    }
 
     this.portal = patchLightShader(new THREE.MeshBasicMaterial({
       map: liquidTex.portal ?? atlasTex,
@@ -253,6 +264,14 @@ export class ChunkMaterials {
 
     this._playFrames(this.water, this.liquidFrames?.water, time, 10);
     this._playFrames(this.lava, this.liquidFrames?.lava, time, 10);
+
+    // Flow animation: pan water/lava textures over time like Minecraft
+    this.water.map.offset.y = (time * 0.02) % 1;
+    this.water.map.offset.x = Math.sin(time * 0.5) * 0.03;
+    this.water.map.needsUpdate = true;
+    this.lava.map.offset.x = (time * 0.03) % 1;
+    this.lava.map.offset.y = (time * 0.03) % 1;
+    this.lava.map.needsUpdate = true;
 
     const portalShader = this.portal.userData.shader;
     if (portalShader?.uniforms?.uPortalFrame) {
